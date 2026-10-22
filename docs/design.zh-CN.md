@@ -1,5 +1,7 @@
 # 设计与实现 / v0.1
 
+本文描述技术实现。产品定位、视觉和 Android 交互约束见[产品设计](../PRODUCT_DESIGN.zh-CN.md)。
+
 ## 分层与生命周期
 
 单一 Android app 模块，Kotlin、Compose、Material 3。`core/` 包含可确定重放的纯算法：几何、分段、路线识别、历史统计与合成轨迹。`data/` 管理 Room 实体、事务、互斥仓库。`recording/` 包含可替换 `LocationSource`、系统 `LocationManager` 与前台服务。`ui/` 为 ViewModel、四页界面、轨迹/摩托车 Canvas 和修正弹窗。ViewModel 通过 Flow 观察 Room；Service 是记录生命周期的权威，不依赖页面或 Activity 实例。
@@ -34,8 +36,8 @@ ETA 把各条历史轨迹投影到当前位置，提取历史到此之后的剩�
 
 ## 视觉与可访问性
 
-保留原型背景 `#efeee7`、主墨绿 `#24382e`、强调 `#c9ed94`、线 `#d2d8ca`、浅底 `#e0e7d7`、表面 `#fafbf6`、等待 `#dbb98b`、记录卡 `#233d30`。小号次级文字加深为 `#53634f`。摩托车按原型 42×30 SVG 几何绘制，两端预留 24 dp，0/100% 不裁切车轮。大号等宽耗时、12–16 dp 圆角、可滚动布局、适配系统 Insets 的 Scaffold、主要操作至少 48 dp。Canvas 图表附文字语义。避免骑行操作。字体放大、TalkBack、窄屏/横屏和 OPPO 导航栏仍列入设备验收。
+保留原型背景 `#efeee7`、主墨绿 `#24382e`、强调 `#c9ed94`、线 `#d2d8ca`、浅底 `#e0e7d7`、表面 `#fafbf6`、等待 `#dbb98b`、记录卡 `#233d30`。小号次级文字加深为 `#53634f`。摩托车按原型 42×30 SVG 几何绘制，两端预留 24 dp，0/100% 不裁切车轮。大号等宽耗时、12–16 dp 圆角、可滚动布局、适配系统 Insets 的 Scaffold、主要操作至少 48 dp。Canvas 图表附文字语义。避免骑行操作。字体放大、TalkBack、窄屏/横屏和系统导航栏仍列入设备验收。
 
 ## 官方依据
 
-2026-10-22 查阅：[Android 前台定位权限](https://developer.android.com/develop/sensors-and-location/location/permissions)、[location 前台服务类型](https://developer.android.com/develop/background-work/services/fgs/service-types#location)、[AGP 8.9 兼容表](https://developer.android.com/build/releases/agp-8-9-0-release-notes)。这些支持权限/服务设计和固定工具组合，不代表 OPPO 锁屏可靠性已经验证。
+2026-10-22 查阅：[Android 前台定位权限](https://developer.android.com/develop/sensors-and-location/location/permissions)、[location 前台服务类型](https://developer.android.com/develop/background-work/services/fgs/service-types#location)、[AGP 8.9 兼容表](https://developer.android.com/build/releases/agp-8-9-0-release-notes)。这些支持权限/服务设计和固定工具组合，不代表各设备的锁屏可靠性已经验证。

@@ -1,4 +1,6 @@
-# 测试与 OPPO 验收
+# 测试与 Android 设备验收
+
+本清单适用于不同品牌的 Android 设备。下文的具体型号仅标识历史测试环境，不是产品限制。产品设计与交互规范见[产品设计](../PRODUCT_DESIGN.zh-CN.md)。
 
 测试日期：2026-10-22。本机 macOS arm64，Temurin JDK 17.0.20.1 / Gradle 8.11.1 / Kotlin 2.1.20 / SDK 35。以下区分实际执行结果与尚未执行的设备用例；可机读记录见 [verification.json](verification.json)。
 
@@ -10,13 +12,13 @@
 | JVM 单元测试 | 分段、定位质量、路线投影、历史与月度统计 | 已通过：28 个测试，0 失败 / 0 错误 / 0 跳过（分析 11、路线 9、统计 8） |
 | Android 构建 / Lint | Compose、Room/KSP、Manifest、资源、APK | 已通过：应用 APK、测试 APK、Lint（0 错误；7 条 GradleDependency 版本更新提示） |
 | Android 设备测试 | Room 重开、改归类、中断恢复、四页回放、真实服务生命周期 | OPPO PKJ110 上 4 项通过：原有 3 项及新增服务测试；未清除日常行程数据 |
-| OPPO 实路 | 锁屏、主辅路、到达和耗电 | 未执行，必须真机验证 |
+| 真实道路 | 锁屏、主辅路、到达和耗电 | 未执行，必须真机验证 |
 
 应用包：`app/build/outputs/apk/debug/app-debug.apk`（11,314,623 字节），测试包：`app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk`。`apksigner verify --verbose` 通过 v2 签名验证；AAPT 确认包名 `com.ridediary`、版本 0.1.0、最低 API 26 / target 35，权限清单不含联网或全天后台位置。校验和记录在 JSON 中。
 
 Lint 的 7 条提示仅为依赖存在更新版本。初版保留已实际构建验证的固定组合，没有通过屏蔽错误或建立 Lint baseline 来跳过检查。
 
-## OPPO 设备执行记录
+## 历史设备执行记录
 
 2026-10-22，OPPO PKJ110，手机报告 Android 17 / API 37、Oplus ROM V17.0.0。应用已安装并可启动。原有数据库两项与四页/回放一项测试通过，用时 13.647 秒；新增 `ServiceLifecycleTest` 通过，用时 7.151 秒。原始输出分别见 [3 项设备测试](validation/oppo-instrumentation.txt)与[真实服务测试](validation/oppo-service-test.txt)。本次通过 ADB 直接执行，未生成 Gradle connected HTML 报告。
 
@@ -41,7 +43,7 @@ python3 scripts/check-resources.py
 ./gradlew :app:testDebugUnitTest :app:assembleDebug :app:lintDebug
 ./gradlew :app:assembleDebugAndroidTest
 adb devices -l
-# 本次 OPPO 使用直接安装/执行，避免 Gradle connected 的测试后卸载：
+# 直接安装/执行可避免 Gradle connected 的测试后卸载：
 adb install --no-streaming -r app/build/outputs/apk/debug/app-debug.apk
 adb install --no-streaming -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
 adb shell am instrument -w -r com.ridediary.test/androidx.test.runner.AndroidJUnitRunner
@@ -59,9 +61,9 @@ JVM 报告：`app/build/reports/tests/testDebugUnitTest/index.html`。Lint 报�
 
 额外尝试 ADB 截图时未取得 App 可用画面，界面树仅有系统界面，故未将像素级视觉验收标为通过；本次界面结果依据 Compose 测试的可见性和交互断言。
 
-## OPPO 补充与实路验收
+## 通用设备与实路验收
 
-记录手机型号、Android/ColorOS 版本、APK 版本、算法版本 1.0、时间、天气/卫星可见性、系统电池设置。停车后操作，不让测试妨碍骑行。
+记录手机型号、Android/厂商系统版本、APK 版本、算法版本 1.0、时间、天气/卫星可见性、系统电池设置。停车后操作，不让测试妨碍骑行。
 
 | 场景 | 操作与预期 | 需要记录 |
 |---|---|---|
@@ -75,13 +77,13 @@ JVM 报告：`app/build/reports/tests/testDebugUnitTest/index.html`。Lint 报�
 | 静止准确性 | 上下班各数次，人工记总耗时与各停留，不用瞬时速度作目标 | 移动/静止/未知误差，缓行误判和起始等待 |
 | ETA | 同路线至少三次有效历史后，在停车时查看多个进度位置 | 实际样本数、区间覆盖、偏离时降级 |
 | 修改与统计 | 改路线/方向、排除、修正边界、跨午夜、同日往返，重启再看月份与图表 | 原始点保留、图表和表格一起变化、一天两次 |
-| 电池 | 记录 30/60 分钟前后电量并与相近日常使用比较 | 耗电、发热、ColorOS 提示；不默认关闭全部省电 |
+| 电池 | 记录 30/60 分钟前后电量并与相近日常使用比较 | 耗电、发热、系统提示；不默认关闭全部省电 |
 | 适配与隐私 | 中文/英文、最大字体、横竖屏、手势/三键导航、TalkBack、OEM 迁移 | 裁切/触摸/读屏；锁屏通知可见性、备份排除是否遵守 |
 
 ## 结果模板
 
 | 构建/设备 | 场景 | 预期 | 实际 | 证据 | 结论 |
 |---|---|---|---|---|---|
-| 型号 / ColorOS / Android / APK | 测试场景与路线版本 | 预期结果 | 时间/未知比例/耗电等 | 脱敏截图或手记；不向公开日志输出坐标 | 通过 / 待修 / 无法判定 |
+| 型号 / 厂商系统 / Android / APK | 测试场景与路线版本 | 预期结果 | 时间/未知比例/耗电等 | 脱敏截图或手记；不向公开日志输出坐标 | 通过 / 待修 / 无法判定 |
 
-实路准确性是后续迭代指标，不承诺精确到秒。未测内容保持“待测”，模拟轨迹通过不代表 OPPO 后台可靠。
+实路准确性是后续迭代指标，不承诺精确到秒。未测内容保持“待测”，模拟轨迹通过不代表各设备的后台记录可靠。

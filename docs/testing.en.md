@@ -1,4 +1,6 @@
-# Testing and OPPO acceptance
+# Testing and Android device acceptance
+
+This checklist applies across Android brands. Specific models below identify historical test environments, not product restrictions. See [product design](../PRODUCT_DESIGN.md) for product and interaction requirements.
 
 Date: 2026-10-22. Executed on macOS arm64 with Temurin JDK 17.0.20.1 / Gradle 8.11.1 / Kotlin 2.1.20 / SDK 35. Results below distinguish execution from pending device cases. Machine-readable evidence: [verification.json](verification.json).
 
@@ -10,13 +12,13 @@ Date: 2026-10-22. Executed on macOS arm64 with Temurin JDK 17.0.20.1 / Gradle 8.
 | JVM unit tests | Segmentation, fix quality, routing, history, monthly statistics | Passed: 28 tests, 0 failures / 0 errors / 0 skipped (analysis 11, routing 9, statistics 8) |
 | Android build / Lint | Compose, Room/KSP, manifest, resources, APK | Passed: app APK, test APK and Lint (0 errors; 7 GradleDependency update notices) |
 | Android device tests | Room reopen/correction, interrupted recovery, four-screen replay, real service lifecycle | 4 passed on OPPO PKJ110: the original 3 and an added service test; daily ride data retained |
-| OPPO road tests | Screen-off behavior, adjacent roads, arrival, battery | Not executed; physical device required |
+| Real-road tests | Screen-off behavior, adjacent roads, arrival, battery | Not executed; physical device required |
 
 App APK: `app/build/outputs/apk/debug/app-debug.apk` (11,314,623 bytes). Test APK: `app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk`. `apksigner verify --verbose` verified v2 signing; AAPT confirmed `com.ridediary`, version 0.1.0, min API 26 / target 35, and no Internet or background-location permission. Artifact checksums are in the JSON record.
 
 The 7 Lint notices only report newer dependency versions. The initial release keeps the pinned combination actually built here; no error suppression or Lint baseline was used to bypass validation.
 
-## OPPO execution record
+## Historical device execution record
 
 2026-10-22, OPPO PKJ110, reported Android 17 / API 37 and Oplus ROM V17.0.0. The app installed and launched. The original two database tests and four-tab/replay test passed in 13.647 seconds; the additional `ServiceLifecycleTest` passed in 7.151 seconds. Raw evidence: [original 3 tests](validation/oppo-instrumentation.txt) and [real service test](validation/oppo-service-test.txt). These used direct ADB instrumentation; no Gradle connected HTML report was generated.
 
@@ -41,7 +43,7 @@ python3 scripts/check-resources.py
 ./gradlew :app:testDebugUnitTest :app:assembleDebug :app:lintDebug
 ./gradlew :app:assembleDebugAndroidTest
 adb devices -l
-# Direct OPPO installation/execution avoids Gradle connected cleanup/uninstall:
+# Direct installation/execution avoids Gradle connected cleanup/uninstall:
 adb install --no-streaming -r app/build/outputs/apk/debug/app-debug.apk
 adb install --no-streaming -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
 adb shell am instrument -w -r com.ridediary.test/androidx.test.runner.AndroidJUnitRunner
@@ -59,9 +61,9 @@ Algorithm cases cover stationary drift/backfill, initial slow creeping, missing 
 
 An additional ADB screenshot attempt did not capture usable App pixels and its hierarchy contained only system UI. Pixel-level visual acceptance is not claimed; the UI result relies on Compose visibility and interaction assertions.
 
-## Additional and road-level OPPO acceptance
+## General device and real-road acceptance
 
-Record model, Android/ColorOS versions, APK version, algorithm 1.0, date, weather/sky visibility and battery settings. Operate only while parked.
+Record model, Android/manufacturer-system versions, APK version, algorithm 1.0, date, weather/sky visibility and battery settings. Operate only while parked.
 
 | Case | Action and expected behavior | Evidence to collect |
 |---|---|---|
@@ -75,13 +77,13 @@ Record model, Android/ColorOS versions, APK version, algorithm 1.0, date, weathe
 | Stationary accuracy | Several commutes each way with manual elapsed and stop notes | Moving/stationary/unknown error, creeping and initial wait classification |
 | ETA | At least three valid prior rides, inspect multiple positions while parked | Actual count, interval coverage, off-route degradation |
 | Corrections/statistics | Route/direction/exclusion/boundary edits, midnight and same-day return trip, restart | Raw retention, synchronized chart/table, one day/two rides |
-| Battery | Compare 30/60-minute recording with similar normal usage | Drain, heat, ColorOS prompts; no blanket battery exemption |
+| Battery | Compare 30/60-minute recording with similar normal usage | Drain, heat, system prompts; no blanket battery exemption |
 | Accessibility/privacy | Both languages, maximum font, rotation, gesture/three-button navigation, TalkBack, OEM transfer | Clipping/touch/reading, lock-screen notification visibility, backup policy compliance |
 
 ## Result template
 
 | Build/device | Case | Expected | Observed | Evidence | Outcome |
 |---|---|---|---|---|---|
-| Model / ColorOS / Android / APK | Scenario and route version | Expected behavior | Time/unknown share/drain | Redacted screenshot or notes; do not put coordinates in public logs | Pass / fix / inconclusive |
+| Model / manufacturer system / Android / APK | Scenario and route version | Expected behavior | Time/unknown share/drain | Redacted screenshot or notes; do not put coordinates in public logs | Pass / fix / inconclusive |
 
-Road accuracy is an iteration metric, not a promise of second-level precision. Keep untested items pending; synthetic replay does not establish OPPO background reliability.
+Road accuracy is an iteration metric, not a promise of second-level precision. Keep untested items pending; synthetic replay does not establish background reliability across devices.

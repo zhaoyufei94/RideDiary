@@ -1,5 +1,7 @@
 # Design and implementation / v0.1
 
+This document describes implementation. See [product design](../PRODUCT_DESIGN.md) for product scope, visual style and Android interaction requirements.
+
 ## Structure and lifecycle
 
 One Android application module, Kotlin, Compose and Material 3. `core/` contains pure deterministic geometry, segmentation, route recognition, historical statistics and synthetic replay. `data/` owns Room entities, transactions and a mutex-protected repository. `recording/` owns replaceable `LocationSource`, Android `LocationManager` and a foreground service. `ui/` owns the ViewModel, four screens, trace/motorcycle Canvas and correction dialogs. The ViewModel observes Room with Flow; the service owns recording and does not depend on a visible UI or Activity instance.
@@ -34,8 +36,8 @@ Monthly statistics select by departure local date in the stored zone, route and 
 
 ## Visuals and accessibility
 
-Use exact prototype background `#efeee7`, ink `#24382e`, accent `#c9ed94`, line `#d2d8ca`, soft `#e0e7d7`, surface `#fafbf6`, waiting `#dbb98b`, live card `#233d30`. Small secondary text is darkened to `#53634f` for readability. The motorcycle is drawn from the prototype's 42×30 SVG geometry, with reserved 24 dp edge space so its wheels are not clipped at 0/100%. Large monospace elapsed numbers, 12–16 dp corners, scrolling content, system-inset-aware Scaffold and ≥48 dp primary controls. Canvas charts include text descriptions. Driving interaction is discouraged. Large-font rendering, TalkBack, narrow phones, landscape and OPPO navigation bars remain device acceptance items.
+Use exact prototype background `#efeee7`, ink `#24382e`, accent `#c9ed94`, line `#d2d8ca`, soft `#e0e7d7`, surface `#fafbf6`, waiting `#dbb98b`, live card `#233d30`. Small secondary text is darkened to `#53634f` for readability. The motorcycle is drawn from the prototype's 42×30 SVG geometry, with reserved 24 dp edge space so its wheels are not clipped at 0/100%. Large monospace elapsed numbers, 12–16 dp corners, scrolling content, system-inset-aware Scaffold and ≥48 dp primary controls. Canvas charts include text descriptions. Driving interaction is discouraged. Large-font rendering, TalkBack, narrow phones, landscape and system navigation bars remain device acceptance items.
 
 ## Sources
 
-Reviewed 2026-10-22: [Android foreground location permissions](https://developer.android.com/develop/sensors-and-location/location/permissions), [location foreground service type](https://developer.android.com/develop/background-work/services/fgs/service-types#location), [AGP 8.9 compatibility](https://developer.android.com/build/releases/agp-8-9-0-release-notes). These support the permission/service design and pinned toolchain; they do not establish OPPO lock-screen reliability.
+Reviewed 2026-10-22: [Android foreground location permissions](https://developer.android.com/develop/sensors-and-location/location/permissions), [location foreground service type](https://developer.android.com/develop/background-work/services/fgs/service-types#location), [AGP 8.9 compatibility](https://developer.android.com/build/releases/agp-8-9-0-release-notes). These support the permission/service design and pinned toolchain; they do not establish lock-screen reliability across devices.

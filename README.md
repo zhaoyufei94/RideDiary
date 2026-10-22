@@ -1,68 +1,109 @@
 # RideDiary / 途记
 
-Your everyday rides, a little better understood.
+**Your everyday rides, a little better understood.** · [中文说明](README.zh-CN.md)
 
-Native, offline Android commute journal for a phone alone. Manual start, system location foreground service, local Room storage, route recognition, stationary-time analysis, arrival summaries, history and monthly statistics. No GMS, map key, account, server, telemetry or track upload. No Internet permission. [完整中文说明](README.zh-CN.md).
+RideDiary is an offline, native Android commute journal. Record everyday rides with your phone, split elapsed time into moving, stationary and unknown intervals, and compare each commute with your own history.
 
-The cream / forest-green / sand palette and vector motorcycle progress indicator follow the [original prototype](docs/prototype/ui-prototype.html). The four screens are Jetpack Compose, not a WebView. Default language is Chinese; the top-right control switches to English. Settings use private SharedPreferences for this one preference.
+For Android 8.0 and later, across Android phone brands. No extra hardware, account, Google Play services or map key is needed. Recording and analysis happen on your phone; the app has no Internet permission.
+
+## What it does
+
+| Screen | Features |
+|---|---|
+| Ride | Manual recording, elapsed time, average speed, stationary time and location status; motorcycle progress, historical comparison and arrival estimates after route recognition |
+| Journal | Ride history and arrival summaries; correct route, direction and commute boundaries, or exclude unusual rides |
+| Statistics | Filter by month, route and direction; view commute days, rides, distance, elapsed time, stationary share and per-ride time breakdowns |
+| Routes | Create work/home routes from recorded rides; inspect local track sketches and historical samples |
+
+The cream, forest-green, light-green and sand palette pairs with a motorcycle progress indicator. Screens use Jetpack Compose / Material 3. Chinese is the default language; the top-right control switches to English.
+
+## Demo
+
+**Try a complete commute without granting permissions:**
+
+1. Open **Try replay** on the Ride screen.
+2. Play the roughly **11-second** replay to see recognition, moving/stationary segments, motorcycle progress and an arrival summary. Pause and resume whenever you like.
+3. Explore Journal, Statistics and Routes, including six synthetic historical rides and month, route and direction filters.
+4. Exit demo to return to your own records.
+
+Demo data stays in memory and never enters your real ride database. Demo is unavailable during real recording.
+
+Download the repository and open the [interactive UI prototype](docs/prototype/ui-prototype.html) in a browser to preview the palette, screens and motorcycle indicator. The HTML is a design demo; the Android app provides actual location, background recording and local storage.
+
+## Permissions and operating conditions
+
+| Permission or condition | When needed | Purpose and effect of denial |
+|---|---|---|
+| Precise location | When starting a real ride | Track recording, movement analysis and route matching. Approximate-only or denied location prevents real recording; history and demo remain available |
+| Notifications, Android 13+ | Requested as needed when starting | Ongoing recording notification and stop action. Recording can continue if denied; return to the app to finish |
+| System location enabled | During real recording | Required for normal fixes. If disabled, the app explains the issue; timing continues and unclassifiable intervals remain unknown |
+| Location foreground service | After permission and manual start | Continues recording in the background and with the screen off; managed by Android, without a separate permission dialog |
+
+No “Allow all the time” location permission, boot startup, all-day listening or automatic ride start. Recording starts with your action and stops after arrival confirmation or manual finish.
+
+## Using RideDiary
+
+1. **Record the first ride.** While parked, tap **Start recording**, grant precise location and enable system location. With no saved route, view actual elapsed and stationary time, then finish manually.
+2. **Save a commute route.** Open the ride in Journal, choose **Create commute route**, name it, select To work / To home and confirm endpoint radii. A route needs at least four valid fixes and 150 m; radii can be 20–500 m. Multiple routes per direction are supported.
+3. **Record another commute.** Start manually again. Recognition uses the start area and observed track, so it needs some travel; nearly identical candidates remain uncertain.
+4. **View progress and estimates.** Recognized rides show route progress. At least three usable histories for the same route and direction are needed for historical comparison and an arrival estimate.
+5. **Arrive and review.** Arrival requires near-complete route progress, presence inside the endpoint area and at least 30 seconds of continuous fresh low-speed fixes. Manual finish remains available in the app or notification. Correct classification and boundaries or exclude unusual rides afterward; raw fixes are retained and statistics recalculate.
+
+Operate the app while parked. Automatic recognition happens after you manually start recording.
+
+## Timing, location and battery use
+
+- **Total elapsed = moving + stationary + unknown.** Stationary time can include congestion, brief stops or parking; it does not identify red lights. Missing location is not treated as zero speed.
+- Time to the first usable fix varies with surroundings and system behavior. Tunnels, garages, buildings and adjacent roads can affect location and recognition. Progress and arrival estimates are temporarily suppressed when off-route or using stale fixes.
+- Arrival confirmation waits for sustained stopping, so the summary does not appear immediately when passing the endpoint. Estimates use your historical remaining time, without live traffic or second-level guarantees.
+- Continuous location increases battery use. Fixes are requested about every two seconds, but Android controls delivery. Power use and long screen-off continuity still need measurement across devices, systems and real routes.
+- Start with normal battery settings; inspect app-specific battery/background restrictions if recording is interrupted. The app currently holds no wake lock and requests no battery-optimization exemption.
+- If permission is revoked or the process is terminated, reopening marks the unfinished ride interrupted and retains saved data. It does not resume automatically; interrupted rides are excluded from valid commute statistics.
 
 ## Build and install
 
-Pinned toolchain: JDK 17, Gradle 8.11.1, AGP 8.9.2, Kotlin / Compose compiler 2.1.20, KSP 2.1.20-1.0.32, Android SDK / target 35, build tools 35.0.0, min SDK 26. Room 2.7.1; Compose BOM 2025.04.01. These are fixed compatible versions, not a claim to use the newest SDK.
+Use **JDK 17** and Android Studio or the Android command-line SDK. Set `JAVA_HOME` and configure the SDK through `ANDROID_HOME` or `sdk.dir` in `local.properties`. Install these SDK packages and accept their licenses:
 
-Install Android Studio or the Android command-line SDK. Set `JAVA_HOME` to JDK 17 and `ANDROID_HOME` to your SDK, or put `sdk.dir=/absolute/path/to/sdk` in untracked `local.properties`. Install `platforms;android-35`, `build-tools;35.0.0` and `platform-tools`. Accept the SDK licenses after reviewing them. On macOS, the system `/usr/bin/java` stub alone is insufficient.
-
-```sh
-./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
-python3 scripts/check-resources.py
-adb install --no-streaming -r app/build/outputs/apk/debug/app-debug.apk
-# On a connected device, direct instrumentation preserves the installed app:
-adb install --no-streaming -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
-adb shell am instrument -w -r com.ridediary.test/androidx.test.runner.AndroidJUnitRunner
+```text
+platforms;android-35
+build-tools;35.0.0
+platform-tools
 ```
 
-This checkout also includes an ignored local JDK/SDK/cache in `.tooling/`. Run `./scripts/gradle-local.sh` to use those tools without changing your system installation, or pass specific Gradle tasks as arguments. On another machine, configure JDK/SDK as above; the helper does not download or accept licenses automatically.
+The repository includes a pinned Gradle Wrapper; a separate Gradle installation is unnecessary. From the repository root:
 
-If `adb` is not on PATH, use `.tooling/android-sdk/platform-tools/adb install --no-streaming -r app/build/outputs/apk/debug/app-debug.apk` on this checkout after connecting and authorizing your device.
+```sh
+./gradlew :app:assembleDebug
+```
 
-The debug APK uses a development signing key. No release keystore or license has been chosen. The machine-specific `.tooling/` directory and `local.properties` are excluded from Git.
+On Windows, use `gradlew.bat :app:assembleDebug`. The first build downloads tools and dependencies, so its duration depends on the network and cache. Using the app requires no network connection.
 
-## Try it
+The APK is `app/build/outputs/apk/debug/app-debug.apk`. Connect a phone, enable USB debugging and authorize the computer, then install:
 
-Open **Try replay** on the Ride screen. Six synthetic historical rides appear, with a local route sketch. Play the deterministic ~11-second replay, pause/resume, watch the vector motorcycle follow the ordered route, then inspect the arrival summary, Journal, route and monthly filters. Replay is in memory, never inserted into the real database. Exit demo to return to your own data; demo cannot be entered during real recording.
+```sh
+adb devices
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+```
 
-For real rides, park safely, tap **Start recording**, read the permission explanation and grant precise location. Notification permission is requested on Android 13+; denial does not fabricate a location failure, but removes the normal notification stop action, so return to the app to finish. Approximate-only / denied location blocks starting; first launch and replay need no permissions. Enable system location if necessary. Continue with the screen off using a `location` foreground service, and finish from the persistent notification or app. No background location, boot receiver or automatic start is used.
+Add `--no-streaming` if streamed installation fails. Alternatively, transfer the APK to the phone and allow installation from that source when Android prompts. USB debugging is for development installation, not everyday use. This build uses a development signing key.
 
-After the first completed ride, open it in Journal → **Create commute route**, name it, choose To work / To home, and confirm endpoint radii (20–500 m). At least 150 m and four valid fixes are required. Subsequent manually started rides can match it. Several routes in the same direction are supported; near-equal parallel candidates stay uncertain. Arrival requires near-complete ordered progress, endpoint proximity and 30 seconds of fresh low-speed fixes. Manual finish remains available.
+## Data and current limits
 
-In ride details, correct the route/direction, exclude an unusual stop or detour without deleting raw fixes, or adjust commute start/end seconds. All statistics recalculate from selected boundaries and classifications. Interrupted rides remain visible with unknown gaps and do not enter valid commute statistics. They are not automatically restarted or silently converted into completed rides.
+Tracks remain in app-private storage, without uploads, telemetry or precise coordinates in logs. System cloud and device-transfer backups are disabled; no additional app-level encryption is provided. **Uninstalling or clearing app data loses local records. Export, import and cloud recovery are not yet available.**
 
-## What is implemented
+The initial version has track sketches, without a map basemap, navigation, live traffic or red-light detection. Long screen-off recording, real-road accuracy and battery use require continued validation. See [testing](docs/testing.en.md) for actual automated and device results.
 
-- Four scrollable native screens with empty states; local trace Canvas; accessible labels and resource-based Chinese/English strings.
-- Serialized recording service, duplicate-start guard, system GNSS/network updates, 2-second persistence checkpoints, UTC + timezone + monotonic intervals, raw point quality and algorithm version.
-- Moving / stationary / unknown segments, low-speed dwell confirmation with backfill, hysteresis, accuracy / stale / jump / gap filtering.
-- Ordered local-window route projection, conservative ambiguous classification, deviation/turnback indication, endpoint dwell arrival.
-- Previous valid same-route/same-direction baselines (last 20), separate total/component medians, same-position comparison, remaining-time median and interquartile ETA (at least 3 valid samples).
-- Local departure-month / route / direction filtering, unique commute dates, stacked per-ride time chart, distance/time/wait totals, mean/min/max clocks, durations and waits, total median; midnight-aware clock aggregation.
-- Room transactions, raw-point retention, interrupted-record recovery, boundary edits and isolated synthetic replay.
+## Roadmap
 
-## Verification and OPPO acceptance
+- Improve location-loss recovery, arrival detection and long-session performance; expand device and Android-version coverage.
+- Add departure-time/duration scatter plots, stationary hotspots and segment analysis; refine estimates for usual departure windows.
+- Add user-controlled local track/statistics export, backup and import.
+- Improve route/endpoint editing, large text, screen-reader and large-screen support; explore a dark theme.
 
-Installed and passed 4 device tests on OPPO PKJ110: database reopen/correction, interrupted recovery, four-screen replay, and real-service duplicate starts, Activity recreation, brief background persistence and notification stop. Disposable test databases were used and daily data retention was asserted. Device tests pin Espresso 3.7.0, Runner 1.7.0 and JUnit extension 1.3.0 for this phone's system compatibility.
+These are planned directions, not completed features or release-date commitments.
 
-See [testing and recorded results](docs/testing.en.md) and [design / algorithm definitions](docs/design.en.md). Build success, simulated tests and real-road accuracy are separate evidence. **OPPO lock-screen survival, GNSS behavior on adjacent Beijing main/service roads, arrival thresholds and battery usage require the user's phone and repeated commutes.** No road or rain certification is claimed.
+## Project documentation
 
-For OPPO acceptance: run several repeat commutes in each direction; compare manual elapsed/stop notes; lock the screen for at least 30 minutes; test a brief endpoint stop, a tunnel/garage, permission withdrawal, notification stop, process termination and reopening. Record device model, ColorOS/Android versions and battery percentage. Begin with normal battery settings; change an app-specific battery setting only if measured interruption warrants it. Never operate while riding.
-
-## Privacy and limits
-
-Tracks remain in the app-private Room database. Cloud backup and device-transfer backup are excluded, `allowBackup=false`, no precise coordinates are logged. This is a platform backup policy, not encryption beyond Android's device storage protection; uninstalling clears local data, and some OEM transfer tools may need separate device verification. No export, cloud recovery or database migration beyond version 1 is shipped. Do not uninstall or clear storage if you need to retain rides.
-
-GPS cannot reliably distinguish all adjacent lanes or roads. Heuristic thresholds are centralized in `core/Models.kt` and need field calibration. No navigation, live traffic, red-light inference, fastest-record coaching, paid APIs, hardware, maps, account or sync. Time-window route preference, stop hotspots, departure scatter plots and export are future enhancements. Recording does not hold a wake lock or request exemption from battery optimization: screen-off delivery/power behavior is specifically pending OPPO validation. Matching currently replays the recorded track and Room replaces derived segments per checkpoint; appropriate for commute-size tracks, with long-session performance still to be measured.
-
-Source requirements are preserved in [Chinese](docs/requirements.zh-CN.md) and [English](docs/requirements.en.md). Repository: `git@github.com:zhaoyufei94/RideDiary.git`. No open-source license is asserted on the owner's behalf.
-
-## Local Git handoff
-
-`main` is initialized with the provided `origin`. Read-only SSH verification found no remote refs; no push or remote history change was made. Code and bilingual documentation are committed separately. This machine had no explicit Git author identity, so the local commits use Git's automatic OS identity; review/configure the repository identity before publishing. No global Git or SSH settings were changed.
+- [Product design](PRODUCT_DESIGN.md): product scope, visual style, Android interaction requirements and future development constraints.
+- [Technical design](docs/design.en.md): architecture, data models, algorithms and metric definitions.
+- [Testing](docs/testing.en.md): verification methods, recorded results and pending acceptance scenarios.
