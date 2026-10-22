@@ -1,0 +1,11 @@
+<resources>
+    <style name="Base.Theme.RideDiary" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:statusBarColor">#efeee7</item>
+        <item name="android:windowActionModeOverlay">true</item>
+    </style>
+    <style name="Theme.RideDiary" parent="Base.Theme.RideDiary">
+        <item name="android:navigationBarColor">#24382e</item>
+    </style>
+</resources>
