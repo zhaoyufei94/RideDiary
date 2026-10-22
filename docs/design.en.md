@@ -4,7 +4,7 @@ This document describes implementation. See [product design](../PRODUCT_DESIGN.m
 
 ## Structure and lifecycle
 
-One Android application module, Kotlin, Compose and Material 3. `core/` contains pure deterministic geometry, segmentation, route recognition, historical statistics and synthetic replay. `data/` owns Room entities, transactions and a mutex-protected repository. `recording/` owns replaceable `LocationSource`, Android `LocationManager` and a foreground service. `ui/` owns the ViewModel, four screens, trace/motorcycle Canvas and correction dialogs. The ViewModel observes Room with Flow; the service owns recording and does not depend on a visible UI or Activity instance.
+One Android application module, Kotlin, Compose and Material 3. `core/` contains pure deterministic geometry, segmentation, route recognition, historical statistics. `data/` owns Room entities, transactions and a mutex-protected repository. `recording/` owns replaceable `LocationSource`, Android `LocationManager` and a foreground service. `ui/` owns the ViewModel, four screens, trace/motorcycle Canvas and correction dialogs. The ViewModel observes Room with Flow; the service owns recording and does not depend on a visible UI or Activity instance.
 
 Start is a user action in the visible Activity, after precise location permission. The service immediately posts its foreground notification, waits for database recovery, then allocates one ride and subscribes to GNSS/network providers at a requested 2-second interval. A selector prefers good GNSS fixes for 10 seconds, falls back to network, suppresses redundant sub-second callbacks, and lets a good source replace a poor one. This prevents concurrent providers from creating artificial jump/unknown intervals. Requests are serialized on a service-owned channel; repeated starts return without allocating another session. Location and timer checkpoints transact raw fixes, ride summary state and derived segments. The timer continues when fixes disappear. Notification and UI stop use the same service action. `START_NOT_STICKY` prevents accidental recording resurrection. There is no boot receiver or background-location permission. Android may vary delivery intervals; 2 seconds is a request, not a reliability promise.
 
@@ -41,3 +41,21 @@ Use exact prototype background `#efeee7`, ink `#24382e`, accent `#c9ed94`, line 
 ## Sources
 
 Reviewed 2026-10-22: [Android foreground location permissions](https://developer.android.com/develop/sensors-and-location/location/permissions), [location foreground service type](https://developer.android.com/develop/background-work/services/fgs/service-types#location), [AGP 8.9 compatibility](https://developer.android.com/build/releases/agp-8-9-0-release-notes). These support the permission/service design and pinned toolchain; they do not establish lock-screen reliability across devices.
+
+## Ride and route management (0.1.1)
+
+Ride deletion is serialized and transactional. Room cascades to points and segments; routes retain independent shape data even if their source ride is deleted. Route deletion first clears linked ride routeIds, preserving raw tracks, direction and exclusion state. Route edits retain shape/sourceRideId, increment version and propagate direction to linked rides in one transaction. Active rides and routes in use are protected. The schema is unchanged; no migration is needed.
+
+Flow refreshes Journal, Statistics and Routes. A detail BackHandler clears selection and returns to Journal. Replay UI/state is removed; Replay lives in testShared for JVM and Android tests only.
+
+## Long-press management (0.1.2)
+
+Tapping a ride card opens details; holding it reveals deletion. Holding a route card reveals edit/delete; holding the detail summary reveals classification, boundary correction and deletion. Always-visible management buttons are removed. combinedClickable supplies long-press semantics and haptic feedback. Material 3 bottom action sheets dismiss on Back or an outside tap, and deletion still requires separate confirmation. Card composition is keyed by database ID so deleting an item cannot move its menu to another item. UI and repository recording protections remain in force.
+
+## 0.1.3 presentation refinement
+
+ManagementSheets centralizes bottom actions, editor forms and local Canvas line icons. Dialog content inherits the caller's language, density and configuration. Shared DataCard, SectionHeading and TimeComposition components align statistics and details.
+
+Statistics still uses Statistics.month/valid/clocks and Sample.metrics; bar selection is presentation state and does not change storage or aggregation. Filters apply to rings, values, bars and rhythm cards together. The chart viewport fits complete columns and enlarged text expands labels and stacks metrics vertically.
+
+Details retain earlier valid same-route/direction baselines and the distinction between the independent total median and component medians. Presentation changes do not alter recorded tracks, raw data or the recording service.

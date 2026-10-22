@@ -5,8 +5,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.core.net.toUri
 import android.os.Build
-import android.os.SystemClock
 import android.provider.Settings
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
@@ -18,8 +18,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -29,23 +32,20 @@ import com.ridediary.R
 import com.ridediary.core.*
 import com.ridediary.data.*
 import com.ridediary.recording.RecordingService
-import java.time.YearMonth
 import kotlinx.coroutines.delay
 
 @Composable fun RideDiaryScreen(onStart: ()->Unit,onStop: ()->Unit,onLanguage: ()->Unit,vm: RideViewModel=viewModel()) {
     val context=LocalContext.current
-    val real by vm.realRides.collectAsStateWithLifecycle()
-    val realRoutes by vm.realRoutes.collectAsStateWithLifecycle()
-    val demo by vm.demo.collectAsStateWithLifecycle()
-    val demoRides by vm.demoRides.collectAsStateWithLifecycle()
-    val demoRoutes by vm.demoRoutes.collectAsStateWithLifecycle()
-    val playing by vm.replaying.collectAsStateWithLifecycle()
+    val rides by vm.rides.collectAsStateWithLifecycle()
+    val routes by vm.routes.collectAsStateWithLifecycle()
     val error by vm.error.collectAsStateWithLifecycle()
     val quality by RecordingService.quality.collectAsStateWithLifecycle()
-    val rides=if(demo) demoRides else real
-    val routes=if(demo) demoRoutes else realRoutes
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var selected by rememberSaveable { mutableStateOf<String?>(null) }
+    var editingRoute by remember { mutableStateOf<RouteRecord?>(null) }
+    var deletingRoute by remember { mutableStateOf<RouteRecord?>(null) }
+    var deletingRide by remember { mutableStateOf<RideData?>(null) }
+    BackHandler(enabled=tab==1 && selected!=null) { selected=null }
     var explain by remember { mutableStateOf(false) }
     var denied by remember { mutableStateOf(false) }
     var notificationsDenied by remember { mutableStateOf(false) }
@@ -58,40 +58,36 @@ import kotlinx.coroutines.delay
     }
     val active=rides.firstOrNull { it.ride.state=="RECORDING" }
     var previous by remember { mutableStateOf<String?>(null) }
-    LaunchedEffect(active?.ride?.id,demo) {
+    LaunchedEffect(active?.ride?.id) {
         if(previous!=null && active==null) {
             val finished=rides.firstOrNull { it.ride.id==previous }
             if(finished!=null) { selected=finished.ride.id; tab=1 }
         }
         previous=active?.ride?.id
     }
-    LaunchedEffect(demo) { selected=null; previous=null }
     fun begin() {
-        if(demo) vm.replay()
-        else if(ContextCompat.checkSelfPermission(context,Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED) {
+        if(ContextCompat.checkSelfPermission(context,Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED) {
             if(Build.VERSION.SDK_INT>=33 && ContextCompat.checkSelfPermission(context,Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED) explain=true else onStart()
         } else explain=true
     }
+    val pageScroll=key(tab,selected) { rememberScrollState() }
     Scaffold(containerColor=Background,bottomBar={
         NavigationBar(containerColor=Surface) {
-            listOf(R.string.commute,R.string.summary,R.string.statistics,R.string.routes).forEachIndexed { i,res ->
+            listOf(R.string.commute,R.string.summary,R.string.nav_statistics,R.string.routes).forEachIndexed { i,res ->
                 NavigationBarItem(selected=tab==i,onClick={ tab=i; if(i==1) selected=null },icon={ Text(listOf("◉","✓","▥","⌁")[i],fontSize=22.sp) },label={ Text(stringResource(res),maxLines=2,fontSize=12.sp) })
             }
         }
     }) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(horizontal=20.dp,vertical=16.dp),verticalArrangement=Arrangement.spacedBy(14.dp)) {
+        Column(Modifier.fillMaxSize().padding(padding).verticalScroll(pageScroll).padding(horizontal=20.dp,vertical=16.dp),verticalArrangement=Arrangement.spacedBy(14.dp)) {
             Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically) {
                 Text(stringResource(R.string.app_name)+" / COMMUTE",style=MaterialTheme.typography.labelLarge,color=Muted)
                 TextButton(onClick=onLanguage) { Text(stringResource(R.string.language)) }
             }
-            if(demo) {
-                Panel { Text(stringResource(R.string.demo_banner),color=Ink); TextButton(onClick={ vm.toggleDemo() }) { Text(stringResource(R.string.demo_exit)) } }
-            } else if(active==null) TextButton(onClick={ vm.toggleDemo() }) { Text(stringResource(R.string.demo_enter)) }
             if(error) Panel { Text(stringResource(R.string.error)); TextButton(onClick={ vm.error.value=false }) { Text(stringResource(R.string.dismiss)) } }
             when(tab) {
                 0 -> {
                     Text(stringResource(if(active==null) R.string.ready else R.string.ride_title),style=MaterialTheme.typography.headlineMedium)
-                    if(active!=null) LiveRide(active,routes,rides,demo,quality)
+                    if(active!=null) LiveRide(active,routes,rides,quality)
                     else {
                         Panel {
                             Text(stringResource(R.string.tagline),style=MaterialTheme.typography.titleLarge)
@@ -105,11 +101,11 @@ import kotlinx.coroutines.delay
                         Text(stringResource(R.string.permission_denied))
                         TextButton(onClick={ context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,"package:${context.packageName}".toUri())) }) { Text(stringResource(R.string.open_settings)) }
                     }
-                    if(notificationsDenied && !demo) Note(stringResource(R.string.notification_denied))
-                    if(quality=="LOCATION_OFF" && active!=null && !demo) TextButton(onClick={ context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) }) { Text(stringResource(R.string.open_settings)) }
-                    if(active==null && quality in listOf("STORAGE_ERROR","START_FAILED","PERMISSION_LOST") && !demo) Note(stringResource(if(quality=="STORAGE_ERROR") R.string.error else if(quality=="START_FAILED") R.string.quality_start else R.string.quality_permission))
-                    if(active==null || demo) Button(onClick={ begin() },modifier=Modifier.fillMaxWidth().heightIn(min=52.dp),shape=RoundedCornerShape(12.dp)) {
-                        Text(stringResource(if(demo) if(playing) R.string.pause else R.string.replay else R.string.start))
+                    if(notificationsDenied) Note(stringResource(R.string.notification_denied))
+                    if(quality=="LOCATION_OFF" && active!=null) TextButton(onClick={ context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) }) { Text(stringResource(R.string.open_settings)) }
+                    if(active==null && quality in listOf("STORAGE_ERROR","START_FAILED","PERMISSION_LOST")) Note(stringResource(if(quality=="STORAGE_ERROR") R.string.error else if(quality=="START_FAILED") R.string.quality_start else R.string.quality_permission))
+                    if(active==null) Button(onClick={ begin() },modifier=Modifier.fillMaxWidth().heightIn(min=52.dp),shape=RoundedCornerShape(12.dp)) {
+                        Text(stringResource(R.string.start))
                     }
                     if(active!=null) OutlinedButton(onClick={ finishDialog=true },modifier=Modifier.fillMaxWidth().heightIn(min=52.dp)) { Text(stringResource(R.string.finish)) }
                     Note(stringResource(R.string.privacy))
@@ -118,30 +114,58 @@ import kotlinx.coroutines.delay
                     val detail=rides.firstOrNull { it.ride.id==selected }
                     if(detail!=null) {
                         TextButton(onClick={ selected=null }) { Text(stringResource(R.string.back)) }
-                        RideDetail(detail,routes,rides,vm)
+                        RideDetail(detail,routes,rides,vm,onDelete={ deletingRide=detail })
                     } else {
                         Text(stringResource(R.string.history),style=MaterialTheme.typography.headlineMedium)
-                        History(rides,routes) { selected=it }
+                        History(rides,routes,onDelete={ deletingRide=it }) { selected=it }
                     }
                 }
                 2 -> StatsScreen(rides,routes)
                 3 -> {
                     Text(stringResource(R.string.routes),style=MaterialTheme.typography.headlineMedium)
                     if(routes.isEmpty()) Panel { Text(stringResource(R.string.empty_routes)) }
-                    routes.forEach { route ->
-                        Panel {
+                    if(routes.isNotEmpty()) Note(stringResource(R.string.route_long_press_hint))
+                    routes.forEach { route -> key(route.id) {
+                        val inUse=active?.ride?.routeId==route.id
+                        ContextMenuPanel(
+                            modifier=Modifier.testTag("route-${route.id}"),
+                            onLongClickLabel=stringResource(R.string.route_actions),
+                            title=routeName(route.name),subtitle=directionName(route.direction)+" · "+decimal(route.route().length/1000)+" km",
+                            menu={ dismiss ->
+                                SheetAction(title=stringResource(R.string.edit_route),subtitle=stringResource(if(inUse) R.string.route_in_use else R.string.action_edit_route_hint),glyph=Glyph.EDIT,enabled=!inUse,onClick={ dismiss(); editingRoute=route })
+                                SheetAction(title=stringResource(R.string.delete_route),subtitle=stringResource(R.string.action_delete_route_hint),glyph=Glyph.DELETE,enabled=!inUse,destructive=true,onClick={ dismiss(); deletingRoute=route })
+                            }
+                        ) {
                             Text(routeName(route.name)+" · "+directionName(route.direction),style=MaterialTheme.typography.titleMedium)
                             Trace(route.route().points)
                             val count=rides.map { it.sample() }.count { Statistics.valid(it) && it.routeId==route.id && it.direction==route.direction }
                             Note(stringResource(R.string.route_metadata,route.route().length/1000,count))
                             Note(stringResource(R.string.start_radius)+": ${route.startRadius.toInt()} m · "+stringResource(R.string.end_radius)+": ${route.endRadius.toInt()} m")
+                            if(inUse) Note(stringResource(R.string.route_in_use))
                         }
-                    }
+                    } }
                     SectionTitle(stringResource(R.string.history))
-                    History(rides,routes) { selected=it; tab=1 }
+                    History(rides,routes,onDelete={ deletingRide=it }) { selected=it; tab=1 }
                 }
             }
             Spacer(Modifier.height(8.dp))
+        }
+    }
+    editingRoute?.let { route ->
+        RouteDialog(points=route.route().points,route=route,onDismiss={ editingRoute=null },onSave={ name,direction,start,end ->
+            vm.editRoute(route.id,name,direction,start,end); editingRoute=null
+        })
+    }
+    deletingRoute?.let { route ->
+        DeleteDialog(title=stringResource(R.string.delete_route),message=stringResource(R.string.delete_route_message,routeName(route.name)),onDismiss={ deletingRoute=null }) {
+            vm.deleteRoute(route.id); deletingRoute=null
+        }
+    }
+    deletingRide?.let { data ->
+        val sample=data.sample()
+        DeleteDialog(title=stringResource(R.string.delete_ride),message=stringResource(R.string.delete_ride_message,date(sample.startUtc,sample.zone)+" "+clock(sample.startUtc,sample.zone)),onDismiss={ deletingRide=null }) {
+            vm.deleteRide(data.ride.id) { if(selected==data.ride.id) selected=null }
+            deletingRide=null
         }
     }
     if(explain) AlertDialog(onDismissRequest={ explain=false },title={ Text(stringResource(R.string.permission_title)) },text={ Text(stringResource(R.string.permission_body)) },confirmButton={
@@ -152,22 +176,22 @@ import kotlinx.coroutines.delay
             permission.launch(permissions.toTypedArray())
         }) { Text(stringResource(R.string.permission_allow)) }
     },dismissButton={ TextButton(onClick={ explain=false }) { Text(stringResource(R.string.cancel)) } })
-    if(finishDialog) AlertDialog(onDismissRequest={ finishDialog=false },title={ Text(stringResource(R.string.finish_confirm)) },confirmButton={ TextButton(onClick={ finishDialog=false; if(demo) vm.stopDemo() else onStop() }) { Text(stringResource(R.string.finish)) } },dismissButton={ TextButton(onClick={ finishDialog=false }) { Text(stringResource(R.string.cancel)) } })
+    if(finishDialog) AlertDialog(onDismissRequest={ finishDialog=false },title={ Text(stringResource(R.string.finish_confirm)) },confirmButton={ TextButton(onClick={ finishDialog=false; onStop() }) { Text(stringResource(R.string.finish)) } },dismissButton={ TextButton(onClick={ finishDialog=false }) { Text(stringResource(R.string.cancel)) } })
 }
 
-@Composable private fun LiveRide(data: RideData,routes: List<RouteRecord>,all: List<RideData>,demo: Boolean,quality: String) {
+@Composable private fun LiveRide(data: RideData,routes: List<RouteRecord>,all: List<RideData>,quality: String) {
     val sample=data.sample(); val metrics=sample.metrics
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
-    LaunchedEffect(demo) { while(!demo) { now=System.currentTimeMillis(); delay(1_000) } }
+    LaunchedEffect(Unit) { while(true) { now=System.currentTimeMillis(); delay(1_000) } }
     val points=sample.points
     val latest=points.lastOrNull()
-    val fresh=demo || (latest!=null && good(latest) && data.ride.elapsed-latest.t in 0..15_000)
+    val fresh=(latest!=null && good(latest) && data.ride.elapsed-latest.t in 0..15_000)
     val route=routes.firstOrNull { it.id==sample.routeId }?.route()
     val match=route?.let { Routing.follow(points,it) }
     val uncertain=!fresh || match==null || match.deviated
     val eta=if(!uncertain) Statistics.estimate(sample,all.map { it.sample() },match) else null
     val status=when { quality=="STORAGE_ERROR"->R.string.error; quality=="LOCATION_OFF"->R.string.quality_off; quality=="PERMISSION_LOST" || quality=="PRECISE_REQUIRED"->R.string.quality_permission; quality=="START_FAILED"->R.string.quality_start; !fresh->R.string.quality_searching; quality=="POOR" || quality=="STALE"->R.string.quality_poor; else->R.string.quality_good }
-    Note(stringResource(if(demo) R.string.quality_good else status))
+    Note(stringResource(status))
     Surface(color=RideCard,contentColor=Surface,shape=RoundedCornerShape(16.dp)) {
         Column(Modifier.fillMaxWidth().padding(20.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
             Text(if(route!=null) routeName(route.name)+" · "+directionName(route.direction) else stringResource(R.string.ordinary),fontSize=18.sp)
@@ -182,7 +206,7 @@ import kotlinx.coroutines.delay
             HorizontalDivider(color=Color(0xff50654d))
             Text(stringResource(R.string.eta),color=Accent)
             Text(if(eta==null) stringResource(R.string.learning) else {
-                val base=if(demo) sample.startUtc+metrics.elapsed else now
+                val base=now
                 "${clock(base+eta.low,sample.zone)}–${clock(base+eta.high,sample.zone)}"
             },fontSize=20.sp)
             if(eta!=null) Text(stringResource(R.string.comparison_position,delta(eta.elapsedDifference),eta.n),fontSize=14.sp)
@@ -194,75 +218,144 @@ import kotlinx.coroutines.delay
     SectionTitle(stringResource(R.string.time_split)); TimeBar(metrics)
 }
 
-@Composable private fun History(rides: List<RideData>,routes: List<RouteRecord>,onSelect: (String)->Unit) {
+@Composable private fun History(rides: List<RideData>,routes: List<RouteRecord>,onDelete: (RideData)->Unit,onSelect: (String)->Unit) {
     if(rides.isEmpty()) Panel { Text(stringResource(R.string.empty_rides)) }
-    rides.forEach { data ->
+    else Note(stringResource(R.string.ride_long_press_hint))
+    rides.forEach { data -> key(data.ride.id) {
         val s=data.sample(); val route=routes.firstOrNull { it.id==s.routeId }
-        OutlinedCard(onClick={ onSelect(s.id) },modifier=Modifier.fillMaxWidth(),colors=CardDefaults.outlinedCardColors(containerColor=Surface),border=BorderStroke(1.dp,Line)) {
-            Column(Modifier.padding(16.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
-                Text("${date(s.startUtc,s.zone)} · ${clock(s.startUtc,s.zone)}",style=MaterialTheme.typography.titleMedium)
-                Text(if(route==null) stringResource(R.string.ordinary) else routeName(route.name)+" · "+directionName(s.direction))
-                Text("${duration(s.metrics.elapsed)} · ${decimal(s.metrics.distance/1000)} km",fontFamily=FontFamily.Monospace)
-                if(s.state=="INTERRUPTED") Note(stringResource(R.string.interrupted))
-                if(s.state=="RECORDING") Note(stringResource(R.string.recording))
-                if(s.excluded) Note(stringResource(R.string.excluded))
+        ContextMenuPanel(
+            modifier=Modifier.testTag("ride-${s.id}"),onClick={ onSelect(s.id) },
+            onLongClickLabel=stringResource(R.string.ride_actions),canManage=s.state!="RECORDING",
+            title=date(s.startUtc,s.zone)+" · "+clock(s.startUtc,s.zone),subtitle=duration(s.metrics.elapsed)+" · "+decimal(s.metrics.distance/1000)+" km",
+            menu={ dismiss ->
+                SheetAction(title=stringResource(R.string.delete_ride),subtitle=stringResource(R.string.action_delete_ride_hint),glyph=Glyph.DELETE,destructive=true,onClick={ dismiss(); onDelete(data) })
             }
+        ) {
+            Text("${date(s.startUtc,s.zone)} · ${clock(s.startUtc,s.zone)}",style=MaterialTheme.typography.titleMedium)
+            Text(if(route==null) stringResource(R.string.ordinary) else routeName(route.name)+" · "+directionName(s.direction))
+            Text("${duration(s.metrics.elapsed)} · ${decimal(s.metrics.distance/1000)} km",fontFamily=FontFamily.Monospace)
+            if(s.state=="INTERRUPTED") Note(stringResource(R.string.interrupted))
+            if(s.state=="RECORDING") Note(stringResource(R.string.recording))
+            if(s.excluded) Note(stringResource(R.string.excluded))
         }
-    }
+    } }
 }
 
-@Composable private fun RideDetail(data: RideData,routes: List<RouteRecord>,all: List<RideData>,vm: RideViewModel) {
+@Composable private fun RideDetail(data: RideData,routes: List<RouteRecord>,all: List<RideData>,vm: RideViewModel,onDelete: ()->Unit) {
     val s=data.sample(); val m=s.metrics
-    var create by remember { mutableStateOf(false) }; var edit by remember { mutableStateOf(false) }; var trim by remember { mutableStateOf(false) }
-    Text(stringResource(if(data.ride.arrivalConfirmed) R.string.arrival else R.string.details),style=MaterialTheme.typography.headlineMedium)
-    Note("${date(s.startUtc,s.zone)} · ${clock(s.startUtc,s.zone)} → ${clock(s.endUtc,s.zone)} · ${s.zone}")
-    Panel {
-        LargeTime(m.elapsed,44f)
-        if(data.ride.arrivalConfirmed) {
-            Surface(color=RideCard,shape=RoundedCornerShape(12.dp)) {
-                Column(Modifier.padding(12.dp)) { Text("100%",color=Accent); MotorcycleProgress(1.0) }
+    val route=routes.firstOrNull { it.id==s.routeId }
+    var create by remember(s.id) { mutableStateOf(false) }
+    var edit by remember(s.id) { mutableStateOf(false) }
+    var trim by remember(s.id) { mutableStateOf(false) }
+    Text(stringResource(if(data.ride.arrivalConfirmed) R.string.arrival else R.string.details),fontSize=28.sp,fontWeight=FontWeight.SemiBold)
+    Text(date(s.startUtc,s.zone)+" · "+clock(s.startUtc,s.zone)+" – "+clock(s.endUtc,s.zone),fontSize=14.sp,color=Muted)
+    if(s.state!="RECORDING") Text(stringResource(R.string.detail_long_press_hint),fontSize=13.sp,color=Muted)
+    ContextMenuPanel(
+        modifier=Modifier.testTag("ride-detail-${s.id}"),containerColor=RideCard,cornerRadius=26.dp,contentPadding=24.dp,
+        onLongClickLabel=stringResource(R.string.ride_actions),canManage=s.state!="RECORDING",
+        title=date(s.startUtc,s.zone)+" · "+clock(s.startUtc,s.zone),subtitle=duration(m.elapsed)+" · "+decimal(m.distance/1000)+" km",
+        menu={ dismiss ->
+            SheetAction(title=stringResource(R.string.route_edit),subtitle=stringResource(R.string.action_classify_hint),glyph=Glyph.EDIT,onClick={ dismiss(); edit=true })
+            SheetAction(title=stringResource(R.string.boundaries),subtitle=stringResource(R.string.action_boundary_hint),glyph=Glyph.ADJUST,onClick={ dismiss(); trim=true })
+            SheetAction(title=stringResource(R.string.delete_ride),subtitle=stringResource(R.string.action_delete_ride_hint),glyph=Glyph.DELETE,destructive=true,onClick={ dismiss(); onDelete() })
+        }
+    ) {
+        Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
+            Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(5.dp)) {
+                Text(route?.let { routeName(it.name) } ?: stringResource(R.string.ordinary),fontSize=19.sp,fontWeight=FontWeight.Medium,color=Surface)
+                Text(directionName(s.direction),fontSize=13.sp,color=Accent)
+            }
+            AppGlyph(Glyph.ROUTE,Modifier.size(26.dp),Accent)
+        }
+        Text(stringResource(R.string.total_time),Modifier.padding(top=12.dp),fontSize=13.sp,color=Surface.copy(alpha=.7f))
+        LargeTime(m.elapsed,48f,Surface)
+        if(data.ride.arrivalConfirmed) { Text("100%",fontSize=13.sp,color=Accent); MotorcycleProgress(1.0) }
+        HorizontalDivider(Modifier.padding(vertical=10.dp),color=Surface.copy(alpha=.16f))
+        if(LocalDensity.current.fontScale>1.3f) {
+            RideHeroMetric(stringResource(R.string.distance),decimal(m.distance/1000)+" km")
+            RideHeroMetric(stringResource(R.string.average_speed),m.averageKmh?.let { decimal(it)+" km/h" } ?: "—")
+        } else Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(18.dp)) {
+            RideHeroMetric(stringResource(R.string.distance),decimal(m.distance/1000)+" km",Modifier.weight(1f))
+            RideHeroMetric(stringResource(R.string.average_speed),m.averageKmh?.let { decimal(it)+" km/h" } ?: "—",Modifier.weight(1f))
+        }
+    }
+    if(s.state=="INTERRUPTED" || s.state=="RECORDING" || s.excluded || !m.complete || data.ride.boundaryStart>0 || data.ride.boundaryEnd!=null) {
+        Surface(shape=RoundedCornerShape(18.dp),color=Soft.copy(alpha=.65f)) {
+            Column(Modifier.fillMaxWidth().padding(16.dp),verticalArrangement=Arrangement.spacedBy(6.dp)) {
+                if(s.state=="INTERRUPTED") Note(stringResource(R.string.interrupted))
+                if(s.state=="RECORDING") Note(stringResource(R.string.recording))
+                if(s.excluded) {
+                    Note(stringResource(R.string.excluded))
+                    if(data.ride.exclusionReason.isNotBlank()) Note(if(data.ride.exclusionReason=="AUTO_ROUTE_CHECK") stringResource(R.string.auto_route_excluded) else data.ride.exclusionReason)
+                }
+                if(!m.complete) Note(stringResource(R.string.incomplete))
+                if(data.ride.boundaryStart>0 || data.ride.boundaryEnd!=null) Note(stringResource(R.string.trim_note))
             }
         }
-        Text(routes.firstOrNull { it.id==s.routeId }?.let { routeName(it.name) } ?: stringResource(R.string.no_route))
-        Text(directionName(s.direction))
-        if(s.state=="INTERRUPTED") Note(stringResource(R.string.interrupted))
-        if(s.excluded) { Note(stringResource(R.string.excluded)); if(data.ride.exclusionReason.isNotBlank()) Text(if(data.ride.exclusionReason=="AUTO_ROUTE_CHECK") stringResource(R.string.auto_route_excluded) else data.ride.exclusionReason) }
-        if(!m.complete) Note(stringResource(R.string.incomplete))
-        if(data.ride.boundaryStart>0 || data.ride.boundaryEnd!=null) Note(stringResource(R.string.trim_note))
-        Trace(s.points)
     }
-    MetricPair(stringResource(R.string.distance),decimal(m.distance/1000)+" km",stringResource(R.string.average_speed),m.averageKmh?.let { decimal(it)+" km/h" } ?: "—")
-    MetricPair(stringResource(R.string.stops),m.stops.toString(),stringResource(R.string.moving_speed),if(m.complete && m.moving>0) decimal(m.distance*3600/m.moving)+" km/h" else "—")
-    SectionTitle(stringResource(R.string.time_split)); TimeBar(m)
-    Panel {
-        DetailRow(stringResource(R.string.moving),duration(m.moving)); DetailRow(stringResource(R.string.waiting),duration(m.waiting)); DetailRow(stringResource(R.string.unknown),duration(m.unknown))
-        DetailRow(stringResource(R.string.longest_wait),duration(m.longestWait)); DetailRow(stringResource(R.string.average_wait),duration(m.averageWait))
-        DetailRow(stringResource(R.string.wait_share),decimal(m.waiting*100.0/m.elapsed.coerceAtLeast(1))+"%")
-        Note(stringResource(R.string.wait_note))
+    SectionHeading(stringResource(R.string.stats_time_composition),stringResource(R.string.ride_time_caption))
+    DataCard { TimeComposition(m.elapsed,m.moving,m.waiting,m.unknown) }
+    SectionHeading(stringResource(R.string.ride_stops_title),stringResource(R.string.wait_note))
+    DataCard(Modifier.testTag("ride-stops")) {
+        val entries=listOf(
+            stringResource(R.string.stops) to m.stops.toString(),
+            stringResource(R.string.longest_wait) to duration(m.longestWait),
+            stringResource(R.string.average_wait) to duration(m.averageWait),
+            stringResource(R.string.moving_speed) to if(m.complete && m.moving>0) decimal(m.distance*3600/m.moving)+" km/h" else "—"
+        )
+        entries.chunked(2).forEachIndexed { index,pair ->
+            if(index>0) HorizontalDivider(Modifier.padding(vertical=6.dp),color=Line.copy(alpha=.6f))
+            if(LocalDensity.current.fontScale>1.3f) pair.forEach { (label,value) -> RideMetric(label,value) }
+            else Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(16.dp)) {
+                pair.forEach { (label,value) -> RideMetric(label,value,Modifier.weight(1f)) }
+            }
+        }
     }
+    SectionHeading(stringResource(R.string.ride_trace_title),stringResource(R.string.ride_trace_caption))
+    DataCard(Modifier.testTag("ride-trace")) { Trace(s.points) }
     val compare=Statistics.compare(s,all.map { it.sample() })
-    SectionTitle(stringResource(R.string.baseline,compare.n))
-    Panel {
-        if(compare.n<Policy.MIN_HISTORY || !m.complete) Note(stringResource(R.string.no_baseline))
-        else {
-            Text(stringResource(R.string.total_delta,delta(m.elapsed-compare.total!!)))
-            Text(stringResource(R.string.moving_delta,delta(m.moving-compare.moving!!)))
-            Text(stringResource(R.string.waiting_delta,delta(m.waiting-compare.waiting!!)))
-            Text(stringResource(R.string.component_delta,delta(m.moving-compare.moving+m.waiting-compare.waiting)))
-            Note(stringResource(R.string.baseline_note))
+    SectionHeading(stringResource(R.string.baseline,compare.n),stringResource(R.string.ride_comparison_caption))
+    DataCard(Modifier.testTag("ride-comparison")) {
+        if(compare.n<Policy.MIN_HISTORY || !m.complete) {
+            AppGlyph(Glyph.CHART,Modifier.size(26.dp),Moving)
+            Text(stringResource(R.string.no_baseline),fontSize=16.sp,lineHeight=24.sp,color=Muted)
+        } else {
+            Text(stringResource(R.string.ride_total_comparison),fontSize=14.sp,color=Muted)
+            Text(delta(m.elapsed-compare.total!!),fontSize=34.sp,fontFamily=FontFamily.Monospace,fontWeight=FontWeight.Medium,color=if(m.elapsed>compare.total) Danger else Moving)
+            HorizontalDivider(Modifier.padding(vertical=6.dp),color=Line.copy(alpha=.6f))
+            val movingDelta=m.moving-compare.moving!!; val waitDelta=m.waiting-compare.waiting!!
+            if(LocalDensity.current.fontScale>1.3f) {
+                RideMetric(stringResource(R.string.moving),delta(movingDelta),valueColor=if(movingDelta>0) Danger else Moving)
+                RideMetric(stringResource(R.string.waiting),delta(waitDelta),valueColor=if(waitDelta>0) Danger else Moving)
+            } else Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(16.dp)) {
+                RideMetric(stringResource(R.string.moving),delta(movingDelta),Modifier.weight(1f),if(movingDelta>0) Danger else Moving)
+                RideMetric(stringResource(R.string.waiting),delta(waitDelta),Modifier.weight(1f),if(waitDelta>0) Danger else Moving)
+            }
+            Text(stringResource(R.string.component_delta,delta(movingDelta+waitDelta)),fontSize=13.sp,color=Muted)
+            Text(stringResource(R.string.baseline_note),fontSize=12.sp,lineHeight=20.sp,color=Muted)
         }
     }
     if(s.state!="RECORDING") {
         val canCreate=s.points.count(::good)>=4 && m.distance>=Policy.MIN_ROUTE_DISTANCE_M
-        Button(onClick={ create=true },enabled=canCreate,modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) { Text(stringResource(R.string.route_create)) }
+        Button(onClick={ create=true },enabled=canCreate,modifier=Modifier.fillMaxWidth().heightIn(min=54.dp),shape=RoundedCornerShape(16.dp)) {
+            AppGlyph(Glyph.ROUTE,Modifier.size(20.dp),if(canCreate) Surface else Muted)
+            Spacer(Modifier.width(10.dp)); Text(stringResource(R.string.route_create))
+        }
         if(!canCreate) Note(stringResource(R.string.route_too_short))
-        OutlinedButton(onClick={ edit=true },modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) { Text(stringResource(R.string.route_edit)) }
-        TextButton(onClick={ trim=true },modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) { Text(stringResource(R.string.boundaries)) }
     }
-    if(create) RouteDialog(data,onDismiss={ create=false },onSave={ name,direction,start,end -> vm.createRoute(s.id,name,direction,start,end); create=false })
-    if(edit) ClassificationDialog(data,routes,onDismiss={ edit=false },onSave={ route,direction,excluded,reason -> vm.classify(s.id,route,direction,excluded,reason); edit=false })
+    if(create) RouteDialog(points=s.points,onDismiss={ create=false },onSave={ name,direction,start,end -> vm.createRoute(s.id,name,direction,start,end); create=false })
+    if(edit) ClassificationDialog(data,routes,onDismiss={ edit=false },onSave={ selectedRoute,direction,excluded,reason -> vm.classify(s.id,selectedRoute,direction,excluded,reason); edit=false })
     if(trim) BoundaryDialog(data,onDismiss={ trim=false },onSave={ start,end -> vm.boundaries(s.id,start,end); trim=false })
 }
-@Composable private fun DetailRow(label: String,value: String) {
-    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(12.dp)) { Text(label,Modifier.weight(1f),fontSize=14.sp); Text(value,fontFamily=FontFamily.Monospace,fontSize=14.sp) }
+@Composable private fun RideHeroMetric(label: String,value: String,modifier: Modifier=Modifier) {
+    Column(modifier,verticalArrangement=Arrangement.spacedBy(7.dp)) {
+        Text(label,fontSize=13.sp,color=Surface.copy(alpha=.7f))
+        Text(value,fontSize=22.sp,color=Surface,fontFamily=FontFamily.Monospace)
+    }
+}
+@Composable private fun RideMetric(label: String,value: String,modifier: Modifier=Modifier,valueColor: Color=Ink) {
+    Column(modifier,verticalArrangement=Arrangement.spacedBy(7.dp)) {
+        Text(label,fontSize=13.sp,color=Muted)
+        Text(value,fontSize=22.sp,color=valueColor,fontWeight=FontWeight.Medium,fontFamily=FontFamily.Monospace)
+    }
 }

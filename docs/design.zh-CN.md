@@ -4,7 +4,7 @@
 
 ## 分层与生命周期
 
-单一 Android app 模块，Kotlin、Compose、Material 3。`core/` 包含可确定重放的纯算法：几何、分段、路线识别、历史统计与合成轨迹。`data/` 管理 Room 实体、事务、互斥仓库。`recording/` 包含可替换 `LocationSource`、系统 `LocationManager` 与前台服务。`ui/` 为 ViewModel、四页界面、轨迹/摩托车 Canvas 和修正弹窗。ViewModel 通过 Flow 观察 Room；Service 是记录生命周期的权威，不依赖页面或 Activity 实例。
+单一 Android app 模块，Kotlin、Compose、Material 3。`core/` 包含可确定重放的纯算法：几何、分段、路线识别、历史统计。`data/` 管理 Room 实体、事务、互斥仓库。`recording/` 包含可替换 `LocationSource`、系统 `LocationManager` 与前台服务。`ui/` 为 ViewModel、四页界面、轨迹/摩托车 Canvas 和修正弹窗。ViewModel 通过 Flow 观察 Room；Service 是记录生命周期的权威，不依赖页面或 Activity 实例。
 
 用户在可见页面按下开始并取得精确定位后，服务立即显示前台通知，等待旧记录恢复完成，再建立一趟记录，请求两秒一次的 GNSS/网络定位。定位源选择器优先使用 10 秒内的新鲜优质 GNSS，失效后回退网络定位，抑制亚秒级重复回调，允许优质来源替换低质量来源，避免双来源交错造成假跳点和未知区间。服务通道串行处理操作；重复开始不会创建第二趟。定位及定时检查点将原始点、行程状态与派生分段放在事务中保存。无定位仍计时。通知与页面使用同一停止入口。使用 `START_NOT_STICKY`，没有开机接收器或后台位置权限。两秒是请求频率，不是系统保证。
 
@@ -41,3 +41,21 @@ ETA 把各条历史轨迹投影到当前位置，提取历史到此之后的剩�
 ## 官方依据
 
 2026-10-22 查阅：[Android 前台定位权限](https://developer.android.com/develop/sensors-and-location/location/permissions)、[location 前台服务类型](https://developer.android.com/develop/background-work/services/fgs/service-types#location)、[AGP 8.9 兼容表](https://developer.android.com/build/releases/agp-8-9-0-release-notes)。这些支持权限/服务设计和固定工具组合，不代表各设备的锁屏可靠性已经验证。
+
+## 行程与路线管理（0.1.1）
+
+删除行程在仓库互斥锁和事务内执行，由 Room 外键级联删除 points/segments；路线持有独立 shape，来源行程删除后仍能识别。删除路线先解除所有行程的 routeId 再删除路线，保留轨迹、方向与排除标记。编辑路线保留 shape/sourceRideId、递增 version，方向在同一事务内同步到关联行程。正在记录的行程及其路线禁止删除，使用中的路线禁止编辑。数据库结构不变，无需迁移。
+
+界面通过 Flow 更新小结、统计与路线；行程详情的系统返回由 BackHandler 处理并清除选择。回放 UI/状态已移除，Replay 仅位于 testShared，供 JVM 与 Android 测试共享。
+
+## 长按管理交互（0.1.2）
+
+行程卡片单击进入详情，长按才弹出删除菜单；路线卡片长按弹出编辑/删除菜单；详情小结卡片长按弹出归类、边界修正及删除菜单。常驻的编辑与删除按钮已移除。使用 combinedClickable 提供长按语义及震动反馈，Material 3 底部操作面板支持返回键/外部点击关闭，删除仍需二次确认。卡片按数据库 ID 保持组合状态，避免删除列表项后菜单跳到其他项。记录中保护仍由 UI 与仓库共同执行。
+
+## 0.1.3 展示层优化
+
+新增 ManagementSheets，集中底部操作、编辑表单和本地 Canvas 线框图标；底部窗口继承调用处语言、字体和配置。复用 DataCard、SectionHeading 与 TimeComposition，在统计和详情保持相同层次与间距。
+
+统计仍直接使用 Statistics.month/valid/clocks 和 Sample.metrics；仅增加柱状图选中态，不改变统计或持久化模型。月份、路线、方向筛选同时作用于环图、数字、柱图和节奏。图表视口以完整柱宽布局，放大字体时扩展刻度/标签并改用纵向指标。
+
+详情保留基准仅含当前之前、同路线同方向的有效样本，以及总中位数独立于分项中位数的解释。真实轨迹、原始数据和记录服务均不因展示修改而变更。

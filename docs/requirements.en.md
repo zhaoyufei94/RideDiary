@@ -1,5 +1,7 @@
 # RideDiary / 途记: MVP Requirements and Development Handoff
 
+> 0.1.1 update: the latest user request removes in-app replay and adds ride deletion, detail Back to Journal, and route editing/deletion. This document retains the original handoff; its demo requirements are superseded by this update.
+
 Updated: 2026-10-22. This document corresponds to `REQUIREMENTS.zh-CN.md`. It supplies the product requirements, design reference and implementation brief for a new Codex task.
 
 ## 1. Task and project identity

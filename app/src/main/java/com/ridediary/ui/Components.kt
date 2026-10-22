@@ -4,7 +4,7 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
@@ -13,9 +13,12 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
 import com.ridediary.R
 import com.ridediary.core.*
@@ -34,12 +37,39 @@ fun clock(utc: Long,zone: String)=Instant.ofEpochMilli(utc).atZone(ZoneId.of(zon
 fun date(utc: Long,zone: String)=Instant.ofEpochMilli(utc).atZone(ZoneId.of(zone)).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
 fun clockMinutes(m: Int)=String.format(Locale.ROOT,"%02d:%02d",m/60,m%60)
 @Composable fun directionName(direction: String)=stringResource(when(direction){"WORK"->R.string.work;"HOME"->R.string.home;else->R.string.other})
-@Composable fun routeName(name: String)=name.ifBlank { stringResource(R.string.route_demo) }
+@Composable fun routeName(name: String)=name.ifBlank { stringResource(R.string.route_unnamed) }
 @Composable fun SectionTitle(text: String) { Text(text,style=MaterialTheme.typography.titleMedium,modifier=Modifier.padding(top=12.dp,bottom=6.dp)) }
 @Composable fun Note(text: String) { Text(text,color=Muted,fontSize=14.sp,lineHeight=21.sp) }
-@Composable fun Panel(modifier: Modifier=Modifier,content: @Composable ColumnScope.()->Unit) {
-    Surface(modifier.fillMaxWidth(),shape=RoundedCornerShape(16.dp),color=Surface,border=BorderStroke(1.dp,Line)) {
-        Column(Modifier.padding(16.dp),verticalArrangement=Arrangement.spacedBy(10.dp),content=content)
+@Composable fun Panel(modifier: Modifier=Modifier,color: Color=Surface,radius: Dp=16.dp,padding: Dp=16.dp,content: @Composable ColumnScope.()->Unit) {
+    Surface(modifier.fillMaxWidth(),shape=RoundedCornerShape(radius),color=color,border=if(color==Surface) BorderStroke(1.dp,Line) else null) {
+        Column(Modifier.padding(padding),verticalArrangement=Arrangement.spacedBy(10.dp),content=content)
+    }
+}
+@OptIn(ExperimentalFoundationApi::class)
+@Composable fun ContextMenuPanel(
+    modifier: Modifier=Modifier,
+    onClick: ()->Unit={},
+    onLongClickLabel: String,
+    title: String=onLongClickLabel,
+    subtitle: String?=null,
+    containerColor: Color=Surface,
+    cornerRadius: Dp=16.dp,
+    contentPadding: Dp=16.dp,
+    canManage: Boolean=true,
+    menu: @Composable ColumnScope.(dismiss: ()->Unit)->Unit,
+    content: @Composable ColumnScope.()->Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val haptics=LocalHapticFeedback.current
+    val showMenu: (() -> Unit)?=if(canManage) ({
+        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+        expanded=true
+    }) else null
+    Box(Modifier.fillMaxWidth()) {
+        Panel(modifier=modifier.combinedClickable(onClick=onClick,onLongClickLabel=onLongClickLabel,onLongClick=showMenu),color=containerColor,radius=cornerRadius,padding=contentPadding,content=content)
+        if(expanded && canManage) ActionSheet(title=title,subtitle=subtitle,eyebrow=onLongClickLabel,onDismiss={ expanded=false }) {
+            menu { expanded=false }
+        }
     }
 }
 @Composable fun Metric(label: String,value: String,modifier: Modifier=Modifier) {
@@ -117,5 +147,17 @@ fun clockMinutes(m: Int)=String.format(Locale.ROOT,"%02d:%02d",m/60,m%60)
             drawCircle(Ink,6.dp.toPx(),position(valid.last()))
         }
         Note(label)
+    }
+}
+
+@Composable fun DataCard(modifier: Modifier=Modifier,padding: Int=20,content: @Composable ColumnScope.()->Unit) {
+    Surface(modifier.fillMaxWidth(),shape=RoundedCornerShape(24.dp),color=Surface,border=BorderStroke(1.dp,Line.copy(alpha=.6f))) {
+        Column(Modifier.padding(padding.dp),verticalArrangement=Arrangement.spacedBy(12.dp),content=content)
+    }
+}
+@Composable fun SectionHeading(title: String,subtitle: String) {
+    Column(Modifier.padding(top=10.dp,bottom=2.dp),verticalArrangement=Arrangement.spacedBy(5.dp)) {
+        Text(title,fontSize=19.sp,fontWeight=androidx.compose.ui.text.font.FontWeight.SemiBold)
+        Text(subtitle,fontSize=13.sp,color=Muted,lineHeight=20.sp)
     }
 }

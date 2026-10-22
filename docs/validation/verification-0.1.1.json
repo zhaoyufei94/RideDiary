@@ -1,0 +1,107 @@
+{
+  "date": "2026-10-22",
+  "version": "0.1.1",
+  "versionCode": 2,
+  "environment": {
+    "os": "macOS arm64",
+    "jdk": "Temurin 17.0.20.1",
+    "gradle": "8.11.1",
+    "agp": "8.9.2",
+    "kotlin": "2.1.20",
+    "compileSdk": 35,
+    "targetSdk": 35,
+    "minSdk": 26
+  },
+  "command": "./scripts/gradle-local.sh :app:assembleDebug :app:testDebugUnitTest :app:assembleDebugAndroidTest :app:lintDebug --no-daemon --console=plain",
+  "result": "BUILD SUCCESSFUL",
+  "unitTests": [
+    {
+      "name": "com.ridediary.core.AnalysisTest",
+      "tests": "11",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.ridediary.core.RoutingTest",
+      "tests": "9",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.ridediary.core.StatisticsTest",
+      "tests": "8",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    }
+  ],
+  "lint": {
+    "errors": 0,
+    "warnings": 7,
+    "warningIds": [
+      "GradleDependency"
+    ]
+  },
+  "resourceCheck": {
+    "translatedStrings": 128,
+    "result": "PASS"
+  },
+  "gitDiffCheck": "PASS",
+  "apkSignature": "Verifies\nVerified using v1 scheme (JAR signing): false\nVerified using v2 scheme (APK Signature Scheme v2): true\nVerified using v3 scheme (APK Signature Scheme v3): false\nVerified using v3.1 scheme (APK Signature Scheme v3.1): false\nVerified using v4 scheme (APK Signature Scheme v4): false\nVerified for SourceStamp: false\nNumber of signers: 1",
+  "demoExcludedFromAppApk": true,
+  "artifacts": [
+    {
+      "path": "app/build/outputs/apk/debug/app-debug.apk",
+      "bytes": 10828947,
+      "sha256": "b176a56798916c33ca4f1fffb2e8f3a9b89054b0bc357edeae7b1aa03ea454e7"
+    },
+    {
+      "path": "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk",
+      "bytes": 1021946,
+      "sha256": "d0036ab5761822a44ed0ac0cb45e5f3e3710982a5f51d45e7eaf223a7816fcb3"
+    }
+  ],
+  "androidInstrumentedTests": {
+    "status": "PENDING_PHONE_CONNECTION",
+    "compiled": true,
+    "testCount": 10,
+    "scope": [
+      "5 persistence tests including 3 new deletion/edit/protection cases",
+      "4 UI tests using isolated temporary databases",
+      "1 existing service lifecycle test"
+    ],
+    "executedThisChange": false
+  },
+  "historicalDeviceEvidence": "docs/validation/verification-0.1.0.json",
+  "oppoFieldValidation": "PENDING: 30-60 minute screen-off survival, real-road accuracy, adjacent-road matching, arrival calibration, tunnel recovery and battery drain",
+  "sharedDebugSigning": {
+    "keystorePath": ".signing/debug.keystore",
+    "privateKeyCommitted": false,
+    "certificateSha256": "24107b0f1a354d165eb7bae7be2b235752428dae1d4622754e0ebdb84fe110d3",
+    "matchesInstalledVersion": "0.1.1 installed during this chat",
+    "command": "./scripts/gradle-local.sh :app:verifyDebugSigning :app:assembleDebug :app:assembleDebugAndroidTest :app:signingReport --offline --no-daemon --console=plain",
+    "result": "BUILD SUCCESSFUL",
+    "checks": {
+      "missingKeyRejected": true,
+      "wrongKeyRejected": true,
+      "wrongImportPreservesExistingKey": true,
+      "validImportRepeatable": true,
+      "keyGitIgnored": true,
+      "keyFileMode": "600"
+    },
+    "apkCertificates": [
+      {
+        "path": "app/build/outputs/apk/debug/app-debug.apk",
+        "certificateSha256": "24107b0f1a354d165eb7bae7be2b235752428dae1d4622754e0ebdb84fe110d3",
+        "apkSha256": "b176a56798916c33ca4f1fffb2e8f3a9b89054b0bc357edeae7b1aa03ea454e7"
+      },
+      {
+        "path": "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk",
+        "certificateSha256": "24107b0f1a354d165eb7bae7be2b235752428dae1d4622754e0ebdb84fe110d3",
+        "apkSha256": "d0036ab5761822a44ed0ac0cb45e5f3e3710982a5f51d45e7eaf223a7816fcb3"
+      }
+    ]
+  }
+}

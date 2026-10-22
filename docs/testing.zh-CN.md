@@ -2,6 +2,52 @@
 
 本清单适用于不同品牌的 Android 设备。下文的具体型号仅标识历史测试环境，不是产品限制。产品设计与交互规范见[产品设计](../PRODUCT_DESIGN.zh-CN.md)。
 
+## 0.1.3 统计与详情美化验证（2026-10-22）
+
+- 最终应用 APK 和测试 APK 编译通过，155 条双语资源与 Git 空白检查通过；Lint 0 错误、7 条依赖更新提示。两个 APK 均沿用共用开发证书。
+- 已覆盖更新 OPPO PKJ110 至 0.1.3 / versionCode 4，未卸载主应用；正常应用启动成功。
+- 12 项真机测试全部通过，用时 21.272 秒：7 项 UI 用例覆盖长按操作面板、编辑删除、系统返回、月份/路线/方向筛选、图表选择和英文 1.65 倍字体；5 项持久化用例覆盖数据保留、级联、关联及记录中保护。
+- 已检查合成数据下的详情总览、时间分布、停车指标、轨迹、历史对比，以及中英文操作面板。截图仅复制本应用窗口。测试使用临时数据库，每项 UI 用例结束后断言原有日常行程未改变。
+- 前期对话框语言继承问题已修正；测试窗口保持亮屏，避免自动锁屏干扰。算法未变，本次沿用 0.1.1 的 28 项 JVM 测试结果。
+
+证据：[应用构建](validation/local-build-0.1.3.txt)、[最终测试包构建](validation/test-build-0.1.3.txt)、[真机输出](validation/oppo-refined-ui-0.1.3.txt)、[verification.json](verification.json)。
+
+## 0.1.2 长按菜单验证（2026-10-22）
+
+- 应用和测试 APK 编译成功，133 条双语资源及 Git 空白检查通过；Lint 0 错误、7 条依赖更新提示。
+- 沿用共用开发签名，已通过 `adb install --no-streaming -r` 覆盖更新 OPPO PKJ110 至 0.1.2，未卸载主应用。
+- 10 项真机仪器测试全部通过，用时 11.282 秒：5 项 UI 用例验证默认不显示管理按钮、长按菜单、关闭菜单、点击详情、删除确认、路线编辑和重建后返回；5 项 Room 用例验证级联删除、关联更新、重开持久化和记录中保护。
+- UI 用例使用内存数据库，并在每项结束后断言日常行程未改变。算法未修改，本次沿用 0.1.1 的 28 项 JVM 测试结果。
+
+本次结果见 [verification.json](verification.json)、[真机原始输出](validation/oppo-long-press-0.1.2.txt)和[编译记录](validation/local-build-0.1.2.txt)。
+
+## 0.1.1 本次修改验证（2026-10-22）
+
+此电脑已配置项目专用 Temurin JDK 17.0.20.1、Gradle 8.11.1 和 Android SDK 35，位于被 Git 忽略的 `.tooling/`。`local.properties` 指向本地 SDK；`./scripts/gradle-local.sh` 自动选择这些工具。ADB 为 `.tooling/android-sdk/platform-tools/adb`。
+
+- 128 条双语资源引用及 `git diff --check` 通过。
+- 应用 APK、Android 测试 APK 编译通过；28 个 JVM 算法测试全部通过。
+- Lint：0 错误，7 条现有依赖版本更新提示。
+- 版本为 0.1.1 / versionCode 2；数据库结构未改变。应用包不含 Replay 合成轨迹类或演示运行状态。
+- 新增 3 个持久化用例：行程删除级联与路线保留、路线编辑/删除及重开后的关联一致性、记录中保护与无效编辑拒绝。UI 测试改为 4 个独立临时数据库用例：四页及重建后的系统返回、列表删除/取消、详情删除后回列表、路线编辑/删除/取消。
+- **本次 Android 仪器测试尚未运行，等待用户连接手机安装后执行。** 下方 OPPO 设备结果来自 0.1.0，不能作为新增管理功能已在真机通过的证据。
+
+构建与校验信息见 [verification.json](verification.json)，旧版记录见 [verification-0.1.0.json](validation/verification-0.1.0.json)。本次编译日志见 [local-build-0.1.1.txt](validation/local-build-0.1.1.txt)。连接手机后的命令：
+
+```sh
+.tooling/android-sdk/platform-tools/adb devices -l
+.tooling/android-sdk/platform-tools/adb install --no-streaming -r app/build/outputs/apk/debug/app-debug.apk
+# 使用临时测试数据库，不清除日常行程库；请先结束正在进行的记录。
+.tooling/android-sdk/platform-tools/adb install --no-streaming -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+.tooling/android-sdk/platform-tools/adb shell am instrument -w -r com.ridediary.test/androidx.test.runner.AndroidJUnitRunner
+```
+
+## 双 Mac 开发签名验证（2026-10-22）
+
+固定 `.signing/debug.keystore`，证书沿用手机当前 0.1.1 的签名。应用与测试 APK 重新编译、签名报告及 `apksigner verify --print-certs` 校验通过，两个 APK 均匹配公开证书指纹。独立临时工程验证：缺少共用密钥时拒绝构建；有效但错误的密钥也被拒绝。导入脚本对错误证书拒绝导入并保留原密钥，重复导入正确文件成功，密钥文件权限为 600 且被 Git 忽略。本次未操作另一台 Mac；其一次性传输和导入仍需用户完成，见[双 Mac 签名配置](signing.zh-CN.md)。这次签名配置不需要重新卸载手机应用。
+
+## 0.1.0 历史验证记录
+
 测试日期：2026-10-22。本机 macOS arm64，Temurin JDK 17.0.20.1 / Gradle 8.11.1 / Kotlin 2.1.20 / SDK 35。以下区分实际执行结果与尚未执行的设备用例；可机读记录见 [verification.json](verification.json)。
 
 ## 验证分层

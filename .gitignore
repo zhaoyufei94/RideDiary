@@ -1,5 +1,6 @@
 .gradle/
 .tooling/
+.signing/
 local.properties
 **/build/
 .idea/

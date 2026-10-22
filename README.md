@@ -11,30 +11,26 @@ For Android 8.0 and later, across Android phone brands. No extra hardware, accou
 | Screen | Features |
 |---|---|
 | Ride | Manual recording, elapsed time, average speed, stationary time and location status; motorcycle progress, historical comparison and arrival estimates after route recognition |
-| Journal | Ride history and arrival summaries; correct route, direction and commute boundaries, or exclude unusual rides |
+| Journal | Ride history and arrival summaries; correct route, direction and commute boundaries, exclude unusual rides, or delete a ride |
 | Statistics | Filter by month, route and direction; view commute days, rides, distance, elapsed time, stationary share and per-ride time breakdowns |
-| Routes | Create work/home routes from recorded rides; inspect local track sketches and historical samples |
+| Routes | Create work/home routes from recorded rides; inspect local track sketches and historical samples; edit and delete routes |
 
 The cream, forest-green, light-green and sand palette pairs with a motorcycle progress indicator. Screens use Jetpack Compose / Material 3. Chinese is the default language; the top-right control switches to English.
 
-## Demo
+## Manage rides and routes
 
-**Try a complete commute without granting permissions:**
+- Touch and hold a ride card in Journal or the summary card in details, choose **Delete ride** and confirm. The ride and raw fixes are removed and statistics refresh; routes created from it remain available.
+- The detail back button, Android Back button and back gesture return to the Journal list.
+- Touch and hold a route card in Routes to edit its name, work/home direction or endpoint radii, or delete it. Direction changes update linked rides. Deleting a route preserves rides and tracks but unlinks them. Finish recording before changing a route currently in use.
+- The in-app replay feature has been removed. Synthetic tracks are test fixtures and are excluded from the application APK.
 
-1. Open **Try replay** on the Ride screen.
-2. Play the roughly **11-second** replay to see recognition, moving/stationary segments, motorcycle progress and an arrival summary. Pause and resume whenever you like.
-3. Explore Journal, Statistics and Routes, including six synthetic historical rides and month, route and direction filters.
-4. Exit demo to return to your own records.
-
-Demo data stays in memory and never enters your real ride database. Demo is unavailable during real recording.
-
-Download the repository and open the [interactive UI prototype](docs/prototype/ui-prototype.html) in a browser to preview the palette, screens and motorcycle indicator. The HTML is a design demo; the Android app provides actual location, background recording and local storage.
+The [HTML prototype](docs/prototype/ui-prototype.html) remains a historical visual reference; its demo controls do not describe current app features.
 
 ## Permissions and operating conditions
 
 | Permission or condition | When needed | Purpose and effect of denial |
 |---|---|---|
-| Precise location | When starting a real ride | Track recording, movement analysis and route matching. Approximate-only or denied location prevents real recording; history and demo remain available |
+| Precise location | When starting a real ride | Track recording, movement analysis and route matching. Approximate-only or denied location prevents real recording; saved history remains available |
 | Notifications, Android 13+ | Requested as needed when starting | Ongoing recording notification and stop action. Recording can continue if denied; return to the app to finish |
 | System location enabled | During real recording | Required for normal fixes. If disabled, the app explains the issue; timing continues and unclassifiable intervals remain unknown |
 | Location foreground service | After permission and manual start | Continues recording in the background and with the screen off; managed by Android, without a separate permission dialog |
@@ -70,6 +66,10 @@ build-tools;35.0.0
 platform-tools
 ```
 
+On this computer, project-local JDK 17 and Android SDK tools are configured in the Git-ignored `.tooling/` directory. Use `./scripts/gradle-local.sh :app:assembleDebug` to select them automatically. ADB is at `.tooling/android-sdk/platform-tools/adb`.
+
+Before the first build on another computer, [import the shared signing key](docs/signing.en.md); this project will not generate a replacement identity.
+
 The repository includes a pinned Gradle Wrapper; a separate Gradle installation is unnecessary. From the repository root:
 
 ```sh
@@ -86,6 +86,23 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
 Add `--no-streaming` if streamed installation fails. Alternatively, transfer the APK to the phone and allow installation from that source when Android prompts. USB debugging is for development installation, not everyday use. This build uses a development signing key.
+
+## Statistics and ride detail presentation (0.1.3)
+
+Statistics uses a monthly distance overview, time-composition ring, selectable per-ride bars and departure/arrival rhythm cards. Month, route and direction filters continue to apply consistently across every metric and chart. Empty scopes show an honest empty state, and enlarged text switches metrics to vertical layouts.
+
+Ride details share the forest-green overview and grouped cards for time, distance, speed, moving/stationary/unknown intervals, stops, the recorded track and same-route historical comparison. Holding a card opens a bottom action sheet with icons and explanations; edit forms and deletion confirmations share the palette and rounded shapes.
+
+## Alternating builds between two Macs
+
+The project pins `.signing/debug.keystore`. After syncing the code to the other Mac, privately transfer this key and import it once before building. Missing keys or wrong certificates fail explicitly; the build never silently generates a different signing identity. Git does not transfer the private key.
+
+```sh
+python3 scripts/import-debug-signing.py "$HOME/Downloads/debug.keystore"
+./scripts/gradle-local.sh :app:assembleDebug
+```
+
+This retains the certificate used by version 0.1.1 currently installed on the phone, so no uninstall is needed. See [shared signing setup](docs/signing.en.md) for transfer, verification and troubleshooting.
 
 ## Data and current limits
 

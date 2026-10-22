@@ -27,10 +27,10 @@ Principles:
 |---|---|---|
 | Recording | Manual start, location foreground service, manual/confirmed-arrival finish, persistence, interruption marking | Long screen-off reliability, recovery, power and long-session performance |
 | Analysis | Moving/stationary/unknown segmentation, time, distance and average speed | Field calibration, stationary hotspots and segment analysis |
-| Routes | Creation from recorded tracks, names, work/home direction, endpoint radii, multiple-route recognition, local sketches | More intuitive route and endpoint editing |
+| Routes | Creation from recorded tracks, editing names/direction/endpoint radii, deletion, multiple-route recognition, local sketches | More intuitive track-shape and endpoint editing |
 | Comparison | Same-route/direction history, same-position elapsed differences, historical remaining-time ETA ranges | Departure-window-aware sampling |
 | History and statistics | Details, classification/exclusion/boundary correction, linked month/route/direction filters | Departure-time/duration scatter plots and trends |
-| Experience | Four native screens, Chinese/English switching, isolated in-memory replay | Large-text and screen-reader improvements, large screens, dark theme |
+| Experience | Four native screens, Chinese/English switching, system Back to Journal | Large-text and screen-reader improvements, large screens, dark theme |
 | Data management | Private local database, retained raw fixes, system backups disabled | User-controlled local export, backup, import and migrations |
 
 No map basemap, navigation, live traffic, red-light detection, account or cloud sync is currently provided. Vehicle displays, CAN/OBD, third-party navigation scraping, Accessibility/MediaProjection capture and racing features are outside current scope. Prototype decoration or sample numbers do not establish a shipped feature.
@@ -39,7 +39,7 @@ No map basemap, navigation, live traffic, red-light detection, account or cloud 
 
 ### First experience
 
-Allow browsing and empty states before authorization. Ride offers real recording and **Try replay**. Demo contains six synthetic histories and an approximately 11-second replay, with pause/resume and an arrival summary. Clearly identify demo mode and restore real data on exit. Never insert demo rides into the real database; prevent demo entry during real recording.
+Allow browsing and empty states before authorization. Ride offers **Start recording**. The in-app replay entry and demo runtime have been removed at user request. Synthetic tracks are only automation fixtures and are excluded from the application APK.
 
 ### First real ride
 
@@ -64,11 +64,13 @@ Mark interrupted rides separately, retain saved points and never automatically r
 | Screen | Hierarchy and actions | Empty/degraded states |
 |---|---|---|
 | Ride | Primary: recording state, elapsed, start/finish; secondary: location quality, route/motorcycle progress; supporting: breakdown, history, ETA | Clear start entry; ordinary ride without a route; no placeholders pretending to be history |
-| Journal | History → details/arrival → create route, classify, exclude, adjust boundaries | Explain recording/demo; visibly mark interrupted and excluded rides |
+| Journal | History → details/arrival → create route, classify, exclude, adjust boundaries | Explain recording; visibly mark interrupted and excluded rides |
 | Statistics | Month/route/direction filters → totals → per-ride stacked chart → clock/duration statistics | Explain no valid samples; label one sample; zero stationary time is valid |
 | Routes | Name, direction, length, sample count, local track sketch and history entry | Explain creation from history; do not present sketches as navigation maps |
 
-Requirements: give each context a clear primary action. Distinguish real recording and demo. Errors explain their impact and a useful next step. Separate durations from departure/arrival clock times and label distance, speed and percentage units. Use text or icons alongside color for important states.
+Requirements: give each context a clear primary action. Errors explain their impact and a useful next step. Separate durations from departure/arrival clock times and label distance, speed and percentage units. Use text or icons alongside color for important states.
+
+Journal list cards and detail summary cards expose correction/deletion menus on long press, followed by a separate deletion confirmation, cascading to raw points and segments while retaining saved route geometry. Detail Back controls and Android Back return to the Journal list. Route cards expose editing names, direction and endpoint radii, and deletion through a long-press context menu. Direction changes propagate to linked rides. Route deletion unlinks rides while retaining their raw tracks and direction. A route in use by an active recording cannot be edited or deleted.
 
 ## 5. Recording states and failures
 
@@ -76,7 +78,7 @@ Lifecycle: idle → permission request → recording → completed, with interru
 
 | Situation | Expected experience |
 |---|---|
-| Denied/approximate location | Explain precise location; block real start while allowing browsing/demo |
+| Denied/approximate location | Explain precise location; block real start while allowing browsing saved rides |
 | Notification denial | Explain the missing normal notification stop entry; allow recording and in-app finish |
 | Location disabled, first fix, poor signal or gap | Honest quality state, continuous timing, unknown intervals rather than fabricated distance/stationary time |
 | Ambiguous routes, deviation or turnback | Preserve uncertainty; suppress unreliable progress/ETA; permit later correction |
@@ -162,7 +164,7 @@ The [test record](docs/testing.en.md) documents 28 JVM tests and four device tes
 |---|---|
 | P0: reliable records | Denied/approximate/revoked permissions, notification denial, no fixes, duplicate starts, recreation, storage failure, interruption; no duplicate ride or loss of saved raw points |
 | P0: real roads | Repeated work/home rides, parallel roads, brief endpoint stop versus arrival, garages/tunnels, 30–60 minutes screen-off with normal battery settings; record error, unknown share, drain and heat |
-| P1: understanding and interaction | Onboarding/demo, learning/deviation/interruption copy, finish, corrections, linked filters, both languages, large fonts, TalkBack, Back and navigation bars |
+| P1: understanding and interaction | Onboarding, learning/deviation/interruption copy, finish, corrections, linked filters, both languages, large fonts, TalkBack, Back and navigation bars |
 | P1: analysis and management | Scatter plots, hotspots, departure windows, route/endpoint editing, local export/backup/import |
 | P2: expanded experience | Large screens, dark theme, long-term performance; any future map basemap must preserve offline/key-independent core use |
 
@@ -174,7 +176,7 @@ Read this specification first, then [README](README.md) for usage/building, [tec
 
 | Location | Responsibility |
 |---|---|
-| `app/src/main/java/com/ridediary/core/` | Quality, segmentation, route projection, statistics and replay |
+| `app/src/main/java/com/ridediary/core/` | Quality, segmentation, route projection and statistics |
 | `app/src/main/java/com/ridediary/data/` | Models, Room, transactions, correction and recovery |
 | `app/src/main/java/com/ridediary/recording/` | System location, foreground service, recording lifecycle |
 | `app/src/main/java/com/ridediary/ui/` | Screens, components, charts, theme, dialogs and ViewModel |
@@ -185,3 +187,9 @@ Read this specification first, then [README](README.md) for usage/building, [tec
 Original handoff requirements remain in `docs/requirements.*.md`; personal phone, city and early setup details are historical context. This document defines current product scope and design direction. New explicit user instructions take precedence. If code and specification differ, identify and resolve the gap rather than presenting plans as delivered.
 
 Update both languages, feature status and affected validation with each iteration. Preserve metric and privacy contracts. Keep README focused on users and contributors; debugging narratives and device evidence belong in test records.
+
+## 0.1.3 statistics, details and action sheets
+
+Long-press management uses Material 3 bottom sheets showing the selected ride/route, its summary and explained actions with local line icons. Deletion uses a restrained brick-red treatment and still requires confirmation. Edit sheets provide scrolling content with a persistent save/cancel footer.
+
+Statistics and details use light cards with 24 dp corners, forest-green hero cards with 26 dp corners and sheets with 28 dp top corners. Distance, commute days/counts, time composition, per-ride duration and commute rhythm form distinct information levels. Details lead with actual elapsed time, distance and speed, followed by intervals, stops, the track and historical baselines; insufficient history never produces invented differences. Enlarged text uses vertical layouts and selection includes accessibility semantics.

@@ -76,12 +76,43 @@ class RideRepository(val db: RideDatabase) {
     }
     suspend fun createRoute(id: String, name: String, direction: String, startRadius: Double, endRadius: Double) = mutex.withLock {
         db.withTransaction {
+            validateRoute(name,direction,startRadius,endRadius)
             val data=dao.ride(id) ?: return@withTransaction
+            require(data.ride.state != "RECORDING")
             val fixes=data.sample().points.filter(::good)
             require(fixes.size >= 4 && Analyzer.analyze(fixes,data.sample().metrics.elapsed).distance >= Policy.MIN_ROUTE_DISTANCE_M)
             val route=RouteRecord(UUID.randomUUID().toString(),name.trim(),direction,id,RouteRecord.encode(fixes),startRadius,endRadius)
             dao.saveRoute(route)
             dao.saveRide(data.ride.copy(routeId=route.id,direction=direction))
         }
+    }
+    suspend fun deleteRide(id: String) = mutex.withLock {
+        db.withTransaction {
+            val ride=dao.ride(id)?.ride ?: return@withTransaction
+            require(ride.state != "RECORDING")
+            // Points and segments cascade; saved routes keep their independent geometry.
+            dao.deleteRide(id)
+        }
+    }
+    suspend fun editRoute(id: String, name: String, direction: String, startRadius: Double, endRadius: Double) = mutex.withLock {
+        db.withTransaction {
+            validateRoute(name,direction,startRadius,endRadius)
+            require(dao.active().none { it.ride.routeId==id })
+            val route=dao.routes().firstOrNull { it.id==id } ?: return@withTransaction
+            dao.saveRoute(route.copy(name=name.trim(),direction=direction,startRadius=startRadius,endRadius=endRadius,version=route.version+1))
+            dao.updateRouteDirection(id,direction)
+        }
+    }
+    suspend fun deleteRoute(id: String) = mutex.withLock {
+        db.withTransaction {
+            require(dao.active().none { it.ride.routeId==id })
+            // Preserve raw rides and their direction, but omit them from route baselines.
+            dao.unlinkRoute(id)
+            dao.deleteRoute(id)
+        }
+    }
+    private fun validateRoute(name: String, direction: String, startRadius: Double, endRadius: Double) {
+        require(name.isNotBlank() && direction in listOf("WORK","HOME"))
+        require(startRadius in 20.0..500.0 && endRadius in 20.0..500.0)
     }
 }

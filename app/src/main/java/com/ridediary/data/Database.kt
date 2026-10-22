@@ -69,6 +69,10 @@ interface RideDao {
     @Query("DELETE FROM segments WHERE rideId = :id") suspend fun clearSegments(id: String)
     @Insert suspend fun segments(segments: List<SegmentRecord>)
     @Upsert suspend fun saveRoute(route: RouteRecord)
+    @Query("DELETE FROM rides WHERE id = :id AND state != 'RECORDING'") suspend fun deleteRide(id: String)
+    @Query("DELETE FROM routes WHERE id = :id") suspend fun deleteRoute(id: String)
+    @Query("UPDATE rides SET routeId = NULL WHERE routeId = :id") suspend fun unlinkRoute(id: String)
+    @Query("UPDATE rides SET direction = :direction WHERE routeId = :id") suspend fun updateRouteDirection(id: String, direction: String)
 }
 @Database(entities=[RideRecord::class,PointRecord::class,SegmentRecord::class,RouteRecord::class],version=1,exportSchema=false)
 abstract class RideDatabase : RoomDatabase() { abstract fun dao(): RideDao }

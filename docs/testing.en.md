@@ -2,6 +2,52 @@
 
 This checklist applies across Android brands. Specific models below identify historical test environments, not product restrictions. See [product design](../PRODUCT_DESIGN.md) for product and interaction requirements.
 
+## 0.1.3 statistics and detail refinement (2026-10-22)
+
+- Application/test APK builds, all 155 bilingual resources and Git whitespace checks pass. Lint has 0 errors and 7 dependency-update warnings. Both APKs use the shared development certificate.
+- OPPO PKJ110 is updated in place to 0.1.3 / versionCode 4 without uninstalling the main app. Normal application launch succeeds.
+- All 12 instrumented tests pass in 21.272 seconds: 7 UI cases cover action sheets, editing/deletion, system Back, month/route/direction filters, chart selection and English at 1.65 font scale; 5 persistence cases cover retention, cascades, associations and recording protection.
+- Synthetic-data previews of ride overview, time composition, stop metrics, trace, historical comparison and Chinese/English action sheets were inspected. Capture copies only this application's windows. Disposable databases isolate test data, with original daily rides equality asserted after every UI case.
+- The preliminary dialog locale issue is fixed. Test windows stay awake to avoid automatic lock-screen interruptions. Algorithms are unchanged; the 28 JVM results from 0.1.1 are retained.
+
+Evidence: [application build](validation/local-build-0.1.3.txt), [final test build](validation/test-build-0.1.3.txt), [device output](validation/oppo-refined-ui-0.1.3.txt) and [verification.json](verification.json).
+
+## 0.1.2 long-press menu validation (2026-10-22)
+
+- Application/test APK builds, 133 bilingual resource references and Git whitespace checks pass. Lint has 0 errors and 7 dependency-update warnings.
+- OPPO PKJ110 was updated in place to 0.1.2 using `adb install --no-streaming -r` and the shared Debug key, without uninstalling the application.
+- All 10 instrumented tests pass in 11.282 seconds: 5 UI cases cover hidden-by-default management actions, long-press menus, dismissal, normal detail navigation, deletion confirmation, route editing and Back after recreation; 5 Room cases cover cascades, route links, reopen persistence and active-recording protection.
+- UI cases use disposable in-memory databases and assert the original daily rides are unchanged after each case. Algorithms are unchanged; the 28 JVM results from 0.1.1 are retained rather than rerun for this UI change.
+
+Evidence: [verification.json](verification.json), [device output](validation/oppo-long-press-0.1.2.txt) and [build log](validation/local-build-0.1.2.txt).
+
+## 0.1.1 validation for this change (2026-10-22)
+
+Project-local Temurin JDK 17.0.20.1, Gradle 8.11.1 and Android SDK 35 are configured on this computer in the Git-ignored `.tooling/` directory. `local.properties` points to the SDK and `./scripts/gradle-local.sh` selects these tools. ADB is at `.tooling/android-sdk/platform-tools/adb`.
+
+- All 128 bilingual resource references and `git diff --check` pass.
+- Application and Android test APKs build; all 28 JVM algorithm tests pass.
+- Lint: 0 errors and 7 existing dependency-update warnings.
+- Version 0.1.1 / versionCode 2; database schema unchanged. The application APK excludes the Replay synthetic track class and demo runtime state.
+- Three new persistence cases cover ride deletion cascades and retained routes, route edits/deletion/reopening, and active-recording protection/invalid input. Four isolated-database UI cases cover tabs and Back after recreation, list deletion/cancellation, detail deletion returning to Journal, and route editing/deletion/cancellation.
+- **Android instrumentation tests for this change have not run; they await the user's phone connection and installation.** The OPPO results below belong to 0.1.0 and do not validate the new management features on a device.
+
+Current evidence: [verification.json](verification.json). Previous evidence: [verification-0.1.0.json](validation/verification-0.1.0.json). Current build log: [local-build-0.1.1.txt](validation/local-build-0.1.1.txt). After connecting the phone:
+
+```sh
+.tooling/android-sdk/platform-tools/adb devices -l
+.tooling/android-sdk/platform-tools/adb install --no-streaming -r app/build/outputs/apk/debug/app-debug.apk
+# Tests use disposable databases. Finish any active ride first.
+.tooling/android-sdk/platform-tools/adb install --no-streaming -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+.tooling/android-sdk/platform-tools/adb shell am instrument -w -r com.ridediary.test/androidx.test.runner.AndroidJUnitRunner
+```
+
+## Shared signing validation across Macs (2026-10-22)
+
+Pinned `.signing/debug.keystore` to the certificate already installed with 0.1.1. Application and instrumentation APK builds, signingReport and `apksigner verify --print-certs` pass; both APKs match the public certificate pin. An isolated temporary project rejects both missing and valid-but-wrong keys. The importer rejects a wrong certificate while retaining the correct key, supports repeat imports, sets mode 600 and leaves the key Git-ignored. The other Mac was not accessed; the user still needs to transfer and import this key once, following [shared signing setup](signing.en.md). No phone uninstall is needed for this configuration change.
+
+## 0.1.0 historical validation record
+
 Date: 2026-10-22. Executed on macOS arm64 with Temurin JDK 17.0.20.1 / Gradle 8.11.1 / Kotlin 2.1.20 / SDK 35. Results below distinguish execution from pending device cases. Machine-readable evidence: [verification.json](verification.json).
 
 ## Evidence levels
