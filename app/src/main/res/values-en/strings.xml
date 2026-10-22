@@ -11,6 +11,7 @@
     <string name="recording_title">RideDiary is recording</string>
     <string name="recording_body">Saving your track. Tap to open or finish below.</string>
     <string name="recording_channel">Ride recording</string>
+    <string name="recording_screen_on">The screen stays on while recording. Press the power button to lock it.</string>
     <string name="language">中文</string>
     <string name="ready">Ready when you are</string>
     <string name="ride_title">A little further today</string>

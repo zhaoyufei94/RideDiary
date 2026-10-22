@@ -17,6 +17,10 @@ For Android 8.0 and later, across Android phone brands. No extra hardware, accou
 
 The cream, forest-green, light-green and sand palette pairs with a motorcycle progress indicator. Screens use Jetpack Compose / Material 3. Chinese is the default language; the top-right control switches to English.
 
+## Keep the recording screen awake (0.1.4)
+
+After recording starts, RideDiary automatically keeps its visible screen awake across all four tabs. Finishing, confirmed arrival, or leaving the app restores normal screen timeout; returning during recording keeps it awake again. You can still lock the phone with the power button while background recording continues. No additional permission is needed; keeping the screen on consumes more power.
+
 ## Manage rides and routes
 
 - Touch and hold a ride card in Journal or the summary card in details, choose **Delete ride** and confirm. The ride and raw fixes are removed and statistics refresh; routes created from it remain available.

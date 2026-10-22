@@ -2,6 +2,16 @@
 
 This checklist applies across Android brands. Specific models below identify historical test environments, not product restrictions. See [product design](../PRODUCT_DESIGN.md) for product and interaction requirements.
 
+## 0.1.4 keep the recording screen awake (2026-10-22)
+
+- Application/test APK builds pass; all 156 bilingual resources pass. Lint has 0 errors and 7 existing dependency-update warnings. Shared signatures verify, and the app was installed in place without uninstalling the main package.
+- The initial 13-case device run passed 7 UI and 5 persistence tests. The service fixture was blocked while re-granting existing permissions and now skips already-granted permissions.
+- The service rerun timed out on a screen-on assertion. Its foreground return now resumes the same ActivityScenario with phase-specific diagnostics. ADB stopped responding during subsequent UI cases. This latest fixture is not yet rebuilt/retested; the screen-on feature has not passed device acceptance.
+- Automatic escalation review repeatedly timed out even after explicit user approval to continue. Sandbox Gradle/ADB fallback also failed because local sockets are prohibited. Rebuild and rerun all 13 cases after tool recovery. Algorithms are unchanged; JVM tests were not rerun.
+- Acceptance must also cover tabs/recreation/foreground return, finish/arrival/service destruction, normal background timeout, and manual power-button locking with continued recording.
+
+Evidence: [initial build](validation/local-build-0.1.4.txt), [permission-fixture build](validation/local-build-0.1.4-final.txt), [initial device run](validation/oppo-screen-awake-preliminary-0.1.4.txt), [incomplete rerun](validation/oppo-screen-awake-incomplete-0.1.4.txt) and [verification.json](verification.json).
+
 ## 0.1.3 statistics and detail refinement (2026-10-22)
 
 - Application/test APK builds, all 155 bilingual resources and Git whitespace checks pass. Lint has 0 errors and 7 dependency-update warnings. Both APKs use the shared development certificate.

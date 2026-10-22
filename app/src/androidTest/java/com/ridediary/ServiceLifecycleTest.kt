@@ -3,9 +3,12 @@ package com.ridediary
 import android.Manifest
 import android.app.NotificationManager
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.SystemClock
+import android.view.WindowManager
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
 import androidx.room.Room
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -33,7 +36,15 @@ class ServiceLifecycleTest {
         }
     }
 
-    @Test fun duplicateStartsRecreationBackgroundCheckpointsAndNotificationStop()=runBlocking {
+    private suspend fun awaitScreenOn(scenario: ActivityScenario<MainActivity>,expected: Boolean,stage: String) {
+        awaitCondition("$stage: screen-on window flag did not become $expected (lifecycle=${scenario.state})") {
+            var enabled=false
+            scenario.onActivity { enabled=it.window.attributes.flags and WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON != 0 }
+            enabled==expected
+        }
+    }
+
+    @Test fun recordingKeepsScreenOnAcrossRecreationAndReleasesOnBackgroundAndStop()=runBlocking {
         val instrumentation=InstrumentationRegistry.getInstrumentation()
         val app=instrumentation.targetContext.applicationContext as RideDiaryApp
         app.ready.await()
@@ -48,35 +59,51 @@ class ServiceLifecycleTest {
         try {
             // Standard app-scoped instrumentation grants; no background location or battery changes.
             for(permission in listOf(Manifest.permission.ACCESS_COARSE_LOCATION,Manifest.permission.ACCESS_FINE_LOCATION)) {
-                instrumentation.uiAutomation.grantRuntimePermission(app.packageName,permission)
+                if(ContextCompat.checkSelfPermission(app,permission)!=PackageManager.PERMISSION_GRANTED)
+                    instrumentation.uiAutomation.grantRuntimePermission(app.packageName,permission)
             }
-            if(Build.VERSION.SDK_INT>=33) instrumentation.uiAutomation.grantRuntimePermission(app.packageName,Manifest.permission.POST_NOTIFICATIONS)
+            if(Build.VERSION.SDK_INT>=33 && ContextCompat.checkSelfPermission(app,Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED)
+                instrumentation.uiAutomation.grantRuntimePermission(app.packageName,Manifest.permission.POST_NOTIFICATIONS)
             app.repository=isolated
             scenario=ActivityScenario.launch(MainActivity::class.java)
+            awaitScreenOn(scenario,false,"Before recording")
             scenario.onActivity { activity ->
                 repeat(3) { ContextCompat.startForegroundService(activity,Intent(activity,RecordingService::class.java)) }
             }
             awaitCondition("Service did not become active") { RecordingService.active.value && isolated.dao.active().size==1 }
+            awaitScreenOn(scenario,true,"Recording started")
             val id=isolated.dao.active().single().ride.id
             scenario.recreate()
+            awaitScreenOn(scenario,true,"Activity recreated")
             awaitCondition("No incremental checkpoint was persisted") { (isolated.dao.ride(id)?.ride?.elapsed ?: 0)>=2_000 }
             val beforeBackground=isolated.dao.ride(id)!!.ride.elapsed
             scenario.onActivity { it.moveTaskToBack(true) }
+            awaitScreenOn(scenario,false,"Activity backgrounded")
             awaitCondition("Timer stopped when activity went to the background") { (isolated.dao.ride(id)?.ride?.elapsed ?: 0)>=beforeBackground+4_000 }
             assertEquals(id,isolated.dao.active().single().ride.id)
             assertEquals(1,isolated.rides.first().size)
+            scenario.moveToState(Lifecycle.State.RESUMED)
+            awaitScreenOn(scenario,true,"Activity foregrounded")
             val manager=app.getSystemService(NotificationManager::class.java)
             val notification=manager.activeNotifications.single { it.id==1 && it.notification.channelId==RecordingService.CHANNEL }
             notification.notification.actions.single().actionIntent.send()
             awaitCondition("Notification stop did not complete the ride") {
                 !RecordingService.active.value && isolated.dao.ride(id)?.ride?.state=="COMPLETED"
             }
+            awaitScreenOn(scenario,false,"Recording finished")
             val saved=isolated.dao.ride(id)!!
             assertTrue(saved.ride.elapsed>=6_000)
             assertTrue(saved.segments.isNotEmpty())
             assertEquals(saved.ride.elapsed,saved.sample().metrics.let { it.moving+it.waiting+it.unknown })
             assertTrue(isolated.dao.active().isEmpty())
             awaitCondition("Recording notification remained after stop") { manager.activeNotifications.none { it.id==1 } }
+            // Service destruction also releases the visible window, including unexpected stops.
+            scenario.onActivity { ContextCompat.startForegroundService(it,Intent(it,RecordingService::class.java)) }
+            awaitCondition("Second recording did not start") { RecordingService.active.value }
+            awaitScreenOn(scenario,true,"Second recording started")
+            app.stopService(Intent(app,RecordingService::class.java))
+            awaitCondition("Destroyed service remained active") { !RecordingService.active.value }
+            awaitScreenOn(scenario,false,"Service destroyed")
         } finally {
             app.stopService(Intent(app,RecordingService::class.java))
             awaitCondition("Service cleanup did not stop") { !RecordingService.active.value }

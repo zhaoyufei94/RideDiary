@@ -59,3 +59,7 @@ ManagementSheets centralizes bottom actions, editor forms and local Canvas line 
 Statistics still uses Statistics.month/valid/clocks and Sample.metrics; bar selection is presentation state and does not change storage or aggregation. Filters apply to rings, values, bars and rhythm cards together. The chart viewport fits complete columns and enlarged text expands labels and stacks metrics vertically.
 
 Details retain earlier valid same-route/direction baselines and the distinction between the independent total median and component medians. Presentation changes do not alter recorded tracks, raw data or the recording service.
+
+## Keep screen awake during recording (0.1.4)
+
+MainActivity collects RecordingService.active only while STARTED, setting FLAG_KEEP_SCREEN_ON for actual service recording. Finish, arrival and service destruction clear the flag; cancellation on backgrounding releases it in finally. Recreation, language changes and foreground return restore the current StateFlow value. The flag covers the Activity across tabs. No wake lock, additional permission or system timeout setting change is needed; manual locking and background recording remain system-managed.

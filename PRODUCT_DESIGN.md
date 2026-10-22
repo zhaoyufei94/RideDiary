@@ -193,3 +193,7 @@ Update both languages, feature status and affected validation with each iteratio
 Long-press management uses Material 3 bottom sheets showing the selected ride/route, its summary and explained actions with local line icons. Deletion uses a restrained brick-red treatment and still requires confirmation. Edit sheets provide scrolling content with a persistent save/cancel footer.
 
 Statistics and details use light cards with 24 dp corners, forest-green hero cards with 26 dp corners and sheets with 28 dp top corners. Distance, commute days/counts, time composition, per-ride duration and commute rhythm form distinct information levels. Details lead with actual elapsed time, distance and speed, followed by intervals, stops, the track and historical baselines; insufficient history never produces invented differences. Enlarged text uses vertical layouts and selection includes accessibility semantics.
+
+## Keep screen awake during recording (0.1.4)
+
+Keep the visible app awake automatically after the recording service starts, consistently across all four tabs. Restore normal timeout on finish, confirmed arrival, service stop or backgrounding. Foreground return, rotation and language recreation restore the current recording behavior. The Ride screen explains that the power button can still lock the phone. No setting toggle or permission prompt is added. Continuous screen use increases power consumption.

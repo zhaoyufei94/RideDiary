@@ -107,7 +107,10 @@ import kotlinx.coroutines.delay
                     if(active==null) Button(onClick={ begin() },modifier=Modifier.fillMaxWidth().heightIn(min=52.dp),shape=RoundedCornerShape(12.dp)) {
                         Text(stringResource(R.string.start))
                     }
-                    if(active!=null) OutlinedButton(onClick={ finishDialog=true },modifier=Modifier.fillMaxWidth().heightIn(min=52.dp)) { Text(stringResource(R.string.finish)) }
+                    if(active!=null) {
+                        Note(stringResource(R.string.recording_screen_on))
+                        OutlinedButton(onClick={ finishDialog=true },modifier=Modifier.fillMaxWidth().heightIn(min=52.dp)) { Text(stringResource(R.string.finish)) }
+                    }
                     Note(stringResource(R.string.privacy))
                 }
                 1 -> {

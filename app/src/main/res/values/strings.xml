@@ -11,6 +11,7 @@
     <string name="recording_title">途记正在记录骑行</string>
     <string name="recording_body">持续保存轨迹；点击返回，或结束记录。</string>
     <string name="recording_channel">骑行记录</string>
+    <string name="recording_screen_on">记录中保持亮屏，可按电源键手动锁屏。</string>
     <string name="language">English</string>
     <string name="ready">准备出发</string>
     <string name="ride_title">这一趟，向前</string>

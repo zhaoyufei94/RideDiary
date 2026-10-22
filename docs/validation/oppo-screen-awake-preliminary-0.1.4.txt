@@ -1,0 +1,265 @@
+INSTRUMENTATION_STATUS: class=com.ridediary.ServiceLifecycleTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+com.ridediary.ServiceLifecycleTest:
+INSTRUMENTATION_STATUS: test=recordingKeepsScreenOnAcrossRecreationAndReleasesOnBackgroundAndStop
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.ridediary.ServiceLifecycleTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stack=java.lang.SecurityException: Error granting runtime permission android.permission.ACCESS_COARSE_LOCATION to package com.ridediary for user UserHandle{0}
+	at android.app.UiAutomation.grantRuntimePermissionAsUser(UiAutomation.java:1657)
+	at android.app.UiAutomation.grantRuntimePermission(UiAutomation.java:1623)
+	at com.ridediary.ServiceLifecycleTest$recordingKeepsScreenOnAcrossRecreationAndReleasesOnBackgroundAndStop$1.invokeSuspend(ServiceLifecycleTest.kt:60)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:106)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:280)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:85)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:59)
+	at kotlinx.coroutines.BuildersKt.runBlocking(dex-id-73661511ccc92cb434a6a93865376d9bd9df63e6:1)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:38)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(dex-id-73661511ccc92cb434a6a93865376d9bd9df63e6:1)
+	at com.ridediary.ServiceLifecycleTest.recordingKeepsScreenOnAcrossRecreationAndReleasesOnBackgroundAndStop(ServiceLifecycleTest.kt:45)
+	... 32 trimmed
+Caused by: java.lang.SecurityException: grantRuntimePermission: Neither user 2000 nor current process has android.permission.GRANT_RUNTIME_PERMISSIONS.
+	at android.os.Parcel.createExceptionOrNull(Parcel.java:3422)
+	at android.os.Parcel.createException(Parcel.java:3406)
+	at android.os.Parcel.readException(Parcel.java:3389)
+	at android.os.Parcel.readException(Parcel.java:3331)
+	at android.app.IUiAutomationConnection$Stub$Proxy.grantRuntimePermission(IUiAutomationConnection.java:772)
+	at android.app.UiAutomation.grantRuntimePermissionAsUser(UiAutomation.java:1654)
+	... 44 more
+
+INSTRUMENTATION_STATUS: stream=
+Error in recordingKeepsScreenOnAcrossRecreationAndReleasesOnBackgroundAndStop(com.ridediary.ServiceLifecycleTest):
+java.lang.SecurityException: Error granting runtime permission android.permission.ACCESS_COARSE_LOCATION to package com.ridediary for user UserHandle{0}
+	at android.app.UiAutomation.grantRuntimePermissionAsUser(UiAutomation.java:1657)
+	at android.app.UiAutomation.grantRuntimePermission(UiAutomation.java:1623)
+	at com.ridediary.ServiceLifecycleTest$recordingKeepsScreenOnAcrossRecreationAndReleasesOnBackgroundAndStop$1.invokeSuspend(ServiceLifecycleTest.kt:60)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:106)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:280)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:85)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:59)
+	at kotlinx.coroutines.BuildersKt.runBlocking(dex-id-73661511ccc92cb434a6a93865376d9bd9df63e6:1)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:38)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(dex-id-73661511ccc92cb434a6a93865376d9bd9df63e6:1)
+	at com.ridediary.ServiceLifecycleTest.recordingKeepsScreenOnAcrossRecreationAndReleasesOnBackgroundAndStop(ServiceLifecycleTest.kt:45)
+	... 32 trimmed
+Caused by: java.lang.SecurityException: grantRuntimePermission: Neither user 2000 nor current process has android.permission.GRANT_RUNTIME_PERMISSIONS.
+	at android.os.Parcel.createExceptionOrNull(Parcel.java:3422)
+	at android.os.Parcel.createException(Parcel.java:3406)
+	at android.os.Parcel.readException(Parcel.java:3389)
+	at android.os.Parcel.readException(Parcel.java:3331)
+	at android.app.IUiAutomationConnection$Stub$Proxy.grantRuntimePermission(IUiAutomationConnection.java:772)
+	at android.app.UiAutomation.grantRuntimePermissionAsUser(UiAutomation.java:1654)
+	... 44 more
+
+INSTRUMENTATION_STATUS: test=recordingKeepsScreenOnAcrossRecreationAndReleasesOnBackgroundAndStop
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_STATUS: class=com.ridediary.UiSmokeTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+com.ridediary.UiSmokeTest:
+INSTRUMENTATION_STATUS: test=statisticsFiltersAndSelectableChartKeepTheSameDataScope
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.ridediary.UiSmokeTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=statisticsFiltersAndSelectableChartKeepTheSameDataScope
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.ridediary.UiSmokeTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=editAndDeleteRouteKeepRideAndUpdateAssociation
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.ridediary.UiSmokeTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=editAndDeleteRouteKeepRideAndUpdateAssociation
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.ridediary.UiSmokeTest
+INSTRUMENTATION_STATUS: current=4
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=cancelAndConfirmRideDeletionFromJournal
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.ridediary.UiSmokeTest
+INSTRUMENTATION_STATUS: current=4
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=cancelAndConfirmRideDeletionFromJournal
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.ridediary.UiSmokeTest
+INSTRUMENTATION_STATUS: current=5
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=fourTabsAndSystemBackReturnToJournalAfterRecreation
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.ridediary.UiSmokeTest
+INSTRUMENTATION_STATUS: current=5
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=fourTabsAndSystemBackReturnToJournalAfterRecreation
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.ridediary.UiSmokeTest
+INSTRUMENTATION_STATUS: current=6
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=deleteFromDetailReturnsToJournal
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.ridediary.UiSmokeTest
+INSTRUMENTATION_STATUS: current=6
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=deleteFromDetailReturnsToJournal
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.ridediary.UiSmokeTest
+INSTRUMENTATION_STATUS: current=7
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=englishLargeTextStatisticsAndActionSheetRemainUsable
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.ridediary.UiSmokeTest
+INSTRUMENTATION_STATUS: current=7
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=englishLargeTextStatisticsAndActionSheetRemainUsable
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.ridediary.UiSmokeTest
+INSTRUMENTATION_STATUS: current=8
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=longPressShowsMenuWithoutOpeningDetailsAndBackDismissesIt
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.ridediary.UiSmokeTest
+INSTRUMENTATION_STATUS: current=8
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=longPressShowsMenuWithoutOpeningDetailsAndBackDismissesIt
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.ridediary.PersistenceTest
+INSTRUMENTATION_STATUS: current=9
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+com.ridediary.PersistenceTest:
+INSTRUMENTATION_STATUS: test=routeEditsPersistAndDeletionUnlinksRidesWithoutLosingTracks
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.ridediary.PersistenceTest
+INSTRUMENTATION_STATUS: current=9
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=routeEditsPersistAndDeletionUnlinksRidesWithoutLosingTracks
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.ridediary.PersistenceTest
+INSTRUMENTATION_STATUS: current=10
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=duplicateStartReturnsSameRideAndRecoveryCreatesUnknownGap
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.ridediary.PersistenceTest
+INSTRUMENTATION_STATUS: current=10
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=duplicateStartReturnsSameRideAndRecoveryCreatesUnknownGap
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.ridediary.PersistenceTest
+INSTRUMENTATION_STATUS: current=11
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=reopensRawPointsRoutesSegmentsAndRebuildsAfterCorrection
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.ridediary.PersistenceTest
+INSTRUMENTATION_STATUS: current=11
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=reopensRawPointsRoutesSegmentsAndRebuildsAfterCorrection
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.ridediary.PersistenceTest
+INSTRUMENTATION_STATUS: current=12
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=activeRideAndItsRouteAreProtectedAndInvalidEditsDoNotPersist
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.ridediary.PersistenceTest
+INSTRUMENTATION_STATUS: current=12
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=activeRideAndItsRouteAreProtectedAndInvalidEditsDoNotPersist
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.ridediary.PersistenceTest
+INSTRUMENTATION_STATUS: current=13
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=deletingRideCascadesPointsAndSegmentsButPreservesRouteAcrossReopen
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.ridediary.PersistenceTest
+INSTRUMENTATION_STATUS: current=13
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=deletingRideCascadesPointsAndSegmentsButPreservesRouteAcrossReopen
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_RESULT: stream=
+
+Time: 19.898
+There was 1 failure:
+1) recordingKeepsScreenOnAcrossRecreationAndReleasesOnBackgroundAndStop(com.ridediary.ServiceLifecycleTest)
+java.lang.SecurityException: Error granting runtime permission android.permission.ACCESS_COARSE_LOCATION to package com.ridediary for user UserHandle{0}
+	at android.app.UiAutomation.grantRuntimePermissionAsUser(UiAutomation.java:1657)
+	at android.app.UiAutomation.grantRuntimePermission(UiAutomation.java:1623)
+	at com.ridediary.ServiceLifecycleTest$recordingKeepsScreenOnAcrossRecreationAndReleasesOnBackgroundAndStop$1.invokeSuspend(ServiceLifecycleTest.kt:60)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:106)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:280)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:85)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:59)
+	at kotlinx.coroutines.BuildersKt.runBlocking(dex-id-73661511ccc92cb434a6a93865376d9bd9df63e6:1)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:38)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(dex-id-73661511ccc92cb434a6a93865376d9bd9df63e6:1)
+	at com.ridediary.ServiceLifecycleTest.recordingKeepsScreenOnAcrossRecreationAndReleasesOnBackgroundAndStop(ServiceLifecycleTest.kt:45)
+	... 32 trimmed
+Caused by: java.lang.SecurityException: grantRuntimePermission: Neither user 2000 nor current process has android.permission.GRANT_RUNTIME_PERMISSIONS.
+	at android.os.Parcel.createExceptionOrNull(Parcel.java:3422)
+	at android.os.Parcel.createException(Parcel.java:3406)
+	at android.os.Parcel.readException(Parcel.java:3389)
+	at android.os.Parcel.readException(Parcel.java:3331)
+	at android.app.IUiAutomationConnection$Stub$Proxy.grantRuntimePermission(IUiAutomationConnection.java:772)
+	at android.app.UiAutomation.grantRuntimePermissionAsUser(UiAutomation.java:1654)
+	... 44 more
+
+FAILURES!!!
+Tests run: 13,  Failures: 1
+
+
+INSTRUMENTATION_CODE: -1

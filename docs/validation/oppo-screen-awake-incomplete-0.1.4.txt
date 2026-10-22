@@ -1,0 +1,103 @@
+INSTRUMENTATION_STATUS: class=com.ridediary.ServiceLifecycleTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+com.ridediary.ServiceLifecycleTest:
+INSTRUMENTATION_STATUS: test=recordingKeepsScreenOnAcrossRecreationAndReleasesOnBackgroundAndStop
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.ridediary.ServiceLifecycleTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stack=java.lang.IllegalStateException: Screen-on window flag did not become true
+	at com.ridediary.ServiceLifecycleTest.awaitCondition(ServiceLifecycleTest.kt:33)
+	at com.ridediary.ServiceLifecycleTest.access$awaitCondition(ServiceLifecycleTest.kt:27)
+	at com.ridediary.ServiceLifecycleTest$awaitCondition$1.invokeSuspend(ServiceLifecycleTest.kt:15)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTaskKt.resume(DispatchedTask.kt:235)
+	at kotlinx.coroutines.DispatchedTaskKt.dispatch(DispatchedTask.kt:168)
+	at kotlinx.coroutines.CancellableContinuationImpl.dispatchResume(CancellableContinuationImpl.kt:474)
+	at kotlinx.coroutines.CancellableContinuationImpl.resumeImpl(CancellableContinuationImpl.kt:508)
+	at kotlinx.coroutines.CancellableContinuationImpl.resumeImpl$default(CancellableContinuationImpl.kt:497)
+	at kotlinx.coroutines.CancellableContinuationImpl.resumeUndispatched(CancellableContinuationImpl.kt:595)
+	at kotlinx.coroutines.EventLoopImplBase$DelayedResumeTask.run(EventLoop.common.kt:493)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:280)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:85)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:59)
+	at kotlinx.coroutines.BuildersKt.runBlocking(dex-id-73661511ccc92cb434a6a93865376d9bd9df63e6:1)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:38)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(dex-id-73661511ccc92cb434a6a93865376d9bd9df63e6:1)
+	at com.ridediary.ServiceLifecycleTest.recordingKeepsScreenOnAcrossRecreationAndReleasesOnBackgroundAndStop(ServiceLifecycleTest.kt:46)
+
+INSTRUMENTATION_STATUS: stream=
+Error in recordingKeepsScreenOnAcrossRecreationAndReleasesOnBackgroundAndStop(com.ridediary.ServiceLifecycleTest):
+java.lang.IllegalStateException: Screen-on window flag did not become true
+	at com.ridediary.ServiceLifecycleTest.awaitCondition(ServiceLifecycleTest.kt:33)
+	at com.ridediary.ServiceLifecycleTest.access$awaitCondition(ServiceLifecycleTest.kt:27)
+	at com.ridediary.ServiceLifecycleTest$awaitCondition$1.invokeSuspend(ServiceLifecycleTest.kt:15)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTaskKt.resume(DispatchedTask.kt:235)
+	at kotlinx.coroutines.DispatchedTaskKt.dispatch(DispatchedTask.kt:168)
+	at kotlinx.coroutines.CancellableContinuationImpl.dispatchResume(CancellableContinuationImpl.kt:474)
+	at kotlinx.coroutines.CancellableContinuationImpl.resumeImpl(CancellableContinuationImpl.kt:508)
+	at kotlinx.coroutines.CancellableContinuationImpl.resumeImpl$default(CancellableContinuationImpl.kt:497)
+	at kotlinx.coroutines.CancellableContinuationImpl.resumeUndispatched(CancellableContinuationImpl.kt:595)
+	at kotlinx.coroutines.EventLoopImplBase$DelayedResumeTask.run(EventLoop.common.kt:493)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:280)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:85)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:59)
+	at kotlinx.coroutines.BuildersKt.runBlocking(dex-id-73661511ccc92cb434a6a93865376d9bd9df63e6:1)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:38)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(dex-id-73661511ccc92cb434a6a93865376d9bd9df63e6:1)
+	at com.ridediary.ServiceLifecycleTest.recordingKeepsScreenOnAcrossRecreationAndReleasesOnBackgroundAndStop(ServiceLifecycleTest.kt:46)
+
+INSTRUMENTATION_STATUS: test=recordingKeepsScreenOnAcrossRecreationAndReleasesOnBackgroundAndStop
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_STATUS: class=com.ridediary.UiSmokeTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+com.ridediary.UiSmokeTest:
+INSTRUMENTATION_STATUS: test=statisticsFiltersAndSelectableChartKeepTheSameDataScope
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.ridediary.UiSmokeTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stack=java.lang.IllegalStateException: No compose hierarchies found in the app. Possible reasons include: (1) the Activity that calls setContent did not launch; (2) setContent was not called; (3) setContent was called before the ComposeTestRule ran. If setContent is called by the Activity, make sure the Activity is launched after the ComposeTestRule runs
+	at androidx.compose.ui.test.TestOwnerKt.getAllSemanticsNodes(TestOwner.kt:82)
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchSemanticsNodes$ui_test_release(SemanticsNodeInteraction.kt:64)
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow(SemanticsNodeInteraction.kt:157)
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow$default(SemanticsNodeInteraction.kt:150)
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchSemanticsNode(SemanticsNodeInteraction.kt:84)
+	at androidx.compose.ui.test.ActionsKt.performTouchInput(Actions.kt:389)
+	at androidx.compose.ui.test.AndroidActions.performClickImpl(Actions.android.kt:23)
+	at androidx.compose.ui.test.ActionsKt.performClick(Actions.kt:60)
+	at com.ridediary.UiSmokeTest.click(UiSmokeTest.kt:77)
+	at com.ridediary.UiSmokeTest.statisticsFiltersAndSelectableChartKeepTheSameDataScope(UiSmokeTest.kt:146)
+
+INSTRUMENTATION_STATUS: stream=
+Error in statisticsFiltersAndSelectableChartKeepTheSameDataScope(com.ridediary.UiSmokeTest):
+java.lang.IllegalStateException: No compose hierarchies found in the app. Possible reasons include: (1) the Activity that calls setContent did not launch; (2) setContent was not called; (3) setContent was called before the ComposeTestRule ran. If setContent is called by the Activity, make sure the Activity is launched after the ComposeTestRule runs
+	at androidx.compose.ui.test.TestOwnerKt.getAllSemanticsNodes(TestOwner.kt:82)
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchSemanticsNodes$ui_test_release(SemanticsNodeInteraction.kt:64)
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow(SemanticsNodeInteraction.kt:157)
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow$default(SemanticsNodeInteraction.kt:150)
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchSemanticsNode(SemanticsNodeInteraction.kt:84)
+	at androidx.compose.ui.test.ActionsKt.performTouchInput(Actions.kt:389)
+	at androidx.compose.ui.test.AndroidActions.performClickImpl(Actions.android.kt:23)
+	at androidx.compose.ui.test.ActionsKt.performClick(Actions.kt:60)
+	at com.ridediary.UiSmokeTest.click(UiSmokeTest.kt:77)
+	at com.ridediary.UiSmokeTest.statisticsFiltersAndSelectableChartKeepTheSameDataScope(UiSmokeTest.kt:146)
+
+INSTRUMENTATION_STATUS: test=statisticsFiltersAndSelectableChartKeepTheSameDataScope
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_STATUS: class=com.ridediary.UiSmokeTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=editAndDeleteRouteKeepRideAndUpdateAssociation
+INSTRUMENTATION_STATUS_CODE: 1
