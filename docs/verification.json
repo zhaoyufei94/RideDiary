@@ -1,0 +1,65 @@
+{
+  "date": "2026-10-22",
+  "version": "0.1.0",
+  "environment": {
+    "os": "macOS arm64",
+    "jdk": "Temurin 17.0.20.1",
+    "gradle": "8.11.1",
+    "agp": "8.9.2",
+    "kotlin": "2.1.20",
+    "compileSdk": 35,
+    "targetSdk": 35,
+    "minSdk": 26
+  },
+  "command": "./scripts/gradle-local.sh :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest :app:lintDebug --no-daemon --console=plain",
+  "result": "BUILD SUCCESSFUL",
+  "unitTests": [
+    {
+      "name": "com.ridediary.core.AnalysisTest",
+      "tests": "11",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.ridediary.core.RoutingTest",
+      "tests": "9",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.ridediary.core.StatisticsTest",
+      "tests": "8",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    }
+  ],
+  "lint": {
+    "errors": 0,
+    "warnings": 9,
+    "warningIds": [
+      "GradleDependency"
+    ]
+  },
+  "resourceCheck": {
+    "translatedStrings": 125,
+    "result": "PASS"
+  },
+  "apkSignature": "v2 verified using apksigner",
+  "artifacts": [
+    {
+      "path": "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk",
+      "bytes": 1064751,
+      "sha256": "e7b075e175c64c640da96c0dd28d94a2c4afe8fc542c55c33455a05e7c09b74f"
+    },
+    {
+      "path": "app/build/outputs/apk/debug/app-debug.apk",
+      "bytes": 11314623,
+      "sha256": "e5b39d36e83fd5b67e2e5dc40030cd321ef4c11b79852b62dd2f7b6dc1e1e61a"
+    }
+  ],
+  "androidInstrumentedTests": "COMPILED_NOT_RUN: adb devices -l returned no devices; no running emulator",
+  "oppoFieldValidation": "PENDING"
+}
