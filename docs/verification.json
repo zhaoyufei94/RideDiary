@@ -38,7 +38,7 @@
   ],
   "lint": {
     "errors": 0,
-    "warnings": 9,
+    "warnings": 7,
     "warningIds": [
       "GradleDependency"
     ]
@@ -51,8 +51,8 @@
   "artifacts": [
     {
       "path": "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk",
-      "bytes": 1064751,
-      "sha256": "e7b075e175c64c640da96c0dd28d94a2c4afe8fc542c55c33455a05e7c09b74f"
+      "bytes": 1062256,
+      "sha256": "42f9a331ffa7363ae7efe306f320ad0b317255b8a7c46ede0beb991f35c3f912"
     },
     {
       "path": "app/build/outputs/apk/debug/app-debug.apk",
@@ -60,6 +60,43 @@
       "sha256": "e5b39d36e83fd5b67e2e5dc40030cd321ef4c11b79852b62dd2f7b6dc1e1e61a"
     }
   ],
-  "androidInstrumentedTests": "COMPILED_NOT_RUN: adb devices -l returned no devices; no running emulator",
-  "oppoFieldValidation": "PENDING"
+  "androidInstrumentedTests": {
+    "device": {
+      "manufacturer": "OPPO",
+      "model": "PKJ110",
+      "reportedAndroid": "17",
+      "api": 37,
+      "oplusRom": "V17.0.0"
+    },
+    "passed": 4,
+    "failed": 0,
+    "runs": [
+      {
+        "tests": 3,
+        "durationSeconds": 13.647,
+        "output": "docs/validation/oppo-instrumentation.txt"
+      },
+      {
+        "tests": 1,
+        "durationSeconds": 7.151,
+        "output": "docs/validation/oppo-service-test.txt"
+      }
+    ],
+    "scope": [
+      "Room reopen, classification, exclusion and boundaries",
+      "repository duplicate start and interrupted recovery",
+      "four native tabs and deterministic replay arrival",
+      "real service duplicate starts, Activity recreation, brief background persistence and notification stop"
+    ],
+    "dataIsolation": "Temporary test databases deleted; original daily database equality asserted",
+    "permissions": "App-scoped location and notifications granted by instrumentation; battery settings unchanged"
+  },
+  "oppoFieldValidation": "PENDING: 30-60 minute screen-off survival, real-road accuracy, adjacent-road matching, arrival calibration, tunnel recovery and battery drain",
+  "testLibraries": {
+    "androidx.test.ext:junit": "1.3.0",
+    "androidx.test:runner": "1.7.0",
+    "androidx.test.espresso:espresso-core": "3.7.0"
+  },
+  "deviceBuildCommand": "./scripts/gradle-local.sh :app:assembleDebugAndroidTest :app:lintDebug --no-daemon --console=plain",
+  "deviceTestCommand": "adb shell am instrument -w -r com.ridediary.test/androidx.test.runner.AndroidJUnitRunner"
 }

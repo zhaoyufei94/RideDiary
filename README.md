@@ -15,14 +15,15 @@ Install Android Studio or the Android command-line SDK. Set `JAVA_HOME` to JDK 1
 ```sh
 ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
 python3 scripts/check-resources.py
-adb install -r app/build/outputs/apk/debug/app-debug.apk
-# With a connected Android 8+ device/emulator:
-./gradlew :app:connectedDebugAndroidTest
+adb install --no-streaming -r app/build/outputs/apk/debug/app-debug.apk
+# On a connected device, direct instrumentation preserves the installed app:
+adb install --no-streaming -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+adb shell am instrument -w -r com.ridediary.test/androidx.test.runner.AndroidJUnitRunner
 ```
 
 This checkout also includes an ignored local JDK/SDK/cache in `.tooling/`. Run `./scripts/gradle-local.sh` to use those tools without changing your system installation, or pass specific Gradle tasks as arguments. On another machine, configure JDK/SDK as above; the helper does not download or accept licenses automatically.
 
-If `adb` is not on PATH, use `.tooling/android-sdk/platform-tools/adb install -r app/build/outputs/apk/debug/app-debug.apk` on this checkout after connecting and authorizing your device.
+If `adb` is not on PATH, use `.tooling/android-sdk/platform-tools/adb install --no-streaming -r app/build/outputs/apk/debug/app-debug.apk` on this checkout after connecting and authorizing your device.
 
 The debug APK uses a development signing key. No release keystore or license has been chosen. The machine-specific `.tooling/` directory and `local.properties` are excluded from Git.
 
@@ -47,6 +48,8 @@ In ride details, correct the route/direction, exclude an unusual stop or detour 
 - Room transactions, raw-point retention, interrupted-record recovery, boundary edits and isolated synthetic replay.
 
 ## Verification and OPPO acceptance
+
+Installed and passed 4 device tests on OPPO PKJ110: database reopen/correction, interrupted recovery, four-screen replay, and real-service duplicate starts, Activity recreation, brief background persistence and notification stop. Disposable test databases were used and daily data retention was asserted. Device tests pin Espresso 3.7.0, Runner 1.7.0 and JUnit extension 1.3.0 for this phone's system compatibility.
 
 See [testing and recorded results](docs/testing.en.md) and [design / algorithm definitions](docs/design.en.md). Build success, simulated tests and real-road accuracy are separate evidence. **OPPO lock-screen survival, GNSS behavior on adjacent Beijing main/service roads, arrival thresholds and battery usage require the user's phone and repeated commutes.** No road or rain certification is claimed.
 

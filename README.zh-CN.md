@@ -15,14 +15,15 @@
 ```sh
 ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
 python3 scripts/check-resources.py
-adb install -r app/build/outputs/apk/debug/app-debug.apk
-# 连接 Android 8+ 手机或模拟器后：
-./gradlew :app:connectedDebugAndroidTest
+adb install --no-streaming -r app/build/outputs/apk/debug/app-debug.apk
+# 连接设备后，使用直接测试以保留安装的应用：
+adb install --no-streaming -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+adb shell am instrument -w -r com.ridediary.test/androidx.test.runner.AndroidJUnitRunner
 ```
 
 当前工作目录已经在 `.tooling/` 准备了不提交的本地 JDK/SDK/缓存。可直接运行 `./scripts/gradle-local.sh` 使用这些工具，不修改系统安装；也可传入指定 Gradle 任务。在其他机器上仍需按上文配置 JDK/SDK，该脚本不会自动下载或接受许可。
 
-如果 PATH 中没有 `adb`，连接并在手机上授权后，本机可用 `.tooling/android-sdk/platform-tools/adb install -r app/build/outputs/apk/debug/app-debug.apk` 安装。
+如果 PATH 中没有 `adb`，连接并在手机上授权后，本机可用 `.tooling/android-sdk/platform-tools/adb install --no-streaming -r app/build/outputs/apk/debug/app-debug.apk` 安装。
 
 Debug APK 使用开发签名。未生成正式发布密钥，也未替用户选择开源许可证。本机工具 `.tooling/` 与 `local.properties` 不进入 Git。
 
@@ -47,6 +48,8 @@ Debug APK 使用开发签名。未生成正式发布密钥，也未替用户选�
 - Room 事务、原始点保留、中断恢复提示、通勤边界调整及隔离演示。
 
 ## 验证与 OPPO 实测
+
+已在 OPPO PKJ110 上安装并通过 4 项设备测试：数据库重开与修正、中断恢复、四页回放，以及真实服务重复开始、页面重建、短时后台保存与通知停止。测试使用临时数据库，已确认日常行程库未变化。测试依赖固定为 Espresso 3.7.0、Runner 1.7.0、JUnit 扩展 1.3.0，以兼容该手机系统。
 
 实际执行结果见[测试记录](docs/testing.zh-CN.md)，计算口径和实现见[设计文档](docs/design.zh-CN.md)。构建通过、合成测试和真实道路效果分开说明。**OPPO 锁屏存活、北京主辅路相邻时的定位表现、到达参数和耗电仍须真机重复通勤验证**，不宣称道路或雨骑认证。
 
