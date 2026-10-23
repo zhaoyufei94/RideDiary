@@ -62,6 +62,8 @@
 
 ## 验证分层
 
+下表与 `verification.json` 的 APK 大小、校验和和设备测试为初版执行快照。后续品牌更新的构建验证见下一节，不代表重新执行了道路或设备测试。
+
 | 层次 | 范围 | 当前证据 |
 |---|---|---|
 | 资源 / 静态检查 | 中英文资源完整、源码引用、Git 空白错误 | 已通过：125 条双语资源，所有 Kotlin 引用有效 |
@@ -73,6 +75,12 @@
 应用包：`app/build/outputs/apk/debug/app-debug.apk`（11,314,623 字节），测试包：`app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk`。`apksigner verify --verbose` 通过 v2 签名验证；AAPT 确认包名 `com.ridediary`、版本 0.1.0、最低 API 26 / target 35，权限清单不含联网或全天后台位置。校验和记录在 JSON 中。
 
 Lint 的 7 条提示仅为依赖存在更新版本。初版保留已实际构建验证的固定组合，没有通过屏蔽错误或建立 Lint baseline 来跳过检查。
+
+## 品牌更新验证（2026-10-22）
+
+品牌命名与方格纸 Logo 更新后，`python3 scripts/check-resources.py` 通过：126 条双语资源，源码引用有效；`python3 scripts/generate-brand-assets.py --check` 确认 6 个 Android 品牌资源与 SVG 一致。`./scripts/gradle-local.sh :app:assembleDebug :app:lintDebug --no-daemon --console=plain` 构建成功。已检查本地链接、XML、圆形/圆角/主题预览与 48/32/24 像素效果；自适应前景的两端完整位于安全区。预览见[图标检查图](brand/icon-preview.png)。
+
+本次未检测到 ADB 设备，未更新手机安装，也未重跑设备或实路测试。本地原型因浏览器安全策略不能自动读取 `file://`，完成了静态引用检查，未声称浏览器视觉验收通过。
 
 ## 历史设备执行记录
 

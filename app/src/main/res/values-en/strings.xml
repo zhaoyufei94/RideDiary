@@ -1,6 +1,7 @@
 <resources>
     <string name="auto_route_excluded">Route incomplete or deviated; automatically excluded. Inspect the trace to correct this.</string>
     <string name="app_name">RideDiary</string>
+    <string name="app_brand">RideDiary / 途记</string>
     <string name="tagline">Your everyday rides, a little better understood.</string>
     <string name="commute">Ride</string>
     <string name="summary">Journal</string>

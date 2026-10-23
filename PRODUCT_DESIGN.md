@@ -8,6 +8,8 @@ This document guides product decisions, UI design and future development. **“C
 
 **Your everyday rides, a little better understood.**
 
+Use **RideDiary** as the English product name and **途记** as the Chinese name consistently across app headers, demo prototypes, document titles and footers. “Commute” describes a feature or use case, never a separate product name. The combined brand label is “RideDiary / 途记”.
+
 RideDiary is a phone-only, offline-first commute journal. It serves people repeatedly riding a set of commute routes who want to understand their time. Why did a ride feel congested yet finish sooner? Was movement slower, stationary time longer, or departure different?
 
 Priorities are reliable recording, an honest moving/stationary/unknown breakdown, comparison with personal history on the same route and direction, and understanding long-term patterns. Instantaneous speed, speed records and racing rankings are not product goals.
@@ -113,6 +115,8 @@ Continuous location consumes power and processing. No wake lock or battery-optim
 Exact quality, hysteresis, jump and projection thresholds live in [technical design](docs/design.en.md) and `core/Models.kt`. Metric changes require matching copy, algorithm-version and meaningful test updates.
 
 ## 8. Visual style
+
+The approved brand logo is **cream graph paper, one continuous forest-green trace, and lime/sand endpoints**, in a flat style without a notebook outline, folded corner, dimensional shadows or added motorcycle. Use it for the launcher, app header and public branding. Keep the in-app motorcycle progress indicator as a functional element. The editable master is [ridediary-logo.svg](docs/brand/ridediary-logo.svg); see [brand assets](docs/brand/README.md) for resources and Android adaptation rules.
 
 Keywords: **quiet, natural, clear, journal-like**. Preserve the [prototype](docs/prototype/ui-prototype.html) hierarchy and character while adapting native components to real windows. Use whitespace, light surfaces, thin separators, 12–16 dp corners and prominent monospace elapsed numbers. Dense speed dashboards and neon styling do not fit the current identity.
 

@@ -1,6 +1,7 @@
 <resources>
     <string name="auto_route_excluded">路线未完整完成或存在偏离，已自动排除；检查轨迹后可修正。</string>
     <string name="app_name">途记</string>
+    <string name="app_brand">RideDiary / 途记</string>
     <string name="tagline">每天的骑行，多一点了解。</string>
     <string name="commute">通勤</string>
     <string name="summary">小结</string>

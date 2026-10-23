@@ -36,6 +36,8 @@ ETA 把各条历史轨迹投影到当前位置，提取历史到此之后的剩�
 
 ## 视觉与可访问性
 
+品牌 Logo 使用米白方格纸和深绿两点轨迹，主文件为 [ridediary-logo.svg](brand/ridediary-logo.svg)。`scripts/generate-brand-assets.py` 从同一 SVG 生成 App 内标志、自适应图标的背景/前景/单色层及透明通知轮廓，避免多份路径漂移。Android 8+ 共用启动图标，支持的 Android 13+ 启动器使用单色主题层；前景缩放到安全区，具体资源约定见[品牌说明](brand/README.md)。
+
 保留原型背景 `#efeee7`、主墨绿 `#24382e`、强调 `#c9ed94`、线 `#d2d8ca`、浅底 `#e0e7d7`、表面 `#fafbf6`、等待 `#dbb98b`、记录卡 `#233d30`。小号次级文字加深为 `#53634f`。摩托车按原型 42×30 SVG 几何绘制，两端预留 24 dp，0/100% 不裁切车轮。大号等宽耗时、12–16 dp 圆角、可滚动布局、适配系统 Insets 的 Scaffold、主要操作至少 48 dp。Canvas 图表附文字语义。避免骑行操作。字体放大、TalkBack、窄屏/横屏和系统导航栏仍列入设备验收。
 
 ## 官方依据

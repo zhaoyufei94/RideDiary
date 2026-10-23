@@ -104,9 +104,9 @@ class RecordingService: Service() {
     private fun notification(): Notification {
         val stop=PendingIntent.getService(this,2,Intent(this,RecordingService::class.java).setAction(STOP),PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         val open=PendingIntent.getActivity(this,1,Intent(this,MainActivity::class.java),PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-        return NotificationCompat.Builder(this,CHANNEL).setSmallIcon(R.drawable.ic_moto).setContentTitle(getString(R.string.recording_title))
+        return NotificationCompat.Builder(this,CHANNEL).setSmallIcon(R.drawable.ic_ridediary_notification).setContentTitle(getString(R.string.recording_title))
             .setContentText(getString(R.string.recording_body)).setOngoing(true).setContentIntent(open)
-            .addAction(R.drawable.ic_moto,getString(R.string.finish),stop).build()
+            .addAction(android.R.drawable.ic_menu_close_clear_cancel,getString(R.string.finish),stop).build()
     }
     override fun onDestroy() {
         source?.stop(); active.value=false; operations.close(); scope.cancel(); super.onDestroy()

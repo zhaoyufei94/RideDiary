@@ -1,4 +1,6 @@
-# 途记 / RideDiary
+# RideDiary / 途记
+
+<img src="docs/brand/ridediary-logo.svg" width="96" height="96" alt="RideDiary 标志" />
 
 **每天的骑行，多一点了解。** · [English](README.md)
 

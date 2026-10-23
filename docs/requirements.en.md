@@ -70,7 +70,7 @@ Adapt to real system insets, font scaling and touch targets; do not reproduce th
 
 ### 5.2 Main screens
 
-**Commute / active recording**
+**Ride / active recording**
 - Before departure: recent/common route summary and Start Recording.
 - During recording: route/direction, location quality and matching/recognized/deviation/no-fix states.
 - Large elapsed time, overall average speed and cumulative stationary time; optionally current stop duration.

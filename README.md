@@ -1,5 +1,7 @@
 # RideDiary / 途记
 
+<img src="docs/brand/ridediary-logo.svg" width="96" height="96" alt="RideDiary logo" />
+
 **Your everyday rides, a little better understood.** · [中文说明](README.zh-CN.md)
 
 RideDiary is an offline, native Android commute journal. Record everyday rides with your phone, split elapsed time into moving, stationary and unknown intervals, and compare each commute with your own history.

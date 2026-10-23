@@ -62,6 +62,8 @@ Date: 2026-10-22. Executed on macOS arm64 with Temurin JDK 17.0.20.1 / Gradle 8.
 
 ## Evidence levels
 
+APK sizes, checksums and device results below and in `verification.json` are the initial execution snapshot. Later brand-update build checks are recorded separately and do not imply repeated device or road tests.
+
 | Level | Scope | Current evidence |
 |---|---|---|
 | Resources / static checks | Bilingual parity, Kotlin references, Git whitespace | Passed: 125 translated resources; all references resolve |
@@ -73,6 +75,12 @@ Date: 2026-10-22. Executed on macOS arm64 with Temurin JDK 17.0.20.1 / Gradle 8.
 App APK: `app/build/outputs/apk/debug/app-debug.apk` (11,314,623 bytes). Test APK: `app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk`. `apksigner verify --verbose` verified v2 signing; AAPT confirmed `com.ridediary`, version 0.1.0, min API 26 / target 35, and no Internet or background-location permission. Artifact checksums are in the JSON record.
 
 The 7 Lint notices only report newer dependency versions. The initial release keeps the pinned combination actually built here; no error suppression or Lint baseline was used to bypass validation.
+
+## Brand update verification (2026-10-22)
+
+After the naming and graph-paper logo update, `python3 scripts/check-resources.py` passed with 126 bilingual resources and valid source references. `python3 scripts/generate-brand-assets.py --check` confirmed six Android resources match the SVG. `./scripts/gradle-local.sh :app:assembleDebug :app:lintDebug --no-daemon --console=plain` succeeded. Local links, XML, circle/rounded/themed previews and 48/32/24 px rendering were checked; adaptive endpoints remain inside the safe area. See the [icon preview](brand/icon-preview.png).
+
+No ADB device was detected, so the phone installation was not updated and device/road tests were not rerun. Browser security prevented automated access to the local `file://` prototype; static references were checked, without claiming browser visual acceptance.
 
 ## Historical device execution record
 

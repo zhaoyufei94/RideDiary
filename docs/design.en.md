@@ -36,6 +36,8 @@ Monthly statistics select by departure local date in the stored zone, route and 
 
 ## Visuals and accessibility
 
+The brand logo uses cream graph paper and a forest-green trace joining two endpoints. [ridediary-logo.svg](brand/ridediary-logo.svg) is the master; `scripts/generate-brand-assets.py` generates the in-app logo, adaptive background/foreground/monochrome layers and transparent notification silhouette from the same geometry. One Android 8+ adaptive icon includes a monochrome layer for supported Android 13+ launchers, with foreground scaled into the safe area. See [brand assets](brand/README.md) for conventions.
+
 Use exact prototype background `#efeee7`, ink `#24382e`, accent `#c9ed94`, line `#d2d8ca`, soft `#e0e7d7`, surface `#fafbf6`, waiting `#dbb98b`, live card `#233d30`. Small secondary text is darkened to `#53634f` for readability. The motorcycle is drawn from the prototype's 42×30 SVG geometry, with reserved 24 dp edge space so its wheels are not clipped at 0/100%. Large monospace elapsed numbers, 12–16 dp corners, scrolling content, system-inset-aware Scaffold and ≥48 dp primary controls. Canvas charts include text descriptions. Driving interaction is discouraged. Large-font rendering, TalkBack, narrow phones, landscape and system navigation bars remain device acceptance items.
 
 ## Sources

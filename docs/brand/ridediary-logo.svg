@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 108 108">
+  <title>RideDiary / 途记</title>
+  <desc>A forest-green ride trace joins lime and sand endpoints on cream graph paper.</desc>
+  <g id="paper">
+    <path fill="#fafbf6" d="M0 0H108V108H0Z"/>
+    <path fill="none" stroke="#d2d8ca" stroke-width="0.2" d="M6.5 0V108M14.5 0V108M22.5 0V108M30.5 0V108M38.5 0V108M46.5 0V108M54.5 0V108M62.5 0V108M70.5 0V108M78.5 0V108M86.5 0V108M94.5 0V108M102.5 0V108M0 9.5H108M0 17.5H108M0 25.5H108M0 33.5H108M0 41.5H108M0 49.5H108M0 57.5H108M0 65.5H108M0 73.5H108M0 81.5H108M0 89.5H108M0 97.5H108M0 105.5H108"/>
+  </g>
+  <g id="route">
+    <path fill="none" stroke="#24382e" stroke-width="5.6" stroke-linecap="round" stroke-linejoin="round" d="M40.8 80.8C51 78.4 63.1 79.6 64.4 70.5C65.7 61.3 49.2 60.5 50.3 51.3C51.4 42.6 63.4 42.7 71.1 37.8C75.2 35.3 77.2 34.2 78.1 32.2"/>
+    <circle cx="33.4" cy="82.7" r="6" fill="#c9ed94" stroke="#24382e" stroke-width="3.2"/>
+    <circle cx="79.6" cy="24.8" r="6" fill="#dbb98b" stroke="#24382e" stroke-width="3.2"/>
+  </g>
+</svg>
