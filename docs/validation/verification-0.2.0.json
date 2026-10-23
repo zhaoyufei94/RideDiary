@@ -1,0 +1,83 @@
+{
+  "date": "2026-10-23",
+  "version": "0.2.0",
+  "versionCode": 10,
+  "databaseVersion": 3,
+  "environment": {
+    "os": "macOS arm64",
+    "jdk": "Temurin 17.0.20.1",
+    "gradle": "8.11.1",
+    "agp": "8.9.2",
+    "kotlin": "2.1.20",
+    "compileSdk": 35,
+    "targetSdk": 35,
+    "minSdk": 26
+  },
+  "command": "./scripts/gradle-local.sh :app:assembleDebug --no-daemon --console=plain",
+  "result": "BUILD SUCCESSFUL",
+  "validationScope": "APP_BUILD_ONLY: user requested no tests or device connection",
+  "unitTests": {
+    "status": "NOT_RUN"
+  },
+  "androidInstrumentedTests": {
+    "status": "NOT_RUN"
+  },
+  "lint": {
+    "status": "NOT_RUN"
+  },
+  "deviceInstallation": {
+    "status": "NOT_RUN"
+  },
+  "deviceConnection": {
+    "status": "NOT_USED"
+  },
+  "artifacts": [
+    {
+      "path": "app/build/outputs/apk/debug/app-debug.apk",
+      "bytes": 11696717,
+      "sha256": "a15fd6f1682a26bbb57df6072bb2f84df1d69dca4997c05b996fa14dbc5ae9d8"
+    }
+  ],
+  "signing": {
+    "configuration": ".signing/debug.keystore",
+    "gradleSigningCheck": "PASS",
+    "privateKeyCommitted": false
+  },
+  "buildLog": "docs/validation/local-build-0.2.0.txt",
+  "previousVersionEvidence": "docs/validation/verification-0.1.8.json",
+  "pendingValidation": [
+    "Room 2→3 and 1→3 migration, retained raw points/trips, plan defaults and reopening",
+    "Workday holidays/make-up weekends/ordinary dates, missing years and custom weekday independence",
+    "Today/Tomorrow planned departures, exact time boundary, midnight, timezone and recreation",
+    "Direction-specific plan updates and same-group legacy references",
+    "Top pull-to-refresh, short pages and scrolling in other tabs",
+    "Current-weather next-hour probability intervals and its sole timestamp",
+    "Route feels-like values, missing data and forecast-window coverage",
+    "One Toast per failed refresh, retained timestamps and absence of cache captions",
+    "Deduplicated progressive requests, footer attribution, weather-off and provider switching",
+    "Encrypted credential persistence, real providers/account quotas and network error paths",
+    "Bound route start through permissions, finish review and interruptions",
+    "Time entry, IME, large text, TalkBack and narrow screens",
+    "Previous unfinished notification/recreation regression"
+  ],
+  "weatherLiveIntegration": {
+    "status": "NOT_RUN_BY_AGENT",
+    "credentialsUsed": false,
+    "locationSent": false,
+    "userFeedback": "User reports 0.1.8 weather feature usable; this does not validate 0.2.0"
+  },
+  "testApkBuild": {
+    "status": "NOT_RUN",
+    "note": "Migration fixture source updated but not compiled or executed"
+  },
+  "workCalendar": {
+    "bundledYears": [
+      2026
+    ],
+    "runtimeNetwork": false,
+    "source": "https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/2026.json",
+    "notice": "https://www.gov.cn/zhengce/content/202511/content_7047090.htm",
+    "nextYearReview": "No formal 2027 notice found on 2026-10-23; upstream papers/days empty, not bundled",
+    "license": "app/src/main/assets/work-calendar/LICENSE"
+  }
+}

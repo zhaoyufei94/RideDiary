@@ -1,0 +1,28 @@
+{
+  "beforeVersion": 3,
+  "afterVersion": 4,
+  "integrity": "ok",
+  "beforeCounts": {
+    "rides": 2,
+    "routes": 2,
+    "points": 3212,
+    "segments": 48
+  },
+  "afterCounts": {
+    "rides": 2,
+    "routes": 2,
+    "points": 3212,
+    "segments": 48
+  },
+  "unchanged": {
+    "rides": true,
+    "points": true,
+    "segments": true,
+    "originalRouteFields": true
+  },
+  "newPlanModes": {
+    "CUSTOM": 2
+  },
+  "processId": "1791",
+  "currentProcessFatalException": false
+}

@@ -1,0 +1,27 @@
+--------- beginning of crash
+E/AndroidRuntime(26762): FATAL EXCEPTION: main
+E/AndroidRuntime(26762): Process: com.ridediary, PID: 26762
+E/AndroidRuntime(26762): java.lang.IllegalStateException: Room cannot verify the data integrity. Looks like you've changed schema but forgot to update the version number. You can simply fix this by increasing the version number. Expected identity hash: 57588671c5091b76b2e49e8771f924ea, found: 0e1f63cb9de2d5b48b5230e9fa77bc62
+E/AndroidRuntime(26762): 	at androidx.room.BaseRoomConnectionManager.checkIdentity(RoomConnectionManager.kt:288)
+E/AndroidRuntime(26762): 	at androidx.room.BaseRoomConnectionManager.onOpen(RoomConnectionManager.kt:267)
+E/AndroidRuntime(26762): 	at androidx.room.RoomConnectionManager$SupportOpenHelperCallback.onOpen(RoomConnectionManager.android.kt:164)
+E/AndroidRuntime(26762): 	at androidx.sqlite.db.framework.FrameworkSQLiteOpenHelper$OpenHelper.onOpen(FrameworkSQLiteOpenHelper.android.kt:279)
+E/AndroidRuntime(26762): 	at android.database.sqlite.SQLiteOpenHelper.getDatabaseLocked(SQLiteOpenHelper.java:444)
+E/AndroidRuntime(26762): 	at android.database.sqlite.SQLiteOpenHelper.getWritableDatabase(SQLiteOpenHelper.java:332)
+E/AndroidRuntime(26762): 	at androidx.sqlite.db.framework.FrameworkSQLiteOpenHelper$OpenHelper.getWritableOrReadableDatabase(FrameworkSQLiteOpenHelper.android.kt:224)
+E/AndroidRuntime(26762): 	at androidx.sqlite.db.framework.FrameworkSQLiteOpenHelper$OpenHelper.innerGetDatabase(FrameworkSQLiteOpenHelper.android.kt:180)
+E/AndroidRuntime(26762): 	at androidx.sqlite.db.framework.FrameworkSQLiteOpenHelper$OpenHelper.getSupportDatabase(FrameworkSQLiteOpenHelper.android.kt:141)
+E/AndroidRuntime(26762): 	at androidx.sqlite.db.framework.FrameworkSQLiteOpenHelper.getWritableDatabase(FrameworkSQLiteOpenHelper.android.kt:96)
+E/AndroidRuntime(26762): 	at androidx.room.driver.SupportSQLiteDriver.open(SupportSQLiteDriver.android.kt:26)
+E/AndroidRuntime(26762): 	at androidx.room.driver.SupportSQLiteConnectionPool.getSupportConnection(SupportSQLiteConnectionPool.android.kt:35)
+E/AndroidRuntime(26762): 	at androidx.room.driver.SupportSQLiteConnectionPool.useConnection(SupportSQLiteConnectionPool.android.kt:42)
+E/AndroidRuntime(26762): 	at androidx.room.RoomConnectionManager.useConnection(RoomConnectionManager.android.kt:126)
+E/AndroidRuntime(26762): 	at androidx.room.RoomDatabase.useConnection$room_runtime_release(RoomDatabase.android.kt:593)
+E/AndroidRuntime(26762): 	at androidx.room.TriggerBasedInvalidationTracker.syncTriggers$room_runtime_release(InvalidationTracker.kt:300)
+E/AndroidRuntime(26762): 	at androidx.room.TriggerBasedInvalidationTracker$createFlow$1$1.invokeSuspend(InvalidationTracker.kt:233)
+E/AndroidRuntime(26762): 	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+E/AndroidRuntime(26762): 	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:108)
+E/AndroidRuntime(26762): 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1100)
+E/AndroidRuntime(26762): 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+E/AndroidRuntime(26762): 	at java.lang.Thread.run(Thread.java:1572)
+E/AndroidRuntime(26762): 	Suppressed: kotlinx.coroutines.internal.DiagnosticCoroutineContextException: [StandaloneCoroutine{Cancelling}@2aba613, Dispatchers.Main.immediate]

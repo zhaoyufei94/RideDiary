@@ -2,6 +2,39 @@
 
 This checklist applies across Android brands. Specific models below identify historical test environments, not product restrictions. See [product design](../PRODUCT_DESIGN.md) for product and interaction requirements.
 
+## 0.2.1 startup and database upgrade repair (2026-10-23)
+
+- Read this app's crash stack and confirmed a v3 Room identity mismatch, with planMode absent. Create a private local backup under an ignored directory before repair, without publishing database contents, names or coordinates.
+- 0.2.1 / versionCode 11, Room v4: app/test APK builds passed with shared debug.keystore; v4 schema export and Git whitespace review passed. No JVM tests, Lint or unrelated regression run.
+- Four isolated migration tests passed on OPPO PKJ110 in 0.209 seconds: v1→4, v2→4, early v3→4 and final v3→4. Synthetic temporary databases only; no screen-awake or real-recording test.
+- Updated app/test packages in place. The actual v3 database upgraded to v4, cold start succeeded and reopening left the process running without a current-process FATAL EXCEPTION.
+- Before/after counts match: two completed trips, two routes, 3,212 points and 48 segments. Row-content digests match for trips, points, segments and all original route columns; SQLite integrity_check is ok. Earlier weekday plans retain CUSTOM mode. No app uninstall or data clearing.
+
+Evidence: [original crash](validation/startup-crash-0.2.0.txt), [build](validation/local-build-0.2.1.txt), [four migration cases](validation/migration-0.2.1.txt), [actual data retention](validation/data-retention-0.2.1.json), [current record](verification.json). Other 0.2.0 pending items remain open; this targeted fix is not full feature acceptance.
+
+## 0.2.0 travel plans and weather presentation (2026-10-23)
+
+- 0.2.0 / versionCode 10, Room v3; only the app assembleDebug build ran with shared debug.keystore signing. Git whitespace review passed.
+- No JVM/instrumented tests, Lint, test-APK compilation, device installation or interaction. Usable-weather feedback for 0.1.8 does not validate these workflows.
+- Resource preparation checked/bundled the 2026 State Council schedule and JSON/license. No formal 2027 schedule was found and its source is still empty, so none is bundled. Runtime calendar code reads assets only and has no request implementation.
+- Pending: 2→3/1→3 migrations, retained trips/tracks, plan persistence and same-group/direction propagation; make-up weekends, weekday holidays, ordinary workdays, missing years and custom weekdays; expired/boundary departures, midnight/timezones and recreated navigation.
+- Pending: top pull refresh, short pages/other-tab scrolling, deduplicated progressive endpoints, weather-off, empty plans, provider switching and footer-only attribution; next-hour probability, current-only timestamps, missing feels-like values and forecast coverage; Toast-only refresh failures with unchanged retained timestamps.
+- Pending: small route start through permissions, Save/Delete/Cancel, deviation exclusion/recovery, large text, TalkBack, time entry and IME layout. Screen-awake behavior is not retested.
+
+Evidence: [build](validation/local-build-0.2.0.txt), [current record](verification.json), [snapshot](validation/verification-0.2.0.json), [calendar data](work-calendar.en.md).
+
+## 0.1.8 weather and route recommendations (2026-10-23)
+
+- Version 0.1.8 / versionCode 9, Room v2 without migration: Open-Meteo, configurable QWeather, current/daily weather, departure-window previews, recommendations and bound-route start.
+- Only `./scripts/gradle-local.sh :app:assembleDebug --no-daemon --console=plain` was run; the final build passed using the shared debug.keystore. Git whitespace review passed.
+- No JVM/instrumented tests or Lint, device connection/install, live weather API calls or real credentials were used. Historical passes do not validate this version. Screen-awake behavior was not retested.
+- Pending: both live providers and account permissions/quotas; Gzip, authentication errors, 429, timeouts and offline cache; no new queries after disabling weather; denied/approximate weather permission must never start recording.
+- Pending: 15:00 home suggestions, multiple-route frequency, weekday/weekend, midnight/timezones and sparse history; endpoint forecast coverage/cache labels, QWeather minute-resolution times/local dates and source links.
+- Pending: route selection through first permission, start, Cancel/Save/Delete, recreation and interruption, retaining direction; incomplete/deviated exclusion with raw points preserved; stale choices must not leave a foreground service behind.
+- Pending: encrypted-key persistence, provider/language changes, saving through dialog dismissal/recreation, narrow screens, large text, TalkBack and finish-button access, without logging keys or precise coordinates.
+
+Evidence: [build log](validation/local-build-0.1.8.txt), [current record](verification.json), [version snapshot](validation/verification-0.1.8.json).
+
 ## 0.1.7 copy, route navigation and settings (2026-10-23)
 
 - 0.1.7 / versionCode 8, database v2; copy, linked-trip navigation, unlinking and Settings code are complete.

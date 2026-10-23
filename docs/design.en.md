@@ -1,6 +1,44 @@
-# Design and implementation / v0.1
+# Design and implementation / v0.2
 
 This document describes implementation. See [product design](../PRODUCT_DESIGN.md) for product scope, visual style and Android interaction requirements.
+
+## 0.2.1 startup crash repair
+
+The crash log identifies a Room identity mismatch: earlier v3 hash `0e1f63cb9de2d5b48b5230e9fa77bc62` lacks planMode, while final 0.2.0 hash `57588671c5091b76b2e49e8771f924ea` includes it. Reusing the schema version prevented migration and data observation threw an exception.
+
+0.2.1 / versionCode 11 uses Room v4 and registers 1→2→3→4. `MIGRATION_3_4` inspects actual columns, adding planMode only when absent and retaining early weekday plans as CUSTOM; existing modes remain unchanged. Room validates and updates identity normally, without editing its identity table or destructive rebuilding. Export schema snapshots to `app/schemas/`. Every subsequent schema change requires a new database version and migration, even before an app release.
+
+`SchemaUpgradeTest` covers synthetic v2 and both v3 variants; the existing v1 case completes four targeted device migration tests, including reopening and retention of raw points/segments, routes, exclusions and boundaries. The phone's in-place update cold-started successfully, with matching row-content digests for trips, points, segments and original route columns. See testing evidence; this does not establish unrelated feature regression coverage.
+
+## 0.2.0 plans, bundled calendars and refresh
+
+`RouteRecord` adds planMode (WORKDAYS/CUSTOM), planDays (weekday bits) and nullable planMinute (null learns history). Room v3 explicitly migrates v2, retaining entities/raw points and defaulting to workdays/automatic time. `updatePlan` uses the repository mutex/transaction to update only plan fields for all same-group/same-direction references. Trips, geometry and the opposite direction remain intact. v1 upgrades run 1→2→3. Migration fixture sources now assert defaults and plan retention after reopening, but neither tests nor the test APK were run/built this iteration.
+
+`calendar/WorkCalendar.kt` reads only APK assets, bundling the 2026 State Council schedule and holiday-cn MIT license, with no networking implementation. Apply any bundled following-year override to year-end dates, then current-year exceptions, then ordinary weekdays within a covered year. Missing years are unknown, never assumed Monday–Friday. No formal 2027 schedule was found; do not bundle its empty placeholder. Verify new annual notices and ship updates with the APK; see [calendar sources](work-calendar.en.md).
+
+`RouteSuggestions.planned` evaluates Today/Tomorrow separately in the phone’s current timezone: use the bundled calendar by default or custom weekday bits; retain departure > now and order by time/frequency. Never roll expired plans forward or use a generic afternoon preference. Automatic time is a circular median over up to 20 usable histories/60 days, separating known work/rest categories with at least three samples. Defaults without history are 08:00/18:00. Candidates are actual references; bound starts and finish review remain unchanged.
+
+Record uses Material 3 [PullToRefreshBox](https://developer.android.com/develop/ui/compose/components/pull-to-refresh) around its existing scroll content; other tabs keep ordinary scrolling. One page task coordinates one-shot location, distinct current/endpoint requests, progressive rendering, completion and footer attribution. A manual timestamp sets the minimum cache retrieval time, preventing duplicate same-point refreshes. Weather authorization never starts recording. Automatic checks remain limited to the visible STARTED page.
+
+Fetch three Open-Meteo days and 72 QWeather hours for tomorrow’s late departures. Route temperatures use feelsLike directly, never actual-temperature substitution; missing values remain “—”. Current weather previews the maximum hourly probability covering the next hour; Open-Meteo probabilities/gusts represent the preceding hour and are selected by that actual interval rather than treating past values as future forecasts, and alone displays original fetchedAt. Retain usable six-hour data on failures and emit one Toast per batch. Remove cache captions, inline refresh errors and repeated attribution/update times while retaining incomplete-coverage states. Provider configuration, encrypted credentials and rounded-coordinate queries follow the existing design.
+
+Only assembleDebug was completed: no JVM/Android tests, Lint or device operations. Annual-data download/review is build-time resource preparation, not runtime calendar access. Usable-weather feedback for 0.1.8 does not validate 0.2.0.
+
+## 0.1.8 weather and recommendation implementation
+
+`weather/` owns an independent WeatherViewModel, HTTPS client, private disk cache, Keystore settings and directional recommendations. Queries run while Record is composed and the Activity is at least STARTED; leaving Record/backgrounding stops new work. In-flight blocking requests have timeouts and cancellation prevents subsequent requests. Check every 15 minutes, cache for 20 minutes and bypass cache on manual refresh; failures may retain data up to six hours old, without invented values. At most three concurrent requests run; a Mutex deduplicates provider/credential-digest/language/rounded-point keys. Keep at most 60 digest-named cache files. Weather is display-only and never changes trip statistics.
+
+Open-Meteo `/v1/forecast` bundles current, two-day hourly and daily data using Unix UTC times, automatic timezone and m/s. QWeather uses the personal Host’s `/weather/v1/current`, `hourly?hours=48` and `daily?days=2&localTime=true`, with an `X-QW-Api-Key` header. Parse minute-resolution ISO times, probabilities in 0–1 as percentages and daily local offsets. These are client integrations; no live calls or real-key integration checks have run.
+
+Accept only HTTPS subdomains of `qweatherapi.com`, disable redirects, set seven-second connect/read timeouts and limit decompressed responses to 2 MB. Never log error URLs, response bodies, coordinates or keys. Android Keystore AES-GCM encrypts the key in private preferences; masked input never enters SavedState. Saving provider/off changes updates configuration and clears cache; turning weather off prevents new requests. Show separate 401/403, 429, network and data failures, plus Open-Meteo/CC BY 4.0 or QWeather-returned attribution links.
+
+Use a fresh existing recording fix or foreground one-shot location (approximate access accepted, ten-second timeout). Explicitly label recent route-origin fallback. Weather permission is separate and never starts recording. No maps, geocoding or background weather jobs are involved; only two-decimal coordinates leave the device, never full tracks.
+
+`RouteSuggestions` uses up to 20 latest usable samples per direction from 60 days. Rank frequency, recency, circular departure-time distance and morning/afternoon direction preference; use weekday/weekend subsets when at least three exist. Candidates are actual existing directional references. Fewer than three samples is a reference time; no samples never becomes a fabricated usual time. Cards combine endpoint hourly forecasts from departure through median duration (one hour without history), with stale/partial coverage labels. Endpoint forecasts cannot describe every point along the route.
+
+Quick start carries `EXTRA_ROUTE_ID` through an Intent and binds reference/direction in a transaction, retaining pending permission selection in SavedState. The Service retains explicit selection for finish, restricting candidates and preserving the association; incomplete/deviated rides remain auto-excluded. Generic start keeps full-track automatic matching. Process death still marks interruption without resuming, retaining persisted routeId. Unavailable choices produce a dedicated error. Room remains v2 without migration; screen-awake logic is unchanged.
+
+Official references: [Open-Meteo](https://open-meteo.com/en/docs), [QWeather current](https://dev.qweather.com/docs/api/weather/weather-current/), [hourly](https://dev.qweather.com/docs/api/weather/weather-hourly-forecast/), [daily](https://dev.qweather.com/docs/api/weather/weather-daily-forecast/), [key authentication](https://dev.qweather.com/docs/configuration/authentication/), [API Host](https://dev.qweather.com/docs/configuration/api-host/), reviewed 2026-10-23. Follow attribution and account terms; non-commercial free access is not unlimited commercial access.
 
 ## 0.1.7 navigation, associations and settings implementation
 
@@ -34,7 +72,7 @@ On a new process, existing RECORDING rows become INTERRUPTED, with the wall-cloc
 
 `rides`: original UTC start/end, recording timezone, persisted elapsed time and last save wall time, state, route/direction, exclusion flag/reason, algorithm version, optional corrected commute boundaries, confirmed-arrival flag. `points`: ordered raw fixes with UTC, ride-relative elapsed time, WGS84 coordinate system, accuracy, nullable speed/speed accuracy and quality. `segments`: derived moving/stationary/unknown intervals with distance; replaceable from raw points. `routes`: source ride ID, ordered reference points, independent direction, endpoint radii and version.
 
-All writes are local. No Internet permission, trackers, coordinate logs, map API or GMS. Backup/cloud transfer exclusions are in the manifest and extraction rules. The app uses Android app-private storage; no additional application encryption is provided. Language is the only SharedPreferences setting. There is no destructive database migration fallback. A future schema change must include a migration and retention test. Raw fixes and original timestamps remain after edits; UI metrics are recalculated on selected boundaries rather than accumulated monthly counters.
+Trips and full tracks stay local. Optional weather uses Internet access with rounded coordinates; there are no trackers, precise coordinate logs, map APIs or GMS. Backup/cloud transfer exclusions are in the manifest and extraction rules. Tracks use app-private storage without additional application encryption. SharedPreferences stores language, weather preferences and Keystore-encrypted QWeather credentials. There is no destructive database migration fallback. A future schema change must include a migration and retention test. Raw fixes and original timestamps remain after edits; UI metrics are recalculated on selected boundaries rather than accumulated monthly counters.
 
 ## Analysis version 1.0
 

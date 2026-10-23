@@ -1,0 +1,113 @@
+{
+  "date": "2026-10-23",
+  "version": "0.2.1",
+  "versionCode": 11,
+  "databaseVersion": 4,
+  "environment": {
+    "os": "macOS arm64",
+    "jdk": "Temurin 17.0.20.1",
+    "gradle": "8.11.1",
+    "agp": "8.9.2",
+    "kotlin": "2.1.20",
+    "compileSdk": 35,
+    "targetSdk": 35,
+    "minSdk": 26
+  },
+  "command": "./scripts/gradle-local.sh :app:assembleDebug :app:assembleDebugAndroidTest --no-daemon --console=plain",
+  "result": "BUILD SUCCESSFUL",
+  "validationScope": "TARGETED_DEVICE_MIGRATION_AND_STARTUP: no screen-awake, real recording or full feature regression",
+  "unitTests": {
+    "status": "NOT_RUN"
+  },
+  "androidInstrumentedTests": {
+    "status": "PASS",
+    "count": 4,
+    "seconds": 0.209,
+    "scope": "SchemaUpgradeTest (3), RouteWorkflowTest versionOneMigration (1)",
+    "log": "docs/validation/migration-0.2.1.txt",
+    "usesDisposableSyntheticDatabases": true
+  },
+  "lint": {
+    "status": "NOT_RUN"
+  },
+  "deviceInstallation": {
+    "status": "PASS",
+    "mode": "in-place update with adb install --no-streaming -r",
+    "version": "0.2.1",
+    "appDataCleared": false
+  },
+  "deviceConnection": {
+    "status": "USED",
+    "model": "OPPO PKJ110"
+  },
+  "artifacts": [
+    {
+      "path": "app/build/outputs/apk/debug/app-debug.apk",
+      "bytes": 11187017,
+      "sha256": "5024a40ea070996ddcce01b351a1cb02db024ab17e4c47aebcdf2dde8fe4f81d"
+    },
+    {
+      "path": "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk",
+      "bytes": 1122614,
+      "sha256": "59b3a2291f291831898e44626d09ea040fd895d6961277b5883bb075a9a3908d"
+    }
+  ],
+  "signing": {
+    "configuration": ".signing/debug.keystore",
+    "gradleSigningCheck": "PASS",
+    "privateKeyCommitted": false
+  },
+  "buildLog": "docs/validation/local-build-0.2.1.txt",
+  "previousVersionEvidence": "docs/validation/verification-0.2.0.json",
+  "pendingValidation": [
+    "Workday holidays/make-up weekends/ordinary dates, missing years and custom weekday independence",
+    "Today/Tomorrow planned departures, exact time boundary, midnight, timezone and recreation",
+    "Direction-specific plan updates and same-group legacy references",
+    "Top pull-to-refresh, short pages and scrolling in other tabs",
+    "Current-weather next-hour probability intervals and its sole timestamp",
+    "Route feels-like values, missing data and forecast-window coverage",
+    "One Toast per failed refresh, retained timestamps and absence of cache captions",
+    "Deduplicated progressive requests, footer attribution, weather-off and provider switching",
+    "Encrypted credential persistence, real providers/account quotas and network error paths",
+    "Bound route start through permissions, finish review and interruptions",
+    "Time entry, IME, large text, TalkBack and narrow screens",
+    "Previous unfinished notification/recreation regression",
+    "Full UI, schedule, weather and real-road regressions remain outside this targeted startup fix"
+  ],
+  "weatherLiveIntegration": {
+    "status": "NOT_RUN_BY_AGENT",
+    "credentialsUsed": false,
+    "locationSent": false,
+    "userFeedback": "User reports 0.1.8 weather feature usable; this does not validate 0.2.0"
+  },
+  "testApkBuild": {
+    "status": "PASS"
+  },
+  "workCalendar": {
+    "bundledYears": [
+      2026
+    ],
+    "runtimeNetwork": false,
+    "source": "https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/2026.json",
+    "notice": "https://www.gov.cn/zhengce/content/202511/content_7047090.htm",
+    "nextYearReview": "No formal 2027 notice found on 2026-10-23; upstream papers/days empty, not bundled",
+    "license": "app/src/main/assets/work-calendar/LICENSE"
+  },
+  "startup": {
+    "status": "PASS",
+    "coldStart": true,
+    "reopened": true,
+    "currentProcessFatalException": false
+  },
+  "dataRetention": {
+    "status": "PASS",
+    "evidence": "docs/validation/data-retention-0.2.1.json",
+    "privateBackup": "ignored .tooling/diagnostics, not committed"
+  },
+  "schemaExport": "app/schemas/com.ridediary.data.RideDatabase/4.json",
+  "documentationReview": {
+    "bilingualResources": 218,
+    "resourceReferences": "PASS",
+    "gitWhitespace": "PASS"
+  }
+}

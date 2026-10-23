@@ -9,6 +9,7 @@ import android.os.*
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.ridediary.*
+import com.ridediary.data.RouteUnavailableException
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,6 +20,7 @@ class RecordingService: Service() {
     private val scope=CoroutineScope(SupervisorJob()+Dispatchers.Main.immediate)
     private var source: LocationSource? = null
     private var rideId: String? = null
+    private var boundRouteId: String? = null
     private var starting=false
     private var arrivalReview=false
     private var origin=0L
@@ -60,6 +62,7 @@ class RecordingService: Service() {
         if (ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             quality.value="PRECISE_REQUIRED"; stopSelf(); return START_NOT_STICKY
         }
+        boundRouteId=intent?.getStringExtra(EXTRA_ROUTE_ID)
         starting=true
         try {
             if (Build.VERSION.SDK_INT >= 29) startForeground(1,notification(),ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
@@ -68,7 +71,8 @@ class RecordingService: Service() {
         operations.trySend {
             app.ready.await()
             origin=SystemClock.elapsedRealtime()
-            rideId=app.repository.start(System.currentTimeMillis())
+            try { rideId=app.repository.start(System.currentTimeMillis(),boundRouteId) }
+            catch (_: RouteUnavailableException) { quality.value="ROUTE_UNAVAILABLE"; close(); return@trySend }
             active.value=true
             source=AndroidLocationSource(this@RecordingService).also { location ->
                 location.start(origin,{ fix ->
@@ -102,7 +106,7 @@ class RecordingService: Service() {
     }
     private fun elapsed()=SystemClock.elapsedRealtime()-origin
     private suspend fun finish() {
-        rideId?.let { app.repository.update(it,elapsed(),System.currentTimeMillis(),finish=true) }
+        rideId?.let { app.repository.update(it,elapsed(),System.currentTimeMillis(),finish=true,fixedRouteId=boundRouteId) }
         close()
     }
     private fun close() {
@@ -122,6 +126,7 @@ class RecordingService: Service() {
     }
     override fun onBind(intent: Intent?): IBinder? = null
     companion object {
+        const val EXTRA_ROUTE_ID="com.ridediary.ROUTE_ID"
         const val CHANNEL="ride_recording"
         const val STOP="com.ridediary.STOP"
         const val DISCARD="com.ridediary.DISCARD"

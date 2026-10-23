@@ -1,8 +1,35 @@
 # RideDiary / 途记 Product Design
 
-Version: v0.1.7 product baseline · Updated: 2026-10-23 · [中文](PRODUCT_DESIGN.zh-CN.md)
+Version: v0.2.1 product baseline · Updated: 2026-10-23 · [中文](PRODUCT_DESIGN.zh-CN.md)
 
 This document guides product decisions, UI design and future development. **“Current” describes existing behavior; “requirements” constrain future changes and do not imply completed implementation or acceptance; “planned” means not delivered.** The product targets Android phones across brands, cities, motorcycle models and commute routes.
+
+## 0.2.1 upgrade compatibility
+
+Fix startup crashes after updating certain 0.2.0 builds. Room v4 handles both v3 variants, with or without planMode, retaining trips, raw tracks, boundaries, exclusion states and original route fields. Earlier weekday-only plans retain Custom weekdays and can be changed to Workdays in route settings. New routes and direct v2 upgrades still default to Workdays. App/test builds and four targeted device migration cases passed; this phone's upgrade, startup and data retention are verified within the testing record's scope.
+
+## 0.2.0 travel plans and two-day suggestions
+
+- **Record:** pull down to refresh weather and Today/Tomorrow forecasts; remove recent routes and the separate refresh button. Provider/license links appear once in the footer, with deduplicated progressive queries.
+- **Plans:** configure Workdays or Custom weekdays per direction. Workdays excludes holidays and includes make-up workdays from the bundled China calendar; custom weekdays ignore holiday rules, and clearing all excludes a direction. Bundle 2026. No formal 2027 schedule was found, so no estimates or empty calendar are shipped. Update calendars with APK releases, without runtime requests. Missing years show an explicit state and withhold workday suggestions.
+- **Time and dates:** choose a fixed time or a circular median from up to 20 usable same-direction trips over 60 days, separating known work/rest categories when at least three samples exist. Defaults without history are 08:00 to work and 18:00 to home. Check today/tomorrow in the phone’s current timezone; retain strictly future departures and order by time. Reached times disappear without shifting or auto-recording. Update on foreground entry, minute boundaries and pull refresh.
+- **Weather:** replace current precipitation amount with the maximum hourly probability covering the next 60 minutes. Only current weather shows retrieval time. Route cards label feels-like temperature ranges, precipitation chance and gusts from endpoints across planned departure through median duration, or one hour without history. Missing data stays “—”, incomplete coverage is explicit and actual temperature never substitutes for missing feels-like values.
+- **Refresh feedback:** retain usable data up to six hours old and show one Toast per failed batch, without cache/failure captions. No data remains unavailable, and retained data keeps its original timestamp. Current and endpoint weather share queries; route cards repeat neither time nor source.
+- **Quick start:** retain route, direction, departure and a small play icon with a 48 dp target. Selection stays bound through permissions and saving; missing reverse references are never invented.
+- **Data:** Room v3 explicitly adds plan mode, weekday bits and optional fixed minute, defaulting existing routes to workdays/automatic time while retaining trips/tracks. Update all same-group/same-direction references together without affecting the opposite direction. Preserve the palette, graph-paper logo and motorcycle progress.
+
+Version 0.2.0 / versionCode 10 retains shared debug.keystore signing. The user reports usable weather in 0.1.8; this version is build-only, with plans, migration, pull refresh and presentation pending acceptance. See [workday calendars](docs/work-calendar.en.md) for sources and annual updates.
+
+## 0.1.8 weather and route recommendations
+
+- **Record:** show current conditions, feels-like temperature, wind/gusts, current precipitation and today’s range/rain chance; label a recent route-origin fallback explicitly. Preserve cream/green branding and motorcycle progress.
+- **Recommendations:** rank up to 20 usable same-direction trips from 60 days by frequency, recency, departure time and time of day, favoring To home in the afternoon without inventing reverse references. Use a circular median and separate weekday/weekend samples when at least three exist; fewer than three is a reference time.
+- **Quick start:** small play icons retain 48 dp targets and route/direction labels. Selection survives permissions and stays bound through saving; incomplete/deviated trips retain the association but are excluded until corrected.
+- **Forecast window:** combine origin/destination hourly temperatures, peak rain probability and gusts from departure through median historical duration, using one hour without duration history. Missing data remains explicit. A usual departure up to six hours ago previews now; otherwise preview tomorrow.
+- **Settings:** default Open-Meteo, optional off switch or QWeather using the user’s dedicated API Host and API Key, applied on save. Retain the logo, approved slogan and language selection.
+- **Data and fallback:** only weather uses networking, with two-decimal coordinates and no full tracks. Approximate location suffices for weather; recording still needs precise access. Cache for 20 minutes; marked fallback may be up to six hours old. Missing values use “—”, never invented clear skies or zero rain. Weather failure cannot block recording; no background weather polling or reminders.
+
+That version was 0.1.8 / versionCode 9, database v2. Only the app build is complete; live weather, permission/UI behavior and bound-route workflows remain unverified.
 
 ## 0.1.7 terminology, route navigation and settings
 
@@ -13,7 +40,7 @@ This document guides product decisions, UI design and future development. **“C
 - **Settings:** the top-right gear opens the logo, installed version, slogan and Simplified Chinese/English selection. Language changes preserve the current page.
 - **Brand copy:** retain “每天的骑行，多一点了解” and “Your everyday rides, a little better understood.” as the Chinese/English slogans, shown in Settings.
 
-This version is 0.1.7 / versionCode 8; the database remains v2. See testing documentation for validation status.
+That version was 0.1.7 / versionCode 8; the database remains v2. See testing documentation for validation status.
 
 ## 0.1.6 route and finish contract
 
@@ -56,6 +83,7 @@ Principles:
 | Comparison | Same-route/direction history, same-position elapsed differences, historical remaining-time ETA ranges | Departure-window-aware sampling |
 | History and statistics | Details, classification/exclusion/boundary correction, linked month/route/direction filters | Departure-time/duration scatter plots and trends |
 | Experience | Four native screens, Chinese/English switching, system Back to Trips | Large-text and screen-reader improvements, large screens, dark theme |
+| Weather and departure | Current/daily weather, plan-window forecasts, Today/Tomorrow routes and directional quick start | Configurable adverse-weather reminders |
 | Data management | Private local database, retained raw fixes, system backups disabled | User-controlled local export, backup, import and migrations |
 
 No map basemap, navigation, live traffic, red-light detection, account or cloud sync is currently provided. Vehicle displays, CAN/OBD, third-party navigation scraping, Accessibility/MediaProjection capture and racing features are outside current scope. Prototype decoration or sample numbers do not establish a shipped feature.
@@ -88,7 +116,7 @@ Mark interrupted rides separately, retain saved points and never automatically r
 
 | Screen | Hierarchy and actions | Empty/degraded states |
 |---|---|---|
-| Record | Primary: recording state, elapsed, start/finish; secondary: location quality, route/motorcycle progress; supporting: breakdown, history, ETA | Clear start entry; ordinary ride without a route; no placeholders pretending to be history |
+| Record | Primary: recording state, elapsed, start/finish; secondary: location quality, route/motorcycle progress; supporting: breakdown, history, ETA; before recording: weather, Today/Tomorrow routes | Clear start entry; ordinary ride without a route; no placeholders pretending to be history |
 | Trips | History → details/arrival → create route, classify, exclude, adjust boundaries | Explain recording; visibly mark interrupted and excluded rides |
 | Statistics | Month/route/direction filters → totals → per-ride stacked chart → clock/duration statistics | Explain no valid samples; label one sample; zero stationary time is valid |
 | Routes | Name, direction, length, sample count, local track sketch and history entry | Explain creation from history; do not present sketches as navigation maps |
@@ -179,7 +207,7 @@ Scrolling, insets, primary touch sizes and some semantics exist today. Full Back
 
 ## 10. Privacy and ownership
 
-Currently no Internet permission, uploads, accounts or telemetry. Tracks use app-private storage; system cloud/device-transfer backups are disabled, with no precise coordinate logging. Android storage protection applies; no extra application encryption or universal manufacturer-transfer verification is claimed.
+Trips and full tracks stay in app-private storage without uploads, accounts or telemetry. Optional weather uses Internet access to send two-decimal current/route-endpoint coordinates to the selected service and can be disabled. Android Keystore encrypts the QWeather key; host and language preferences remain local. Tracks have no additional application encryption. System cloud/device-transfer backups are disabled, with no precise coordinate logging or universal manufacturer-transfer verification claim.
 
 Explain that uninstalling/clearing storage loses records, with no current export/cloud recovery. Future export/import/backup must be user-initiated and define formats, privacy and retention. Classification/exclusion retains raw fixes. Future deletion must explain consequences and require confirmation. Schema changes need migrations and retention tests rather than destructive rebuilding.
 
@@ -206,6 +234,7 @@ Read this specification first, then [README](README.md) for usage, [technical de
 | `app/src/main/java/com/ridediary/core/` | Quality, segmentation, route projection and statistics |
 | `app/src/main/java/com/ridediary/data/` | Models, Room, transactions, correction and recovery |
 | `app/src/main/java/com/ridediary/recording/` | System location, foreground service, recording lifecycle |
+| `app/src/main/java/com/ridediary/weather/` | Weather providers, cache, credentials, location queries and recommendations |
 | `app/src/main/java/com/ridediary/ui/` | Screens, components, charts, theme, dialogs and ViewModel |
 | `app/src/main/res/values/strings.xml`, `values-en/strings.xml` | Chinese/English UI copy |
 | `docs/prototype/ui-prototype.html` | Visual/demo reference, not Android functionality |

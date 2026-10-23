@@ -46,8 +46,8 @@ android {
         applicationId = "com.ridediary"
         minSdk = 26
         targetSdk = 35
-        versionCode = 8
-        versionName = "0.1.7"
+        versionCode = 11
+        versionName = "0.2.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     sourceSets {
@@ -70,6 +70,8 @@ android {
     }
     buildTypes { release { isMinifyEnabled = false } }
 }
+ksp { arg("room.schemaLocation", "$projectDir/schemas") }
+
 dependencies {
     val bom = platform("androidx.compose:compose-bom:2025.04.01")
     implementation(bom)

@@ -1,0 +1,65 @@
+{
+  "date": "2026-10-23",
+  "version": "0.1.8",
+  "versionCode": 9,
+  "databaseVersion": 2,
+  "environment": {
+    "os": "macOS arm64",
+    "jdk": "Temurin 17.0.20.1",
+    "gradle": "8.11.1",
+    "agp": "8.9.2",
+    "kotlin": "2.1.20",
+    "compileSdk": 35,
+    "targetSdk": 35,
+    "minSdk": 26
+  },
+  "command": "./scripts/gradle-local.sh :app:assembleDebug --no-daemon --console=plain",
+  "result": "BUILD SUCCESSFUL",
+  "validationScope": "APP_BUILD_ONLY: user requested no tests or device connection",
+  "unitTests": {
+    "status": "NOT_RUN"
+  },
+  "androidInstrumentedTests": {
+    "status": "NOT_RUN"
+  },
+  "lint": {
+    "status": "NOT_RUN"
+  },
+  "deviceInstallation": {
+    "status": "NOT_RUN"
+  },
+  "deviceConnection": {
+    "status": "NOT_USED"
+  },
+  "artifacts": [
+    {
+      "path": "app/build/outputs/apk/debug/app-debug.apk",
+      "bytes": 11655203,
+      "sha256": "f63a8048fb32404bd65776018809f8cc980eac05449d2e7e8f3d9428b0069a5b"
+    }
+  ],
+  "signing": {
+    "configuration": ".signing/debug.keystore",
+    "gradleSigningCheck": "PASS",
+    "privateKeyCommitted": false
+  },
+  "buildLog": "docs/validation/local-build-0.1.8.txt",
+  "previousVersionEvidence": "docs/validation/verification-0.1.7.json",
+  "pendingValidation": [
+    "Open-Meteo and personal QWeather credentials, permissions and quota against live APIs",
+    "Weather approximate/denied permissions never start recording; normal recording still needs precise access",
+    "Gzip, auth/429 errors, timeouts, offline/stale cache, disabling weather and foreground lifecycle",
+    "15:00 home recommendation, weekday/weekend, midnight/timezones, sparse history and reference labels",
+    "Route endpoint forecast coverage, minute-resolution QWeather times, local dates and attribution",
+    "Selected route/direction across permissions, save/discard/cancel, recreation and interruption",
+    "Incomplete/deviated explicit-route exclusion, stale route selection and raw-point retention",
+    "Encrypted credential persistence, settings save/dismissal/recreation and language changes",
+    "Narrow screens, large text, TalkBack and finish-button accessibility",
+    "Previous unfinished notification/recreation regression"
+  ],
+  "weatherLiveIntegration": {
+    "status": "NOT_RUN",
+    "credentialsUsed": false,
+    "locationSent": false
+  }
+}

@@ -7,6 +7,8 @@ import kotlinx.coroutines.sync.withLock
 import java.time.ZoneId
 import java.util.UUID
 
+class RouteUnavailableException: IllegalStateException()
+
 class RideRepository(val db: RideDatabase) {
     val dao=db.dao()
     private val mutex=Mutex()
@@ -21,10 +23,11 @@ class RideRepository(val db: RideDatabase) {
             }
         }
     }
-    suspend fun start(now: Long): String = mutex.withLock {
+    suspend fun start(now: Long,routeId: String?=null): String = mutex.withLock {
         db.withTransaction {
             dao.active().firstOrNull()?.ride?.id ?: UUID.randomUUID().toString().also {
-                dao.saveRide(RideRecord(it,now,ZoneId.systemDefault().id))
+                val route=routeId?.let { id -> dao.routes().firstOrNull { it.id==id } ?: throw RouteUnavailableException() }
+                dao.saveRide(RideRecord(it,now,ZoneId.systemDefault().id,routeId=route?.id,direction=route?.direction ?: "OTHER"))
             }
         }
     }
@@ -35,7 +38,7 @@ class RideRepository(val db: RideDatabase) {
             SegmentRecord(ride.id,index,s.from,s.to,s.motion.name,s.distance)
         })
     }
-    suspend fun update(id: String, elapsed: Long, now: Long, fix: Fix? = null, finish: Boolean = false): RideRecord? = mutex.withLock {
+    suspend fun update(id: String, elapsed: Long, now: Long, fix: Fix? = null, finish: Boolean = false,fixedRouteId: String? = null): RideRecord? = mutex.withLock {
         db.withTransaction {
             val data=dao.ride(id) ?: return@withTransaction null
             if (data.ride.state != "RECORDING") return@withTransaction data.ride
@@ -49,8 +52,9 @@ class RideRepository(val db: RideDatabase) {
                 points += tagged
             }
             val routes=dao.routes()
-            val shapes=routes.map { it.route() }
-            val reverseSources=if(finish) routes.filter { source ->
+            val fixed=routes.firstOrNull { it.id==fixedRouteId }
+            val shapes=routes.filter { fixed==null || it.id==fixed.id }.map { it.route() }
+            val reverseSources=if(finish && fixed==null) routes.filter { source ->
                 routes.none { it.groupKey==source.groupKey && it.direction==RouteIdentity.opposite(source.direction) }
             }.associateBy { "reverse:${it.id}" } else emptyMap()
             val candidates=shapes+reverseSources.values.map { RouteIdentity.reversed(it.route()) }
@@ -67,10 +71,10 @@ class RideRepository(val db: RideDatabase) {
                 } else match=null
             }
             val arrived=match!=null && Routing.arrived(points,match!!,elapsed)
-            val selectedRoute=if(finish) match?.route?.id else data.ride.routeId ?: match?.route?.id
+            val selectedRoute=fixed?.id ?: if(finish) match?.route?.id else data.ride.routeId ?: match?.route?.id
             val partialOrDeviated=finish && selectedRoute!=null && (match==null || match!!.deviated || match!!.progress<Policy.ARRIVAL_PROGRESS)
             val ride=data.ride.copy(elapsed=elapsed.coerceAtLeast(data.ride.elapsed),lastSavedUtc=now,
-                routeId=selectedRoute, direction=match?.route?.direction ?: if(finish) "OTHER" else data.ride.direction,
+                routeId=selectedRoute, direction=fixed?.direction ?: match?.route?.direction ?: if(finish) "OTHER" else data.ride.direction,
                 state=if(finish) "COMPLETED" else "RECORDING",endUtc=if(finish) now else null,
                 arrivalConfirmed=finish && (arrived || data.ride.arrivalSuggested) && match!=null && !match!!.deviated && match!!.progress>=Policy.ARRIVAL_PROGRESS,
                 arrivalSuggested=data.ride.arrivalSuggested || arrived,
@@ -132,6 +136,17 @@ class RideRepository(val db: RideDatabase) {
                     else variant.copy(name=RouteIdentity.name(name),version=variant.version+1))
             }
             dao.updateRouteDirection(id,direction)
+        }
+    }
+    suspend fun updatePlan(id: String,days: Int,minute: Int?,mode: String="CUSTOM") = mutex.withLock {
+        require(days in 0..127 && (minute==null || minute in 0..1439) && mode in listOf("WORKDAYS","CUSTOM"))
+        db.withTransaction {
+            val routes=dao.routes()
+            val route=routes.firstOrNull { it.id==id } ?: throw RouteUnavailableException()
+            // A plan belongs to one logical route direction, including legacy references.
+            routes.filter { it.groupKey==route.groupKey && it.direction==route.direction }.forEach {
+                dao.saveRoute(it.copy(planDays=days,planMinute=minute,planMode=mode))
+            }
         }
     }
     suspend fun deleteRoute(id: String) = mutex.withLock {

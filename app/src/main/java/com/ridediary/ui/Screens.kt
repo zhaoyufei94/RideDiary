@@ -36,9 +36,10 @@ import com.ridediary.R
 import com.ridediary.core.*
 import com.ridediary.data.*
 import com.ridediary.recording.RecordingService
+import com.ridediary.weather.*
 import kotlinx.coroutines.delay
 
-@Composable fun RideDiaryScreen(onStart: ()->Unit,onStop: ()->Unit,onLanguage: ()->Unit,onDiscard: ()->Unit={},stopReviewToken: Int=0,vm: RideViewModel=viewModel()) {
+@Composable fun RideDiaryScreen(onStart: ()->Unit,onStop: ()->Unit,onLanguage: ()->Unit,onDiscard: ()->Unit={},stopReviewToken: Int=0,vm: RideViewModel=viewModel(),onStartRoute: (String)->Unit={ onStart() },weather: WeatherViewModel=viewModel()) {
     val context=LocalContext.current
     val rides by vm.rides.collectAsStateWithLifecycle()
     val routes by vm.routes.collectAsStateWithLifecycle()
@@ -50,6 +51,10 @@ import kotlinx.coroutines.delay
     var settingsOpen by rememberSaveable { mutableStateOf(false) }
     var unlinkingRide by remember { mutableStateOf<Pair<RideData,String>?>(null) }
     var editingRoute by remember { mutableStateOf<RouteRecord?>(null) }
+    var editingPlanId by rememberSaveable { mutableStateOf<String?>(null) }
+    var refreshToken by remember { mutableLongStateOf(0) }
+    var refreshing by remember { mutableStateOf(false) }
+    fun refreshRecord() { if(!refreshing) { refreshing=true; refreshToken=System.currentTimeMillis() } }
     var deletingRoute by remember { mutableStateOf<RouteRecord?>(null) }
     var deletingRide by remember { mutableStateOf<RideData?>(null) }
     BackHandler(enabled=(tab==1 && selected!=null) || (tab==3 && (selected!=null || selectedRoute!=null))) {
@@ -62,11 +67,13 @@ import kotlinx.coroutines.delay
     var handledStop by rememberSaveable { mutableIntStateOf(0) }
     var handledArrival by rememberSaveable { mutableStateOf<String?>(null) }
     var classifyAfterSave by rememberSaveable { mutableStateOf<String?>(null) }
+    var pendingRouteId by rememberSaveable { mutableStateOf<String?>(null) }
+    fun startPending() { val route=pendingRouteId; pendingRouteId=null; if(route!=null) onStartRoute(route) else onStart() }
     val permission=rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { results ->
         val precise=results[Manifest.permission.ACCESS_FINE_LOCATION] == true || ContextCompat.checkSelfPermission(context,Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED
         denied=!precise
         notificationsDenied=Build.VERSION.SDK_INT>=33 && ContextCompat.checkSelfPermission(context,Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED
-        if(precise) onStart()
+        if(precise) startPending()
     }
     val active=rides.firstOrNull { it.ride.state=="RECORDING" }
     LaunchedEffect(stopReviewToken,active?.ride?.id,active?.ride?.arrivalSuggested) {
@@ -83,9 +90,10 @@ import kotlinx.coroutines.delay
         }
         previous=active?.ride?.id
     }
-    fun begin() {
+    fun begin(routeId: String?=null) {
+        pendingRouteId=routeId
         if(ContextCompat.checkSelfPermission(context,Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED) {
-            if(Build.VERSION.SDK_INT>=33 && ContextCompat.checkSelfPermission(context,Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED) explain=true else onStart()
+            if(Build.VERSION.SDK_INT>=33 && ContextCompat.checkSelfPermission(context,Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED) explain=true else startPending()
         } else explain=true
     }
     val pageScroll=key(tab,selectedRoute,selected) { rememberScrollState() }
@@ -96,7 +104,8 @@ import kotlinx.coroutines.delay
             }
         }
     }) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding).verticalScroll(pageScroll).padding(horizontal=20.dp,vertical=16.dp),verticalArrangement=Arrangement.spacedBy(14.dp)) {
+        RecordRefreshContainer(enabled=tab==0,refreshing=refreshing,onRefresh={ refreshRecord() },modifier=Modifier.fillMaxSize().padding(padding)) {
+        Column(Modifier.fillMaxSize().verticalScroll(pageScroll).padding(horizontal=20.dp,vertical=16.dp),verticalArrangement=Arrangement.spacedBy(14.dp)) {
             Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically) {
                 Row(Modifier.weight(1f),horizontalArrangement=Arrangement.spacedBy(8.dp),verticalAlignment=Alignment.CenterVertically) {
                     Image(painterResource(R.drawable.ic_ridediary_logo),contentDescription=null,modifier=Modifier.size(32.dp).clip(RoundedCornerShape(8.dp)))
@@ -111,14 +120,11 @@ import kotlinx.coroutines.delay
                 0 -> {
                     Text(stringResource(if(active==null) R.string.ready else R.string.ride_title),style=MaterialTheme.typography.headlineMedium)
                     if(active!=null) LiveRide(active,routes,rides,quality)
-                    else {
-                        val last=rides.firstOrNull { it.ride.routeId!=null }
-                        val route=routes.firstOrNull { it.id==last?.ride?.routeId }
-                        if(route!=null) Panel {
-                            Text(stringResource(R.string.last_route),style=MaterialTheme.typography.labelLarge,color=Muted)
-                            Text(routeName(route.name)+" · "+directionName(route.direction))
-                        }
+                    val dashboard=rememberRecordDashboard(weather,rides,routes,active,refreshToken)
+                    LaunchedEffect(dashboard.data.token,dashboard.data.loading,refreshToken) {
+                        refreshing=refreshToken>0 && (dashboard.data.token!=refreshToken || dashboard.data.loading)
                     }
+                    if(active==null) RecordWeather(weather,dashboard,onRefresh={ refreshRecord() }) { settingsOpen=true }
                     if(denied) Panel {
                         Text(stringResource(R.string.permission_denied))
                         TextButton(onClick={ context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,"package:${context.packageName}".toUri())) }) { Text(stringResource(R.string.open_settings)) }
@@ -126,12 +132,15 @@ import kotlinx.coroutines.delay
                     if(notificationsDenied) Note(stringResource(R.string.notification_denied))
                     if(quality=="LOCATION_OFF" && active!=null) TextButton(onClick={ context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) }) { Text(stringResource(R.string.open_settings)) }
                     if(active==null && quality in listOf("STORAGE_ERROR","START_FAILED","PERMISSION_LOST")) Note(stringResource(if(quality=="STORAGE_ERROR") R.string.error else if(quality=="START_FAILED") R.string.quality_start else R.string.quality_permission))
+                    if(active==null && quality=="ROUTE_UNAVAILABLE") Note(stringResource(R.string.route_unavailable))
                     if(active==null) Button(onClick={ begin() },modifier=Modifier.fillMaxWidth().heightIn(min=52.dp),shape=RoundedCornerShape(12.dp)) {
                         Text(stringResource(R.string.start))
                     }
                     if(active!=null) {
                         OutlinedButton(onClick={ finishDialog=true },modifier=Modifier.fillMaxWidth().heightIn(min=52.dp)) { Text(stringResource(R.string.finish)) }
-                    }
+                        RecordWeather(weather,dashboard,onRefresh={ refreshRecord() }) { settingsOpen=true }
+                    } else RouteRecommendations(dashboard,weather) { begin(it) }
+                    RecordWeatherSources(weather,dashboard)
                 }
                 1 -> {
                     val detail=rides.firstOrNull { it.ride.id==selected }
@@ -152,7 +161,7 @@ import kotlinx.coroutines.delay
                         RideDetail(detail,routes,rides,vm,onDelete={ deletingRide=detail })
                     } else if(group!=null) {
                         TextButton(onClick={ selectedRoute=null }) { Text(stringResource(R.string.back)) }
-                        RouteOverview(group,rides,active?.ride?.routeId,onEdit={ editingRoute=it },onDelete={ deletingRoute=it })
+                        RouteOverview(group,rides,active?.ride?.routeId,onEdit={ editingRoute=it },onDelete={ deletingRoute=it },onPlan={ editingPlanId=it.id })
                         SectionHeading(stringResource(R.string.route_trips))
                         History(rides.filter { it.ride.routeId in group.routeIds },routes,
                             onUnlink={ unlinkingRide=it to group.id },emptyMessage=R.string.empty_route_trips) { selected=it }
@@ -169,6 +178,12 @@ import kotlinx.coroutines.delay
             }
             Spacer(Modifier.height(8.dp))
         }
+    }
+    }
+    routes.firstOrNull { it.id==editingPlanId }?.let { route ->
+        TravelPlanDialog(route,rides,routes,onDismiss={ editingPlanId=null },onSave={ mode,days,minute ->
+            vm.updatePlan(route.id,days,minute,mode) { editingPlanId=null }
+        })
     }
     editingRoute?.let { route ->
         RouteDialog(points=route.route().points,route=route,groups=routeGroups(routes),onDismiss={ editingRoute=null },onSave={ name,direction,start,end ->
@@ -190,7 +205,7 @@ import kotlinx.coroutines.delay
             deletingRide=null
         }
     }
-    if(settingsOpen) SettingsDialog(onDismiss={ settingsOpen=false },onLanguage=onLanguage)
+    if(settingsOpen) SettingsDialog(onDismiss={ settingsOpen=false },onLanguage=onLanguage,weather=weather)
     unlinkingRide?.let { (data,groupId) ->
         val name=routeGroups(routes).firstOrNull { it.id==groupId }?.name ?: ""
         AlertDialog(onDismissRequest={ unlinkingRide=null },containerColor=Surface,tonalElevation=0.dp,

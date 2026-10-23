@@ -2,6 +2,29 @@
 
 [中文](CHANGELOG.zh-CN.md)
 
+## 0.2.1
+
+- Fixed: Startup crashes after upgrading certain earlier builds while retaining trips, tracks and route plans.
+
+## 0.2.0
+
+- Added: Workdays, custom weekdays and departure times for each route direction.
+- Improved: Today/Tomorrow replace recent routes and show only upcoming scheduled departures.
+- Improved: Pull to refresh on Record replaces the separate weather refresh button.
+- Improved: Weather attribution appears once in the footer, with deduplicated queries and progressive results.
+- Added: Bundled 2026 holidays and make-up workdays for offline schedule checks.
+- Improved: Current weather shows next-hour precipitation chance and route forecasts use feels-like temperatures.
+- Improved: Only current weather shows an update time, with refresh failures reported through a Toast.
+- Improved: Longer forecasts cover tomorrow’s late departures.
+
+## 0.1.8
+
+- Added: Current weather and today’s overview on Record.
+- Added: Switch or disable Open-Meteo and QWeather with personal credentials in Settings.
+- Added: Route recommendations based on recent habits and time of day, with departure-window weather.
+- Added: Start recording with a selected route and direction using its play icon.
+- Improved: Cached weather and clear failure states preserve offline recording.
+
 ## 0.1.7
 
 - Improved: Consistent trip/route terminology with fewer redundant instructions and decorative captions.

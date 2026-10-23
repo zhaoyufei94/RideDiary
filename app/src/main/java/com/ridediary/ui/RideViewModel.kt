@@ -34,6 +34,9 @@ class RideViewModel(application: Application): AndroidViewModel(application) {
     fun editRoute(id: String,name: String,direction: String,start: Double,end: Double) = task {
         repository.editRoute(id,name,direction,start,end)
     }
+    fun updatePlan(id: String,days: Int,minute: Int?,mode: String,onSaved: ()->Unit) = task {
+        repository.updatePlan(id,days,minute,mode); onSaved()
+    }
     fun deleteRoute(id: String) = task { repository.deleteRoute(id) }
     fun deleteRouteGroup(id: String,onDeleted: ()->Unit={}) = task { repository.deleteRouteGroup(id); onDeleted() }
     fun unlinkRide(id: String,groupId: String,onUnlinked: ()->Unit) = task {

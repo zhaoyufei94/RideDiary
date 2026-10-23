@@ -20,7 +20,7 @@ class RouteWorkflowTest {
     @Before fun before() { context.deleteDatabase(name) }
     @After fun after() { db?.close(); context.deleteDatabase(name) }
     private fun open(): RideRepository {
-        db=Room.databaseBuilder(context,RideDatabase::class.java,name).addMigrations(RideDatabase.MIGRATION_1_2).build()
+        db=Room.databaseBuilder(context,RideDatabase::class.java,name).addMigrations(RideDatabase.MIGRATION_1_2,RideDatabase.MIGRATION_2_3,RideDatabase.MIGRATION_3_4).build()
         return RideRepository(db!!)
     }
     private suspend fun record(repo: RideRepository,points: List<Fix>,start: Long): String {
@@ -122,6 +122,8 @@ class RouteWorkflowTest {
         assertEquals(setOf("work","home","other"),routes.map { it.id }.toSet())
         assertEquals(routes.first { it.id=="work" }.groupKey,routes.first { it.id=="home" }.groupKey)
         assertEquals(2,routeGroups(routes).size)
+        assertTrue(routes.all { it.planMode=="WORKDAYS" && it.planDays==31 && it.planMinute==null })
+        assertEquals(4,db!!.openHelper.readableDatabase.version)
         assertEquals("work",repo.dao.ride("old")!!.ride.routeId)
         assertEquals(1,repo.dao.ride("old")!!.points.size)
         assertEquals(1,repo.dao.ride("old")!!.segments.size)
@@ -129,5 +131,14 @@ class RouteWorkflowTest {
         db!!.close(); repo=open()
         assertEquals(routes,repo.dao.routes())
         assertEquals(30.0,repo.dao.ride("old")!!.points.single().lat,0.0)
+        repo.updatePlan("home",(1 shl 1) or (1 shl 6),19*60+15)
+        db!!.close(); repo=open()
+        val planned=repo.dao.routes().single { it.id=="home" }
+        assertEquals("CUSTOM",planned.planMode)
+        assertEquals(66,planned.planDays)
+        assertEquals(1155,planned.planMinute)
+        assertEquals(31,repo.dao.routes().single { it.id=="work" }.planDays)
+        assertEquals(1,repo.dao.ride("old")!!.points.size)
+        assertEquals(1,repo.dao.ride("old")!!.segments.size)
     }
 }

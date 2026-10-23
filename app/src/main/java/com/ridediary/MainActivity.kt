@@ -45,11 +45,14 @@ class MainActivity: ComponentActivity() {
                 }
             }
         }
-        setContent { RideDiaryTheme { RideDiaryScreen(onStart={
-            try { ContextCompat.startForegroundService(this,Intent(this,RecordingService::class.java)) }
+        fun startRecording(routeId: String?=null) {
+            try { ContextCompat.startForegroundService(this,Intent(this,RecordingService::class.java).apply {
+                routeId?.let { putExtra(RecordingService.EXTRA_ROUTE_ID,it) }
+            }) }
             catch (_: IllegalStateException) { RecordingService.quality.value="START_FAILED" }
             catch (_: SecurityException) { RecordingService.quality.value="PERMISSION_LOST" }
-        },onStop={ startService(Intent(this,RecordingService::class.java).setAction(RecordingService.STOP)) },
+        }
+        setContent { RideDiaryTheme { RideDiaryScreen(onStart={ startRecording() },onStartRoute={ startRecording(it) },onStop={ startService(Intent(this,RecordingService::class.java).setAction(RecordingService.STOP)) },
             onDiscard={ startService(Intent(this,RecordingService::class.java).setAction(RecordingService.DISCARD)) },stopReviewToken=stopReviewToken,onLanguage={
             val prefs=getSharedPreferences("settings",Context.MODE_PRIVATE)
             prefs.edit { putString("language",if(prefs.getString("language","zh-CN")=="zh-CN") "en" else "zh-CN") }

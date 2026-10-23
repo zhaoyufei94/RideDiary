@@ -47,7 +47,7 @@ import com.ridediary.data.*
 }
 
 @Composable fun RouteOverview(group: RouteGroup,rides: List<RideData>,activeRouteId: String?,
-    onEdit: (RouteRecord)->Unit,onDelete: (RouteRecord)->Unit) {
+    onEdit: (RouteRecord)->Unit,onDelete: (RouteRecord)->Unit,onPlan: (RouteRecord)->Unit={}) {
     var direction by rememberSaveable(group.id) { mutableStateOf(if(group.direction("WORK").isNotEmpty()) "WORK" else "HOME") }
     val shown=group.direction(direction)
     val route=shown.firstOrNull() ?: group.variants.first()
@@ -77,5 +77,16 @@ import com.ridediary.data.*
             Note(stringResource(R.string.start_radius)+": ${route.startRadius.toInt()} m · "+stringResource(R.string.end_radius)+": ${route.endRadius.toInt()} m")
         }
         if(inUse) Note(stringResource(R.string.route_in_use))
+    }
+    if(shown.isNotEmpty()) Panel {
+        Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
+            Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(6.dp)) {
+                Text(stringResource(R.string.travel_plan),style=MaterialTheme.typography.titleMedium)
+                Text(if(route.planMode=="WORKDAYS") stringResource(R.string.plan_workdays) else planDaysLabel(route.planDays),style=MaterialTheme.typography.bodyMedium,color=Muted)
+                if(route.planMode=="WORKDAYS" || route.planDays!=0) Text(route.planMinute?.let { clockMinutes(it) } ?: stringResource(R.string.plan_use_history),style=MaterialTheme.typography.bodyMedium,color=Muted)
+            }
+            val label=stringResource(R.string.edit_travel_plan)
+            IconButton(onClick={ onPlan(route) },modifier=Modifier.semantics { contentDescription=label }) { AppGlyph(Glyph.CALENDAR) }
+        }
     }
 }

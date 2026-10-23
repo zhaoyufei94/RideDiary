@@ -39,7 +39,9 @@ data class SegmentRecord(val rideId: String, val sequence: Int, val from: Long, 
 @Entity(tableName="routes")
 data class RouteRecord(@PrimaryKey val id: String, val name: String, val direction: String,
     val sourceRideId: String, val shape: String, val startRadius: Double, val endRadius: Double, val version: Int = 1,
-    @ColumnInfo(defaultValue="''") val groupId: String = "") {
+    @ColumnInfo(defaultValue="''") val groupId: String = "",
+    @ColumnInfo(defaultValue="31") val planDays: Int = 31, val planMinute: Int? = null,
+    @ColumnInfo(defaultValue="'WORKDAYS'") val planMode: String = "WORKDAYS") {
     val groupKey get()=groupId.ifBlank { RouteIdentity.legacyGroup(name) }
     fun route() = RouteShape(id,name,direction,decode(shape),startRadius,endRadius)
     companion object {
@@ -88,10 +90,33 @@ fun routeGroups(routes: List<RouteRecord>)=routes.groupBy { it.groupKey }.map { 
     RouteGroup(id,RouteIdentity.name(variants.first().name),variants)
 }.sortedBy { it.name }
 
-@Database(entities=[RideRecord::class,PointRecord::class,SegmentRecord::class,RouteRecord::class],version=2,exportSchema=false)
+@Database(entities=[RideRecord::class,PointRecord::class,SegmentRecord::class,RouteRecord::class],version=4,exportSchema=true)
 abstract class RideDatabase : RoomDatabase() {
     abstract fun dao(): RideDao
     companion object {
+        // Both 0.2.0 schema variants shipped as v3. Let Room validate and update
+        // identity normally after repairing only the missing column.
+        val MIGRATION_3_4=object: Migration(3,4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                val columns=mutableSetOf<String>()
+                db.query("PRAGMA table_info(routes)").use { rows ->
+                    val name=rows.getColumnIndexOrThrow("name")
+                    while(rows.moveToNext()) columns+=rows.getString(name)
+                }
+                if("planMode" !in columns) {
+                    // The earlier v3 used explicit weekly masks; retain that meaning.
+                    db.execSQL("ALTER TABLE routes ADD COLUMN planMode TEXT NOT NULL DEFAULT 'WORKDAYS'")
+                    db.execSQL("UPDATE routes SET planMode = 'CUSTOM'")
+                }
+            }
+        }
+        val MIGRATION_2_3=object: Migration(2,3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE routes ADD COLUMN planDays INTEGER NOT NULL DEFAULT 31")
+                db.execSQL("ALTER TABLE routes ADD COLUMN planMinute INTEGER")
+                db.execSQL("ALTER TABLE routes ADD COLUMN planMode TEXT NOT NULL DEFAULT 'WORKDAYS'")
+            }
+        }
         val MIGRATION_1_2=object: Migration(1,2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE routes ADD COLUMN groupId TEXT NOT NULL DEFAULT ''")
