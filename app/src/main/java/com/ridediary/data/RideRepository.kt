@@ -149,6 +149,15 @@ class RideRepository(val db: RideDatabase) {
             variants.forEach { dao.unlinkRoute(it.id); dao.deleteRoute(it.id) }
         }
     }
+    suspend fun unlinkRide(id: String,groupId: String) = mutex.withLock {
+        db.withTransaction {
+            val ride=dao.ride(id)?.ride ?: return@withTransaction
+            require(ride.state!="RECORDING")
+            val routeIds=dao.routes().filter { it.groupKey==groupId }.map { it.id }
+            // Ignore a stale menu if the ride has since been assigned to another route.
+            if(ride.routeId in routeIds) dao.saveRide(ride.copy(routeId=null))
+        }
+    }
     suspend fun discardActive(id: String) = mutex.withLock {
         db.withTransaction { dao.discardActive(id) }
     }

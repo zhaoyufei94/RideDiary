@@ -2,6 +2,14 @@
 
 [中文](CHANGELOG.zh-CN.md)
 
+## 0.1.7
+
+- Improved: Consistent trip/route terminology with fewer redundant instructions and decorative captions.
+- Improved: Linked trips appear inside route details instead of a recent-trip list on the Routes page.
+- Added: Open linked trips directly from route details.
+- Added: Unlink a trip from its route while retaining the trip and raw track.
+- Added: Settings with version, logo, approved slogan and language options.
+
 ## 0.1.6
 
 - Added: Cancel, Delete and Save at every finish entry, with recording continuing until confirmation.
@@ -36,7 +44,7 @@
 
 - Added: Ride deletion removes its raw track while retaining routes created from it.
 - Added: Edit route names, directions and endpoint areas, or delete routes while retaining ride history.
-- Fixed: Returning from ride details did not lead back to the Journal list.
+- Fixed: Returning from ride details did not lead back to the Trips list.
 - Improved: Removed the replay entry to simplify everyday recording.
 
 ## 0.1.0

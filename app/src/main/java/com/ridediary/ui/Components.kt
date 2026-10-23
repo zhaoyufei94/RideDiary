@@ -155,9 +155,9 @@ fun clockMinutes(m: Int)=String.format(Locale.ROOT,"%02d:%02d",m/60,m%60)
         Column(Modifier.padding(padding.dp),verticalArrangement=Arrangement.spacedBy(12.dp),content=content)
     }
 }
-@Composable fun SectionHeading(title: String,subtitle: String) {
+@Composable fun SectionHeading(title: String,subtitle: String?=null) {
     Column(Modifier.padding(top=10.dp,bottom=2.dp),verticalArrangement=Arrangement.spacedBy(5.dp)) {
         Text(title,fontSize=19.sp,fontWeight=androidx.compose.ui.text.font.FontWeight.SemiBold)
-        Text(subtitle,fontSize=13.sp,color=Muted,lineHeight=20.sp)
+        if(!subtitle.isNullOrBlank()) Text(subtitle,fontSize=13.sp,color=Muted,lineHeight=20.sp)
     }
 }

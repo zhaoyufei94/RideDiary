@@ -1,0 +1,56 @@
+{
+  "date": "2026-10-23",
+  "version": "0.1.7",
+  "versionCode": 8,
+  "databaseVersion": 2,
+  "environment": {
+    "os": "macOS arm64",
+    "jdk": "Temurin 17.0.20.1",
+    "gradle": "8.11.1",
+    "agp": "8.9.2",
+    "kotlin": "2.1.20",
+    "compileSdk": 35,
+    "targetSdk": 35,
+    "minSdk": 26
+  },
+  "command": "./scripts/gradle-local.sh :app:assembleDebug --no-daemon --console=plain",
+  "result": "BUILD SUCCESSFUL",
+  "validationScope": "APP_BUILD_ONLY: user requested no tests or device connection",
+  "unitTests": {
+    "status": "NOT_RUN"
+  },
+  "androidInstrumentedTests": {
+    "status": "NOT_RUN"
+  },
+  "lint": {
+    "status": "NOT_RUN"
+  },
+  "deviceInstallation": {
+    "status": "NOT_RUN"
+  },
+  "deviceConnection": {
+    "status": "NOT_USED"
+  },
+  "artifacts": [
+    {
+      "path": "app/build/outputs/apk/debug/app-debug.apk",
+      "bytes": 11519579,
+      "sha256": "eecbef084e2040c049e4babacd614ce9dbc322a1c99c0f9c09fad39b44bbea7b"
+    }
+  ],
+  "signing": {
+    "configuration": ".signing/debug.keystore",
+    "gradleSigningCheck": "PASS",
+    "privateKeyCommitted": false
+  },
+  "buildLog": "docs/validation/local-build-0.1.7.txt",
+  "previousVersionEvidence": "docs/validation/verification-0.1.6.json",
+  "pendingValidation": [
+    "Route/trip navigation and Back",
+    "Unlink retention and stale-assignment protection",
+    "Active recording cannot be unlinked",
+    "Settings version and language persistence",
+    "Large text",
+    "Previous unfinished notification/recreation regression"
+  ]
+}

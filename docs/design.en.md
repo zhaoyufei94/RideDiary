@@ -2,6 +2,14 @@
 
 This document describes implementation. See [product design](../PRODUCT_DESIGN.md) for product scope, visual style and Android interaction requirements.
 
+## 0.1.7 navigation, associations and settings implementation
+
+`selectedRoute` and `selected` retain group/trip IDs. Back leaves trip details before route details; bottom navigation resets nested selection. `RouteViews.kt` lists routes, directional references and linked trips using both work/home reference IDs in the group.
+
+`unlinkRide` uses the repository mutex and a Room transaction: reject active recordings, verify routeId still belongs to the selected group, then clear only routeId. A stale request leaves a newly assigned route intact. Raw fixes, segments, direction, boundaries and exclusion state remain; Flow refreshes lists and statistics. No schema migration is needed.
+
+`SettingsDialog.kt` reads the installed package version, reuses the logo and approved slogan, and offers Chinese/English radio options. Language preferences and Activity recreation use the existing mechanism. Decorative captions and routine instructions are removed; permission/error/data-consequence copy remains. Only the app build was run for this version, without tests.
+
 ## 0.1.6 route and finish contract
 
 - **Route before direction:** Select a route first: the overview below the route selector and above direction tabs combines both directions for valid distance, commute days and ride count in the selected month. Charts and duration metrics below the tabs use To work / To home separately, without cross-route aggregation. Routes shows one card per name with separate directional samples and tracks.
@@ -60,7 +68,7 @@ Reviewed 2026-10-22: [Android foreground location permissions](https://developer
 
 Ride deletion is serialized and transactional. Room cascades to points and segments; routes retain independent shape data even if their source ride is deleted. Route deletion first clears linked ride routeIds, preserving raw tracks, direction and exclusion state. Route edits retain shape/sourceRideId, increment version and propagate direction to linked rides in one transaction. Active rides and routes in use are protected. The 0.1.1 change did not alter the schema; 0.1.6 uses the v1→v2 migration above.
 
-Flow refreshes Journal, Statistics and Routes. A detail BackHandler clears selection and returns to Journal. Replay UI/state is removed; Replay lives in testShared for JVM and Android tests only.
+Flow refreshes Trips, Statistics and Routes. A detail BackHandler clears selection and returns to Trips. Replay UI/state is removed; Replay lives in testShared for JVM and Android tests only.
 
 ## Long-press management (0.1.2)
 

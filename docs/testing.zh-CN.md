@@ -2,6 +2,15 @@
 
 本清单适用于不同品牌的 Android 设备。下文的具体型号仅标识历史测试环境，不是产品限制。产品设计与交互规范见[产品设计](../PRODUCT_DESIGN.zh-CN.md)。
 
+## 0.1.7 文案、路线导航与设置（2026-10-23）
+
+- 0.1.7 / versionCode 8，数据库 v2；文案、路线关联行程、解除关联和设置入口代码已完成。
+- 仅执行 `./scripts/gradle-local.sh :app:assembleDebug --no-daemon --console=plain`，最终文案修正后编译成功，使用既有共用 Debug 签名。
+- 按用户要求，未运行 JVM、仪器测试或 Lint，未连接设备、未安装应用；下方旧版测试结果不代表 0.1.7 已通过。
+- 待复验：路线到行程详情及返回、解除关联保留数据、记录中保护、过期菜单不影响新关联、设置版本号、语言切换后的页面保持及大字体布局。
+
+证据：[构建日志](validation/local-build-0.1.7.txt)、[当前记录](verification.json)、[0.1.7 快照](validation/verification-0.1.7.json)；旧版结果见 [0.1.6 快照](validation/verification-0.1.6.json)。
+
 ## 0.1.6 路线归组、统计与结束确认（2026-10-23）
 
 - 版本 0.1.6 / versionCode 7，Room v2。显式 v1→v2 迁移为同名旧参考建立分组，保留原路线 ID、关联行程、原始点与分段；上班/下班分别保存实际轨迹。

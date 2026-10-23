@@ -53,7 +53,6 @@ import kotlin.math.min
     }
     Column(verticalArrangement=Arrangement.spacedBy(6.dp)) {
         Text(stringResource(R.string.statistics),fontSize=30.sp,fontWeight=FontWeight.SemiBold)
-        Text(stringResource(R.string.stats_intro),fontSize=14.sp,color=Muted)
     }
     DataCard(padding=8) {
         Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
@@ -127,13 +126,13 @@ import kotlin.math.min
         second={ MetricTile(stringResource(R.string.median),duration(median(totals)!!),Glyph.CHART) }
     )
     if(samples.size==1) Text(stringResource(R.string.single_sample),fontSize=13.sp,lineHeight=20.sp,color=Muted)
-    SectionHeading(stringResource(R.string.stats_time_composition),stringResource(R.string.stats_time_caption))
+    SectionHeading(stringResource(R.string.stats_time_composition))
     DataCard(modifier=Modifier.testTag("stats-composition")) {
         TimeComposition(total,moving,waiting,unknown)
     }
-    SectionHeading(stringResource(R.string.chart_title),stringResource(R.string.stats_chart_hint))
+    SectionHeading(stringResource(R.string.chart_title))
     RideChart(samples)
-    SectionHeading(stringResource(R.string.stats_rhythm),stringResource(R.string.stats_rhythm_caption))
+    SectionHeading(stringResource(R.string.stats_rhythm))
     val departures=Statistics.clocks(samples,false)!!; val arrivals=Statistics.clocks(samples,true)!!
     AdaptivePair(
         first={ ClockTile(stringResource(R.string.departure),departures) },
@@ -144,7 +143,6 @@ import kotlin.math.min
         HorizontalDivider(Modifier.padding(vertical=8.dp),color=Line.copy(alpha=.65f))
         DurationSummary(stringResource(R.string.waiting),waits)
     }
-    Text(stringResource(R.string.clock_note),fontSize=12.sp,lineHeight=20.sp,color=Muted)
 }
 
 @Composable private fun HeroCount(label: String,value: Int,modifier: Modifier) {

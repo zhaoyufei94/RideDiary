@@ -1,8 +1,19 @@
 # RideDiary / 途记 Product Design
 
-Version: v0.1.6 product baseline · Updated: 2026-10-23 · [中文](PRODUCT_DESIGN.zh-CN.md)
+Version: v0.1.7 product baseline · Updated: 2026-10-23 · [中文](PRODUCT_DESIGN.zh-CN.md)
 
 This document guides product decisions, UI design and future development. **“Current” describes existing behavior; “requirements” constrain future changes and do not imply completed implementation or acceptance; “planned” means not delivered.** The product targets Android phones across brands, cities, motorcycle models and commute routes.
+
+## 0.1.7 terminology, route navigation and settings
+
+- **Terminology:** a trip is one recorded journey; a route is a fixed travel path. Main destinations are Record, Trips, Statistics and Routes.
+- **Copy:** use direct labels and states, removing long-press instructions, decorative captions and stationary-time explanations while retaining permissions, errors, missing-data states and deletion consequences.
+- **Route navigation:** the Routes list contains routes only. Open a route to see linked trips in both directions, then open trip details; Back returns to that route, while details opened from Trips return to the trip list.
+- **Unlinking:** hold a trip inside its route to unlink it while retaining the trip, raw track, direction and exclusion state. Reference geometry remains; active recordings cannot be unlinked.
+- **Settings:** the top-right gear opens the logo, installed version, slogan and Simplified Chinese/English selection. Language changes preserve the current page.
+- **Brand copy:** retain “每天的骑行，多一点了解” and “Your everyday rides, a little better understood.” as the Chinese/English slogans, shown in Settings.
+
+This version is 0.1.7 / versionCode 8; the database remains v2. See testing documentation for validation status.
 
 ## 0.1.6 route and finish contract
 
@@ -44,7 +55,7 @@ Principles:
 | Routes | Creation from recorded tracks, editing names/direction/endpoint radii, deletion, multiple-route recognition, local sketches | More intuitive track-shape and endpoint editing |
 | Comparison | Same-route/direction history, same-position elapsed differences, historical remaining-time ETA ranges | Departure-window-aware sampling |
 | History and statistics | Details, classification/exclusion/boundary correction, linked month/route/direction filters | Departure-time/duration scatter plots and trends |
-| Experience | Four native screens, Chinese/English switching, system Back to Journal | Large-text and screen-reader improvements, large screens, dark theme |
+| Experience | Four native screens, Chinese/English switching, system Back to Trips | Large-text and screen-reader improvements, large screens, dark theme |
 | Data management | Private local database, retained raw fixes, system backups disabled | User-controlled local export, backup, import and migrations |
 
 No map basemap, navigation, live traffic, red-light detection, account or cloud sync is currently provided. Vehicle displays, CAN/OBD, third-party navigation scraping, Accessibility/MediaProjection capture and racing features are outside current scope. Prototype decoration or sample numbers do not establish a shipped feature.
@@ -53,7 +64,7 @@ No map basemap, navigation, live traffic, red-light detection, account or cloud 
 
 ### First experience
 
-Allow browsing and empty states before authorization. Ride offers **Start recording**. The in-app replay entry and demo runtime have been removed at user request. Synthetic tracks are only automation fixtures and are excluded from the application APK.
+Allow browsing and empty states before authorization. Record offers **Start recording**. The in-app replay entry and demo runtime have been removed at user request. Synthetic tracks are only automation fixtures and are excluded from the application APK.
 
 ### First real ride
 
@@ -77,14 +88,14 @@ Mark interrupted rides separately, retain saved points and never automatically r
 
 | Screen | Hierarchy and actions | Empty/degraded states |
 |---|---|---|
-| Ride | Primary: recording state, elapsed, start/finish; secondary: location quality, route/motorcycle progress; supporting: breakdown, history, ETA | Clear start entry; ordinary ride without a route; no placeholders pretending to be history |
-| Journal | History → details/arrival → create route, classify, exclude, adjust boundaries | Explain recording; visibly mark interrupted and excluded rides |
+| Record | Primary: recording state, elapsed, start/finish; secondary: location quality, route/motorcycle progress; supporting: breakdown, history, ETA | Clear start entry; ordinary ride without a route; no placeholders pretending to be history |
+| Trips | History → details/arrival → create route, classify, exclude, adjust boundaries | Explain recording; visibly mark interrupted and excluded rides |
 | Statistics | Month/route/direction filters → totals → per-ride stacked chart → clock/duration statistics | Explain no valid samples; label one sample; zero stationary time is valid |
 | Routes | Name, direction, length, sample count, local track sketch and history entry | Explain creation from history; do not present sketches as navigation maps |
 
 Requirements: give each context a clear primary action. Errors explain their impact and a useful next step. Separate durations from departure/arrival clock times and label distance, speed and percentage units. Use text or icons alongside color for important states.
 
-Journal list cards and detail summary cards expose correction/deletion menus on long press, followed by a separate deletion confirmation, cascading to raw points and segments while retaining saved route geometry. Detail Back controls and Android Back return to the Journal list. Route cards expose editing names, direction and endpoint radii, and deletion through a long-press context menu. Direction changes propagate to linked rides. Route deletion unlinks rides while retaining their raw tracks and direction. A route in use by an active recording cannot be edited or deleted.
+Trips list cards and detail summary cards expose correction/deletion menus on long press, followed by a separate deletion confirmation, cascading to raw points and segments while retaining saved route geometry. Detail Back controls and Android Back return to the source list: Trips or the owning route. Route cards expose editing names, direction and endpoint radii, and deletion through a long-press context menu. Direction changes propagate to linked rides. Route deletion unlinks rides while retaining their raw tracks and direction. A route in use by an active recording cannot be edited or deleted.
 
 ## 5. Recording states and failures
 
@@ -188,7 +199,7 @@ Field results record Android/system version, model, app/algorithm version, route
 
 ## 12. Starting work in another conversation
 
-Read this specification first, then [README](README.md) for usage/building, [technical design](docs/design.en.md) for implementation and [testing](docs/testing.en.md) for evidence and gaps.
+Read this specification first, then [README](README.md) for usage, [technical design](docs/design.en.md) for implementation and [testing](docs/testing.en.md) for evidence and gaps.
 
 | Location | Responsibility |
 |---|---|
@@ -202,7 +213,7 @@ Read this specification first, then [README](README.md) for usage/building, [tec
 
 Original handoff requirements remain in `docs/requirements.*.md`; personal phone, city and early setup details are historical context. This document defines current product scope and design direction. New explicit user instructions take precedence. If code and specification differ, identify and resolve the gap rather than presenting plans as delivered.
 
-Update both languages, feature status and affected validation with each iteration. Preserve metric and privacy contracts. Keep README focused on users and contributors; debugging narratives and device evidence belong in test records.
+Update both languages, feature status and affected validation with each iteration. Preserve metric and privacy contracts. Keep README focused on users; debugging narratives and device evidence belong in test records.
 
 ## 0.1.3 statistics, details and action sheets
 
@@ -212,4 +223,4 @@ Statistics and details use light cards with 24 dp corners, forest-green hero car
 
 ## Keep screen awake during recording (0.1.4)
 
-Keep the visible app awake automatically after the recording service starts, consistently across all four tabs. Restore normal timeout on save, discard, service stop or backgrounding. Foreground return, rotation and language recreation restore the current recording behavior. The Ride screen explains that the power button can still lock the phone. No setting toggle or permission prompt is added. Continuous screen use increases power consumption.
+Keep the visible app awake automatically after the recording service starts, consistently across all four tabs. Restore normal timeout on save, discard, service stop or backgrounding. Foreground return, rotation and language recreation restore the current recording behavior. The power button can still lock the phone. No setting toggle or permission prompt is added. Continuous screen use increases power consumption.

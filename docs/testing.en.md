@@ -2,6 +2,15 @@
 
 This checklist applies across Android brands. Specific models below identify historical test environments, not product restrictions. See [product design](../PRODUCT_DESIGN.md) for product and interaction requirements.
 
+## 0.1.7 copy, route navigation and settings (2026-10-23)
+
+- 0.1.7 / versionCode 8, database v2; copy, linked-trip navigation, unlinking and Settings code are complete.
+- Only `./scripts/gradle-local.sh :app:assembleDebug --no-daemon --console=plain` was run; the final copy revision built successfully using the existing shared Debug signing setup.
+- At the user's request, no JVM/instrumented tests or Lint were run, and no device was connected or updated. Older test results below do not validate 0.1.7.
+- Pending: route-to-trip navigation and Back, data retention when unlinking, active-recording protection, stale menus after reassignment, installed version display, page retention after language changes and large text.
+
+Evidence: [build log](validation/local-build-0.1.7.txt), [current record](verification.json), [0.1.7 snapshot](validation/verification-0.1.7.json); previous results: [0.1.6 snapshot](validation/verification-0.1.6.json).
+
 ## 0.1.6 route groups, statistics and finish review (2026-10-23)
 
 - Version 0.1.6 / versionCode 7, Room v2. Explicit v1→v2 migration groups same-name legacy references while retaining IDs, ride associations, raw fixes and segments. Each direction keeps actual geometry.

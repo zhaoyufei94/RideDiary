@@ -66,7 +66,7 @@ import com.ridediary.core.Fix
             groups=groups,onDismiss={ creating=false },onSave={ name,d,start,end -> onCreate(name,d,start,end,creatingGroup?.id,excluded,reason) })
         return
     }
-    EditorSheet(title=stringResource(R.string.choose_route),subtitle=stringResource(R.string.route_auto_hint),onDismiss=onDismiss,
+    EditorSheet(title=stringResource(R.string.choose_route),onDismiss=onDismiss,
         onSave={
             val group=groups.firstOrNull { it.id==selected }
             val variants=group?.direction(direction).orEmpty()
