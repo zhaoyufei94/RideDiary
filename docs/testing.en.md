@@ -2,6 +2,15 @@
 
 This checklist applies across Android brands. Specific models below identify historical test environments, not product restrictions. See [product design](../PRODUCT_DESIGN.md) for product and interaction requirements.
 
+## 0.1.5 brand and signing integration (2026-10-23)
+
+- Local branding/icons were rebased onto origin/main `aa08a14` (0.1.4), retaining remote ride/route management, statistics and screen-awake behavior. The new version is 0.1.5 / versionCode 6.
+- The supplied root `debug.keystore` was validated and imported to `.signing/debug.keystore`. Actual app/test APK certificates match the pinned fingerprint and signature verification passes. No private key is committed.
+- All 28 JVM tests, 157 bilingual resources and six brand-resource checks pass. App/test APK builds and Lint pass, with zero errors and seven existing dependency-update notices.
+- No phone installation or 13-case device run was performed. The latest screen-awake service fixture now compiles; physical-device acceptance remains pending, without relabeling historical failures as passes.
+
+Evidence: [0.1.5 verification](validation/verification-0.1.5.json), [current record](verification.json); the original 0.1.4 record is preserved as [verification-0.1.4.json](validation/verification-0.1.4.json).
+
 ## 0.1.4 keep the recording screen awake (2026-10-22)
 
 - Application/test APK builds pass; all 156 bilingual resources pass. Lint has 0 errors and 7 existing dependency-update warnings. Shared signatures verify, and the app was installed in place without uninstalling the main package.

@@ -4,6 +4,8 @@
 
 **Your everyday rides, a little better understood.** · [中文说明](README.zh-CN.md)
 
+Current version: **0.1.5**. The graph-paper logo is used across the launcher, app header, notification and project branding.
+
 RideDiary is an offline, native Android commute journal. Record everyday rides with your phone, split elapsed time into moving, stationary and unknown intervals, and compare each commute with your own history.
 
 For Android 8.0 and later, across Android phone brands. No extra hardware, account, Google Play services or map key is needed. Recording and analysis happen on your phone; the app has no Internet permission.

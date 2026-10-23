@@ -29,6 +29,8 @@ python3 scripts/import-debug-signing.py "$HOME/Downloads/debug.keystore"
 
 脚本校验证书后，将密钥安装到当前项目的 `.signing/debug.keystore`，目录权限为 700、文件权限为 600。文件名可以不同，参数填写实际路径。错误文件不会覆盖已配置的密钥；不必替换另一台电脑的 `~/.android/debug.keystore`。
 
+如果收到的 `debug.keystore` 已放在项目根目录，执行 `python3 scripts/import-debug-signing.py debug.keystore`。后续 Gradle 和 Android Studio 构建统一使用已导入的 `.signing/debug.keystore`，不需要每次重新导入；根目录原件和导入副本均不提交 Git。
+
 4. 编译和查看签名：
 
 ```sh

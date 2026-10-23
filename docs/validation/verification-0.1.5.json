@@ -1,0 +1,99 @@
+{
+  "date": "2026-10-23",
+  "version": "0.1.5",
+  "versionCode": 6,
+  "environment": {
+    "os": "macOS arm64",
+    "jdk": "Temurin 17.0.20.1",
+    "gradle": "8.11.1",
+    "agp": "8.9.2",
+    "kotlin": "2.1.20",
+    "compileSdk": 35,
+    "targetSdk": 35,
+    "minSdk": 26
+  },
+  "rebasedOnOriginMain": "aa08a141153dfe5636c3aaa95489418ce521d8a6",
+  "command": "./scripts/gradle-local.sh :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest :app:lintDebug :app:signingReport --no-daemon --console=plain",
+  "result": "BUILD SUCCESSFUL",
+  "unitTests": [
+    {
+      "name": "com.ridediary.core.AnalysisTest",
+      "tests": "11",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.ridediary.core.RoutingTest",
+      "tests": "9",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.ridediary.core.StatisticsTest",
+      "tests": "8",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    }
+  ],
+  "unitTestsSourceVersion": "0.1.5; rerun after rebase",
+  "lint": {
+    "errors": 0,
+    "warnings": 7,
+    "warningIds": [
+      "GradleDependency"
+    ]
+  },
+  "resourceCheck": {
+    "translatedStrings": 157,
+    "result": "PASS"
+  },
+  "brandResourceCheck": {
+    "androidResources": 6,
+    "master": "docs/brand/ridediary-logo.svg",
+    "result": "PASS"
+  },
+  "gitDiffCheck": "PASS",
+  "demoExcludedFromAppApk": true,
+  "artifacts": [
+    {
+      "path": "app/build/outputs/apk/debug/app-debug.apk",
+      "bytes": 10945551,
+      "sha256": "371fac95fde19ccf40a8c6388bf11e54952eee85a09a39af54b84b1ac2636cf9",
+      "certificateSha256": "24107b0f1a354d165eb7bae7be2b235752428dae1d4622754e0ebdb84fe110d3",
+      "signatureVerification": "v2 verified with apksigner"
+    },
+    {
+      "path": "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk",
+      "bytes": 1036734,
+      "sha256": "919f590250ab30cfc4b7c0dd90f7cc89da84cdba485911ef07d7653fac659d46",
+      "certificateSha256": "24107b0f1a354d165eb7bae7be2b235752428dae1d4622754e0ebdb84fe110d3",
+      "signatureVerification": "v2 verified with apksigner"
+    }
+  ],
+  "sharedDebugSigning": {
+    "keystorePath": ".signing/debug.keystore",
+    "importedFrom": "debug.keystore",
+    "certificateSha256": "24107b0f1a354d165eb7bae7be2b235752428dae1d4622754e0ebdb84fe110d3",
+    "sourceAndImportedBytesMatch": true,
+    "privateKeyCommitted": false,
+    "keyFileMode": "600",
+    "appAndTestCertificatesMatch": true,
+    "result": "PASS"
+  },
+  "androidInstrumentedTests": {
+    "status": "NOT_RUN_FOR_0.1.5",
+    "compiled": true,
+    "latestTestSourceCompiled": true,
+    "testCount": 13,
+    "previousVersionEvidence": "docs/validation/verification-0.1.4.json",
+    "screenAwakeDeviceAcceptance": "PENDING"
+  },
+  "deviceInstallation": {
+    "status": "NOT_RUN_FOR_0.1.5"
+  },
+  "fieldValidation": "PENDING: screen-off continuity, real-road accuracy, route/arrival calibration and battery use across devices",
+  "previousVersionEvidence": "docs/validation/verification-0.1.4.json"
+}

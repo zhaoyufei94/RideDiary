@@ -29,6 +29,8 @@ python3 scripts/import-debug-signing.py "$HOME/Downloads/debug.keystore"
 
 The script checks the certificate before importing to `.signing/debug.keystore`, with directory mode 700 and file mode 600. Supply the actual received filename. A wrong file does not replace the existing project key. Leave the other Mac's global `~/.android/debug.keystore` in place.
 
+If the supplied `debug.keystore` is already in the repository root, run `python3 scripts/import-debug-signing.py debug.keystore`. Subsequent Gradle and Android Studio builds use the imported `.signing/debug.keystore`; repeat import is unnecessary. Both the original and imported private key stay out of Git.
+
 4. Build and inspect signing:
 
 ```sh

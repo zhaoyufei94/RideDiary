@@ -1,6 +1,6 @@
 # RideDiary / 途记 Product Design
 
-Version: v0.1 product baseline · Updated: 2026-10-22 · [中文](PRODUCT_DESIGN.zh-CN.md)
+Version: v0.1.5 product baseline · Updated: 2026-10-23 · [中文](PRODUCT_DESIGN.zh-CN.md)
 
 This document guides product decisions, UI design and future development. **“Current” describes existing behavior; “requirements” constrain future changes and do not imply completed implementation or acceptance; “planned” means not delivered.** The product targets Android phones across brands, cities, motorcycle models and commute routes.
 
