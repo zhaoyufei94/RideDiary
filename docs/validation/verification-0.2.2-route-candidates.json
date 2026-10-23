@@ -1,0 +1,144 @@
+{
+  "date": "2026-10-23",
+  "version": "0.2.2",
+  "versionCode": 12,
+  "databaseVersion": 4,
+  "environment": {
+    "os": "macOS arm64",
+    "jdk": "Temurin 17.0.20.1",
+    "gradle": "8.11.1",
+    "agp": "8.9.2",
+    "kotlin": "2.1.20",
+    "compileSdk": 35,
+    "targetSdk": 35,
+    "minSdk": 26
+  },
+  "command": "./scripts/gradle-local.sh :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest :app:lintDebug --offline --no-daemon --console=plain",
+  "result": "BUILD SUCCESSFUL",
+  "validationScope": "TARGETED_ROUTE_REACQUISITION_CANDIDATES_CADENCE_STOP_SAVE_AND_RETENTION",
+  "unitTests": {
+    "status": "PASS",
+    "count": 41,
+    "failures": 0,
+    "includes": [
+      "Reference-start-loop and short-deviation reacquisition",
+      "GNSS-gap/distant-branch protection and parallel-road ambiguity",
+      "Collected overlap vs whole-route progress distinction",
+      "Original routing, arrival, U-turn, geometry equivalence and stop buffer cases"
+    ]
+  },
+  "androidInstrumentedTests": {
+    "status": "PASS_FOR_TARGETED_CASES",
+    "count": 18,
+    "usesDisposableSyntheticDatabases": true,
+    "groups": [
+      {
+        "count": 13,
+        "seconds": 168.537,
+        "scope": "MatchingCadenceTest, StopSaveTest, RecordingReviewTest, PersistenceTest, RouteWorkflowTest",
+        "log": "docs/validation/route-candidates-core-0.2.2.txt",
+        "note": "Device was locked during initial Activity startup; resumed after unlock. Total duration is not matching computation time."
+      },
+      {
+        "count": 5,
+        "seconds": 10.154,
+        "scope": "Candidate ambiguity/overlap, start-loop recovery display, location recovery, arrival save and cancel/discard UI",
+        "log": "docs/validation/route-candidates-ui-0.2.2.txt"
+      }
+    ],
+    "notCovered": "Full app/UI regression and the previously stalled notification/recreation UI fixture are not claimed."
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 14
+  },
+  "resourceCheck": {
+    "translatedStrings": 231,
+    "status": "PASS"
+  },
+  "gitDiffCheck": "PASS",
+  "deviceInstallation": {
+    "status": "PASS",
+    "version": "0.2.2",
+    "mode": "in-place adb install --no-streaming -r",
+    "appDataCleared": false,
+    "coldLaunch": "Status ok, 479 ms"
+  },
+  "deviceConnection": {
+    "model": "OPPO PKJ110",
+    "status": "USED"
+  },
+  "dataRetention": {
+    "status": "PASS",
+    "log": "docs/validation/data-retention-route-candidates-0.2.2.json",
+    "allRowsIdentical": true,
+    "existingRideDurationsCorrectedDuringThisUpdate": false,
+    "latestPreviouslyCorrectedBoundaryEndMs": 3537900,
+    "counts": {
+      "rides": 3,
+      "points": 4978,
+      "segments": 75,
+      "routes": 2
+    }
+  },
+  "artifacts": [
+    {
+      "path": "app/build/outputs/apk/debug/app-debug.apk",
+      "bytes": 11724361,
+      "sha256": "a2a8251fb17b7050869e69f5998a0b56624c9ae2ec068ffddc0ebfb9717b4a99"
+    },
+    {
+      "path": "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk",
+      "bytes": 1125890,
+      "sha256": "67a888f034bf1c1d0720d9c1d00303c71052fd1923ebf5920a12a03f60cb3b3a"
+    }
+  ],
+  "signing": {
+    "configuration": ".signing/debug.keystore",
+    "privateKeyCommitted": false,
+    "certificateSha256": "24107b0f1a354d165eb7bae7be2b235752428dae1d4622754e0ebdb84fe110d3",
+    "gradleSigningCheck": "PASS"
+  },
+  "buildLog": "docs/validation/route-candidates-delivery-build-0.2.2.txt",
+  "testBuildLogs": [
+    "docs/validation/route-candidates-build-0.2.2.txt",
+    "docs/validation/route-candidates-ui-build-0.2.2.txt"
+  ],
+  "previousVersionEvidence": "docs/validation/verification-0.2.1.json",
+  "pendingValidation": [
+    "Workday holidays/make-up weekends/ordinary dates, missing years and custom weekday independence",
+    "Today/Tomorrow planned departures, exact time boundary, midnight, timezone and recreation",
+    "Direction-specific plan updates and same-group legacy references",
+    "Top pull-to-refresh, short pages and scrolling in other tabs",
+    "Current-weather next-hour probability intervals and its sole timestamp",
+    "Route feels-like values, missing data and forecast-window coverage",
+    "One Toast per failed refresh, retained timestamps and absence of cache captions",
+    "Deduplicated progressive requests, footer attribution, weather-off and provider switching",
+    "Encrypted credential persistence, real providers/account quotas and network error paths",
+    "Bound route start through permissions, finish review and interruptions",
+    "Time entry, IME, large text, TalkBack and narrow screens",
+    "Previous unfinished notification/recreation regression",
+    "Full UI, schedule, weather and real-road regressions remain outside this targeted startup fix",
+    "Real-road bridge/tunnel GPS recovery, an hour-long physical ride and battery use",
+    "Complete notification/recreation UI regression; one attempted fixture stalled"
+  ],
+  "matching": {
+    "cadenceMs": {
+      "minimum": 5000,
+      "maximum": 15000,
+      "rule": "4x prior matching computation duration, clamped; only when new points exist"
+    },
+    "finishForcesReview": true,
+    "rawFixPersistenceIndependent": true,
+    "recovery": "Bounded forward search, at least three consecutive ordered fixes and observed movement",
+    "overlapDefinition": "Share of collected usable fixes passing corridor, ordering and continuity checks; not confidence or whole-route progress",
+    "readonlyHistoricalReplay": {
+      "pointCount": 1766,
+      "overlap": 0.986409966024915,
+      "state": "CONFIRMED",
+      "progress": 0.99,
+      "persistedReclassification": false
+    }
+  },
+  "previousBuildEvidence": "docs/validation/verification-0.2.2-stop-save.json"
+}

@@ -18,11 +18,18 @@ object RouteIdentity {
         return route.copy(id="reverse:${route.id}",direction=opposite(route.direction),
             points=route.points.asReversed().map { it.copy(t=end-it.t) },startRadius=route.endRadius,endRadius=route.startRadius)
     }
-    fun match(points: List<Fix>,routes: List<RouteShape>,groups: Map<String,String>): Match? {
-        val candidates=routes.mapNotNull { Routing.follow(points,it) }.filterNot { it.deviated }
+    data class Report(val candidates: List<Routing.Candidate>,val match: Match?,val ambiguous: Boolean)
+    fun report(points: List<Fix>,routes: List<RouteShape>,groups: Map<String,String>): Report {
+        val comparator=compareByDescending<Routing.Candidate> { it.overlap }
+            .thenBy { it.crossTrack }.thenByDescending { it.matchedDistance }.thenBy { it.route.id }
+        val candidates=routes.mapNotNull { Routing.evaluate(points,it) }
             .groupBy { (groups[it.route.id] ?: it.route.id) to it.route.direction }
-            .values.map { it.minBy { match -> match.crossTrack } }.sortedBy { it.crossTrack }
-        if(candidates.size>1 && candidates[1].crossTrack-candidates[0].crossTrack<Policy.MATCH_MARGIN_M) return null
-        return candidates.firstOrNull()
+            .values.map { it.sortedWith(comparator).first() }.sortedWith(comparator)
+        val eligible=candidates.filter { it.eligible && !it.match.deviated }
+        val first=eligible.firstOrNull(); val second=eligible.getOrNull(1)
+        val ambiguous=first!=null && second!=null && first.overlap-second.overlap<0.08 &&
+            kotlin.math.abs(first.crossTrack-second.crossTrack)<Policy.MATCH_MARGIN_M
+        return Report(candidates,if(ambiguous) null else first?.match,ambiguous)
     }
+    fun match(points: List<Fix>,routes: List<RouteShape>,groups: Map<String,String>): Match? = report(points,routes,groups).match
 }

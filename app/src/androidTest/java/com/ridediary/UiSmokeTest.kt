@@ -275,6 +275,91 @@ class UiSmokeTest {
         } } }
         activeId
     }
+    @Test fun liveCandidatesShowParallelAmbiguityAndCollectedOverlap() {
+        val activeId=runBlocking {
+            val base=repository.dao.routes().single()
+            val shifted=base.route().points.map { it.copy(lat=it.lat+5/111_195.0) }
+            repository.dao.saveRoute(base.copy(id="parallel-choice",name="沿河通勤",groupId="parallel-group",shape=RouteRecord.encode(shifted)))
+            val now=System.currentTimeMillis()
+            repository.start(now).also { repository.update(it,80_000,now+80_000,additionalFixes=Replay.points().filter { p->p.t<=80_000 }) }
+        }
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("live-candidate-$routeId").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("live-route-candidates").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("live-candidate-$routeId").assert(hasAnyDescendant(hasText("100.0%")))
+        compose.onNodeWithTag("live-candidate-parallel-choice").assertExists()
+        assertTrue(compose.onNodeWithTag("live-route-candidates").fetchSemanticsNode().size.height <= 80*app.resources.displayMetrics.density)
+        assertTrue(compose.onNodeWithTag("live-ride-overview").fetchSemanticsNode().boundsInRoot.bottom <=
+            compose.onNodeWithTag("live-route-candidates").fetchSemanticsNode().boundsInRoot.top)
+        compose.onNodeWithText(text(R.string.matching)).assertDoesNotExist()
+        compose.onNodeWithText(text(R.string.unavailable)).assertDoesNotExist()
+        assertTrue(repository.matching.value!!.report.ambiguous)
+        assertNull(runBlocking { repository.dao.ride(activeId)!!.ride.routeId })
+        capture("live-route-candidates-ambiguous")
+    }
+    @Test fun liveCandidatesReacquireReferenceStartLoopAndShowConfirmedRoute() {
+        val now=System.currentTimeMillis()
+        val trace=Replay.points()
+        val activeId=runBlocking {
+            val base=repository.dao.routes().single()
+            val first=trace.first()
+            val loop=listOf(first,first.copy(lon=first.lon-55/(111_195*kotlin.math.cos(Math.toRadians(first.lat)))),first)+base.route().points.drop(1)
+            repository.dao.saveRoute(base.copy(shape=RouteRecord.encode(loop)))
+            repository.start(now).also { repository.update(it,10_000,now+10_000,additionalFixes=trace.filter { p->p.t<=10_000 }) }
+        }
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("live-candidate-$routeId").fetchSemanticsNodes().isNotEmpty() }
+        val initial=repository.matching.value!!
+        assertNull(initial.report.match)
+        runBlocking { repository.update(activeId,80_000,now+80_000,additionalFixes=trace.filter { it.t in 10_001..80_000 }) }
+        compose.waitUntil(5_000) {
+            repository.matching.value?.report?.match?.route?.id==routeId
+        }
+        compose.onNodeWithTag("live-candidate-$routeId").performScrollTo().assertIsDisplayed()
+        assertTrue(repository.matching.value!!.report.candidates.single().overlap>.85)
+        assertEquals(routeId,runBlocking { repository.dao.ride(activeId)!!.ride.routeId })
+        compose.onNodeWithText(text(R.string.matched)).assertDoesNotExist()
+        capture("live-route-candidates-confirmed")
+    }
+    @Test fun liveLocationRecoversWhileDatabaseSnapshotIsStale() {
+        val priorQuality=RecordingService.quality.value
+        val priorFix=RecordingService.latestFixRealtime.value
+        try {
+            val activeId=runBlocking {
+                val now=System.currentTimeMillis()
+                repository.start(now).also { repository.update(it,120_000,now+120_000) }
+            }
+            RecordingService.active.value=true
+            RecordingService.quality.value="GOOD"
+            RecordingService.latestFixRealtime.value=android.os.SystemClock.elapsedRealtime()-20_000
+            awaitText(R.string.quality_searching)
+            compose.onNodeWithTag("location-status-problem").assertExists()
+            compose.onNodeWithTag("live-recording-header").assert(hasAnyDescendant(hasText(text(R.string.ride_title))))
+            compose.onNodeWithTag("live-recording-header").assert(hasAnyDescendant(hasText(text(R.string.quality_searching))))
+            // A new callback must recover the indicator even before any DB write completes.
+            RecordingService.latestFixRealtime.value=android.os.SystemClock.elapsedRealtime()
+            awaitText(R.string.quality_good)
+            compose.onNodeWithTag("location-status-good").assertExists()
+            compose.onNodeWithTag("location-status-problem").assertDoesNotExist()
+            val titleBounds=compose.onNodeWithText(text(R.string.ride_title)).fetchSemanticsNode().boundsInRoot
+            val statusBounds=compose.onNodeWithText(text(R.string.quality_good)).fetchSemanticsNode().boundsInRoot
+            assertTrue(statusBounds.left>titleBounds.right)
+            assertTrue(kotlin.math.abs(statusBounds.center.y-titleBounds.center.y)<2*app.resources.displayMetrics.density)
+            capture("live-location-normal")
+            assertEquals(120_000,runBlocking { repository.dao.ride(activeId)!!.ride.elapsed })
+            assertTrue(runBlocking { repository.dao.ride(activeId)!!.points.isEmpty() })
+            RecordingService.quality.value="POOR"
+            awaitText(R.string.quality_poor)
+            compose.onNodeWithTag("location-status-problem").assertExists()
+            compose.onNodeWithTag("location-status-good").assertDoesNotExist()
+            capture("live-location-weak")
+            RecordingService.quality.value="GOOD"
+            RecordingService.latestFixRealtime.value=android.os.SystemClock.elapsedRealtime()
+            awaitText(R.string.quality_good)
+        } finally {
+            RecordingService.active.value=false
+            RecordingService.quality.value=priorQuality
+            RecordingService.latestFixRealtime.value=priorFix
+        }
+    }
     @Test fun notificationIntentOpensReviewAgainAfterCancelAndRecreation() {
         val activeId=runBlocking { repository.start(System.currentTimeMillis()) }
         fun request() { scenario.onActivity { it.startActivity(android.content.Intent(it,MainActivity::class.java).setAction(RecordingService.REVIEW_STOP).addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP)) } }

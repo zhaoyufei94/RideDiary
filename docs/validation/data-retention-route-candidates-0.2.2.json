@@ -1,0 +1,24 @@
+{
+  "tables": {
+    "rides": {
+      "count": 3,
+      "allRowsIdentical": true
+    },
+    "points": {
+      "count": 4978,
+      "allRowsIdentical": true
+    },
+    "segments": {
+      "count": 75,
+      "allRowsIdentical": true
+    },
+    "routes": {
+      "count": 2,
+      "allRowsIdentical": true
+    }
+  },
+  "beforeIntegrity": "ok",
+  "afterIntegrity": "ok",
+  "latestCorrectedBoundaryEndMs": 3537900,
+  "status": "PASS"
+}

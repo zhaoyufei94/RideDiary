@@ -12,6 +12,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -73,7 +74,7 @@ private fun RouteRecord.weatherEnds()=route().points.let { points -> listOfNotNu
     }
     val fallbackPoint=remember(fallback?.shape) { fallback?.weatherEnds()?.firstOrNull() }
     val latest by rememberUpdatedState(active)
-    val language=if(context.resources.configuration.locales[0].language=="zh") "zh" else "en"
+    val language=if(LocalConfiguration.current.locales[0].language=="zh") "zh" else "en"
     val result by produceState(WeatherPageLoad(),config,foreground,now/900_000,endpoints,fallbackPoint,active?.ride?.id,refresh,language) {
         val old=if(value.config==config) value else WeatherPageLoad()
         value=old.copy(token=refresh,loading=foreground && config.enabled && config.ready,config=config)

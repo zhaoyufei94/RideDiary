@@ -10,6 +10,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.ridediary.*
 import com.ridediary.data.RouteUnavailableException
+import com.ridediary.core.RecordingBuffer
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,36 +27,37 @@ class RecordingService: Service() {
     private var origin=0L
     private var ticker: Job? = null
     private var worker: Job? = null
-    private val operations=Channel<suspend ()->Unit>(Channel.UNLIMITED)
+    private var buffer=RecordingBuffer()
+    private val wakeups=Channel<Unit>(Channel.CONFLATED)
     override fun onCreate() {
         super.onCreate()
         getSystemService(NotificationManager::class.java).createNotificationChannel(NotificationChannel(CHANNEL,getString(R.string.recording_channel),NotificationManager.IMPORTANCE_LOW))
-        worker=scope.launch {
-            for (operation in operations) {
-                try { operation() }
-                catch (e: CancellationException) { throw e }
-                catch (_: Exception) {
-                    quality.value="STORAGE_ERROR"
-                    // Keep the service/timer and stop action alive; a later successful checkpoint
-                    // can recover after temporary storage failure. Raw points stay unmodified.
-                }
+    }
+    private fun finalizeRecording(discard: Boolean) {
+        buffer.stop(elapsed(),System.currentTimeMillis(),discard)
+        stopPending.value=true; saving.value=true
+        source?.stop(); ticker?.cancel()
+        wakeups.trySend(Unit)
+    }
+    private suspend fun flush() {
+        val batch=buffer.batch()
+        val id=rideId ?: return
+        if(batch.cutoff?.discard==true) app.repository.discardActive(id)
+        else {
+            val ride=app.repository.update(id,batch.elapsed,batch.utc,finish=batch.cutoff!=null,
+                fixedRouteId=boundRouteId,additionalFixes=batch.fixes)
+            if(ride?.arrivalSuggested==true && !arrivalReview) {
+                arrivalReview=true
+                getSystemService(NotificationManager::class.java).notify(1,notification())
             }
         }
+        buffer.acknowledge(batch)
+        if(batch.cutoff!=null) close()
     }
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == STOP || intent?.action == DISCARD) {
-            operations.trySend {
-                app.ready.await()
-                if (rideId == null) {
-                    // A recreated stop-only service must finalize the saved session without
-                    // pretending it continued collecting locations.
-                    app.repository.recoverInterrupted(System.currentTimeMillis())
-                    close()
-                } else if(intent.action==DISCARD) {
-                    app.repository.discardActive(rideId!!)
-                    close()
-                } else finish()
-            }
+            if(starting || rideId!=null) finalizeRecording(intent.action==DISCARD)
+            else scope.launch { app.ready.await(); close() }
             return START_NOT_STICKY
         }
         if (starting || rideId != null) return START_NOT_STICKY
@@ -64,53 +66,56 @@ class RecordingService: Service() {
         }
         boundRouteId=intent?.getStringExtra(EXTRA_ROUTE_ID)
         starting=true
+        origin=SystemClock.elapsedRealtime()
+        val startUtc=System.currentTimeMillis()
+        buffer=RecordingBuffer().also { it.checkpoint(0,startUtc) }
+        quality.value="SEARCHING"; latestFixRealtime.value=null; stopPending.value=false; saving.value=false
         try {
             if (Build.VERSION.SDK_INT >= 29) startForeground(1,notification(),ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
             else startForeground(1,notification())
         } catch (_: SecurityException) { quality.value="PERMISSION_LOST"; stopSelf(); return START_NOT_STICKY }
-        operations.trySend {
-            app.ready.await()
-            origin=SystemClock.elapsedRealtime()
-            try { rideId=app.repository.start(System.currentTimeMillis(),boundRouteId) }
-            catch (_: RouteUnavailableException) { quality.value="ROUTE_UNAVAILABLE"; close(); return@trySend }
-            active.value=true
-            source=AndroidLocationSource(this@RecordingService).also { location ->
-                location.start(origin,{ fix ->
-                    operations.trySend {
-                        val id=rideId ?: return@trySend
-                        val ride=app.repository.update(id,elapsed(),System.currentTimeMillis(),fix)
-                        if(ride?.arrivalSuggested==true && !arrivalReview) {
-                            arrivalReview=true
-                            getSystemService(NotificationManager::class.java).notify(1,notification())
-                        }
-                        if (ride?.state == "COMPLETED") close()
-                    }
-                },{ quality.value=it })
-            }
-            ticker=scope.launch {
-                while (isActive) {
-                    delay(2_000)
-                    operations.send {
-                        val id=rideId
-                        if (id != null) {
-                            if (ContextCompat.checkSelfPermission(this@RecordingService,Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                                quality.value="PERMISSION_LOST"; source?.stop()
-                            }
-                            app.repository.update(id,elapsed(),System.currentTimeMillis())
-                        }
+        scope.launch {
+            try {
+                app.ready.await()
+                try { rideId=app.repository.start(startUtc,boundRouteId) }
+                catch (_: RouteUnavailableException) { quality.value="ROUTE_UNAVAILABLE"; close(); return@launch }
+                active.value=true
+                worker=scope.launch {
+                    for(signal in wakeups) {
+                        try { flush() }
+                        catch(e: CancellationException) { throw e }
+                        catch(_: Exception) { quality.value="STORAGE_ERROR"; saving.value=false }
                     }
                 }
-            }
+                if(buffer.cutoff==null) {
+                    source=AndroidLocationSource(this@RecordingService).also { location ->
+                        location.start(origin,{ fix ->
+                            if(buffer.cutoff==null) {
+                                latestFixRealtime.value=origin+fix.t
+                                buffer.checkpoint(elapsed(),System.currentTimeMillis(),fix)
+                                wakeups.trySend(Unit)
+                            }
+                        },{ quality.value=it })
+                    }
+                    ticker=scope.launch {
+                        while(isActive) {
+                            delay(2_000)
+                            if(ContextCompat.checkSelfPermission(this@RecordingService,Manifest.permission.ACCESS_FINE_LOCATION)!=PackageManager.PERMISSION_GRANTED) {
+                                quality.value="PERMISSION_LOST"; source?.stop()
+                            }
+                            buffer.checkpoint(elapsed(),System.currentTimeMillis())
+                            wakeups.trySend(Unit)
+                        }
+                    }
+                } else wakeups.trySend(Unit)
+            } catch(e: CancellationException) { throw e }
+            catch(_: Exception) { quality.value="STORAGE_ERROR"; close() }
         }
         return START_NOT_STICKY
     }
     private fun elapsed()=SystemClock.elapsedRealtime()-origin
-    private suspend fun finish() {
-        rideId?.let { app.repository.update(it,elapsed(),System.currentTimeMillis(),finish=true,fixedRouteId=boundRouteId) }
-        close()
-    }
     private fun close() {
-        source?.stop(); ticker?.cancel(); rideId=null; active.value=false
+        source?.stop(); ticker?.cancel(); rideId=null; active.value=false; saving.value=false; stopPending.value=false
         stopForeground(STOP_FOREGROUND_REMOVE); stopSelf()
     }
     private fun notification(): Notification {
@@ -122,7 +127,7 @@ class RecordingService: Service() {
             .addAction(android.R.drawable.ic_menu_close_clear_cancel,getString(R.string.finish),stop).build()
     }
     override fun onDestroy() {
-        source?.stop(); active.value=false; operations.close(); scope.cancel(); super.onDestroy()
+        source?.stop(); active.value=false; saving.value=false; stopPending.value=false; wakeups.close(); scope.cancel(); super.onDestroy()
     }
     override fun onBind(intent: Intent?): IBinder? = null
     companion object {
@@ -133,5 +138,8 @@ class RecordingService: Service() {
         const val REVIEW_STOP="com.ridediary.REVIEW_STOP"
         val quality=MutableStateFlow("SEARCHING")
         val active=MutableStateFlow(false)
+        val saving=MutableStateFlow(false)
+        val stopPending=MutableStateFlow(false)
+        val latestFixRealtime=MutableStateFlow<Long?>(null)
     }
 }

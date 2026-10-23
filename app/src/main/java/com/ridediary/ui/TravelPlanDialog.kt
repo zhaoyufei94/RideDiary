@@ -15,10 +15,11 @@ import com.ridediary.data.*
 import com.ridediary.weather.TravelPlans
 import java.time.*
 import java.time.format.TextStyle
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 
 @Composable fun planDaysLabel(days: Int): String {
-    val locale=LocalContext.current.resources.configuration.locales[0]
+    val locale=LocalConfiguration.current.locales[0]
     return when(days) {
         0 -> stringResource(R.string.plan_disabled)
         TravelPlans.WEEKDAYS -> stringResource(R.string.plan_weekdays)
@@ -39,7 +40,7 @@ import androidx.compose.ui.platform.LocalContext
     }
     var selectedMinute by rememberSaveable(route.id) { mutableIntStateOf(minute) }
     var timeOpen by rememberSaveable { mutableStateOf(false) }
-    val locale=LocalContext.current.resources.configuration.locales[0]
+    val locale=LocalConfiguration.current.locales[0]
     EditorSheet(title=stringResource(R.string.travel_plan),subtitle=routeName(route.name)+" · "+directionName(route.direction),
         onDismiss=onDismiss,onSave={ onSave(mode,days,if(automatic) null else selectedMinute) }) {
         Text(stringResource(R.string.plan_repeat),style=MaterialTheme.typography.titleMedium)

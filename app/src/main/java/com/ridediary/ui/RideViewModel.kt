@@ -13,6 +13,7 @@ class RideViewModel(application: Application): AndroidViewModel(application) {
     private val app=application as RideDiaryApp
     private val repository=app.repository
     val rides=repository.rides.stateIn(viewModelScope,SharingStarted.WhileSubscribed(5_000),emptyList())
+    val matching=repository.matching
     val routes=repository.routes.stateIn(viewModelScope,SharingStarted.WhileSubscribed(5_000),emptyList())
     val error=MutableStateFlow(false)
     private fun task(block: suspend ()->Unit) {

@@ -2,6 +2,40 @@
 
 This checklist applies across Android brands. Specific models below identify historical test environments, not product restrictions. See [product design](../PRODUCT_DESIGN.md) for product and interaction requirements.
 
+## 0.2.2 recording-page deduplication and location indicator (2026-10-23)
+
+Removed repeated matching/ambiguous/unmatched explanations inside the main card. Location status shares the recording-title row with a green/red dot and the existing muted text style. Three targeted device UI cases pass (5.931 s), covering label deduplication, candidates, inline alignment, normal/poor/stale acquisition and recovery; synthetic screenshots were inspected. Build passes; Lint has 0 errors/15 warnings (one additional unused string after removing its display), and all 222 bilingual resources pass. Installed in place, with every database row unchanged. Matching algorithms are unchanged; prior algorithm-test evidence remains applicable.
+
+Evidence: [build](validation/recording-header-build-0.2.2.txt), [UI](validation/recording-header-ui-0.2.2.txt), [retention](validation/data-retention-recording-header-0.2.2.json).
+
+## 0.2.2 compact candidate display (2026-10-23)
+
+Candidates now appear below the main recording card as up to two muted route/overlap rows, without a separate card, progress bars, state explanations or timestamps. Hide when no candidates or usable location exist. Two targeted device UI cases pass (3.730 s), checking order, height at most 80 dp at default scale, candidates and confirmed recovery. Build/Lint pass (0 errors, 14 warnings), as do 223 bilingual resources. Installed in place and inspected synthetic screenshots; every database row remains identical. Matching logic is unchanged; algorithm-test evidence remains from the preceding build.
+
+Evidence: [build](validation/compact-candidates-build-0.2.2.txt), [UI](validation/compact-candidates-ui-0.2.2.txt), [retention](validation/data-retention-compact-candidates-0.2.2.json).
+
+## 0.2.2 route reacquisition and live candidates (2026-10-23)
+
+- All 41 JVM tests pass, including five new cases for start-loop and short-deviation recovery, gap/distant-branch safety, overlap versus progress, and parallel-road ambiguity. Existing U-turn, crossing, arrival and projection-equivalence cases remain passing.
+- All 18 targeted device cases pass: 13 cadence/raw-fix persistence/forced-final-review/save/discard/route/persistence cases and five candidate-name/percentage/ambiguity, confirmed recovery, location-recovery and arrival-save/cancel UI cases. The 168.537 s core run includes an initial locked-Activity wait and is not computation timing; it passed after unlock. UI cases took 10.154 s.
+- Read-only JVM replay of the backed-up 1766-point real trace confirms the intended candidate with 98.64% ordered overlap and 99% progress (arrival remains separately confirmed). Nothing from that replay is persisted into history, and it does not establish field accuracy.
+- All 231 bilingual resources pass; Lint has 0 errors and 14 warnings. Shared signing, version 0.2.2/code 12 and Room v4 are retained. The phone was updated in place, synthetic candidate screenshots inspected and cold launch confirmed.
+- Every historical row remains identical: 3 rides, 4978 fixes, 75 segments, 2 routes. The user's separately corrected 3537900 ms boundary is preserved.
+- Full notification/recreation UI, physical bridge/tunnel recovery, additional adjacent roads and long-term power remain pending; targeted success is not full product acceptance.
+
+Evidence: [build](validation/route-candidates-delivery-build-0.2.2.txt), [core device run](validation/route-candidates-core-0.2.2.txt), [UI run](validation/route-candidates-ui-0.2.2.txt), [retention](validation/data-retention-route-candidates-0.2.2.json) and [current record](verification.json).
+
+## 0.2.2 stop latency and location-status repair (2026-10-23)
+
+- App/test builds and all 36 JVM tests pass; 221 bilingual resources pass. Lint has 0 errors and 21 warnings. Four pre-existing Compose configuration-read errors were corrected.
+- All 15 targeted device cases pass using disposable databases: 12 stop/save, long-trace, persistence and route cases (8.770 s); one location-recovery/stale-DB UI case (1.972 s); two arrival-save and cancel/discard UI cases (5.004 s).
+- A 1.6 s DB block plus duplicate stop command preserves the first command's UTC cutoff. All 1800 fixes of a synthetic hour-long ride persist. 1200 randomized indexed projections exactly match the original exhaustive implementation.
+- An extra four-case UI run stalled in the existing notification/recreation case and was terminated. Its other three relevant cases passed separately. Full notification/recreation UI acceptance is not claimed.
+- Installed 0.2.2 in place with the shared key; Room stays at v4. Every row/field remains identical across update and tests: 3 rides, 4978 fixes, 75 segments and 2 routes. Historical durations were not corrected. SQLite quick_check is ok before/after and cold launch succeeds.
+- Physical bridge/tunnel recovery, hour-long road use, power consumption and prior weather/plan pending cases remain unverified.
+
+Evidence: [build](validation/local-build-0.2.2.txt), [stop/data tests](validation/stop-save-device-0.2.2.txt), [location UI](validation/location-ui-0.2.2.txt), [arrival UI](validation/arrival-ui-0.2.2.txt), [retention](validation/data-retention-0.2.2.json) and [verification.json](verification.json).
+
 ## 0.2.1 startup and database upgrade repair (2026-10-23)
 
 - Read this app's crash stack and confirmed a v3 Room identity mismatch, with planMode absent. Create a private local backup under an ignored directory before repair, without publishing database contents, names or coordinates.

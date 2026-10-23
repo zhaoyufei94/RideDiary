@@ -2,6 +2,18 @@
 
 [中文](CHANGELOG.zh-CN.md)
 
+## 0.2.2
+
+- Recover from reference-start loops and short deviations using bounded, consecutive-fix reacquisition, while keeping parallel-route ambiguity and gap protections.
+- Show up to two live candidate routes and collected-fix overlap in a compact section below the main recording card.
+- Remove repeated route-matching labels and place location status beside the recording title, with green/red indicators and concise text.
+- Match about every 5 seconds, adapting up to 15 seconds for expensive calculations. Raw-fix persistence stays independent; finishing always forces a final review.
+- Fix delayed stop/save and inflated duration caused by queued full-trace updates on long rides.
+- Coalesce update wakeups while retaining every received raw fix in batches. Stop acquisition immediately and keep the requested finish time through retries.
+- Decouple live location status from database/rendering lag so a recovered fix clears the searching indicator.
+- Cache route projection indexes and search nearby segments; run live analysis off the UI thread without repeating it on clock ticks.
+- Add saving/retry states. Existing rides, routes, durations and raw points are not retrospectively modified.
+
 ## 0.2.1
 
 - Fixed: Startup crashes after upgrading certain earlier builds while retaining trips, tracks and route plans.

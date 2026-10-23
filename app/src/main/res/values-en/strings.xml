@@ -37,10 +37,10 @@
     <string name="current_wait">Current stop %s</string>
     <string name="comparison_position">At the same position: %1$s · samples: %2$d</string>
     <string name="quality_good">Location available</string>
-    <string name="quality_searching">No fresh location · gaps count as unknown</string>
-    <string name="quality_poor">Low accuracy · interval is unknown</string>
-    <string name="quality_off">Location disabled · enable it in system settings</string>
-    <string name="quality_permission">Precise location required · check system permissions</string>
+    <string name="quality_searching">Waiting for location</string>
+    <string name="quality_poor">Weak location signal</string>
+    <string name="quality_off">Location disabled</string>
+    <string name="quality_permission">Precise location required</string>
     <string name="quality_start">Could not start. Retry with the app visible.</string>
     <string name="permission_title">Before recording</string>
     <string name="permission_body">Precise location saves your track, separates movement and stops, and recognizes routes. Notifications show recording status and a stop action. Recording starts only when you choose; a location foreground service continues with the screen off. No all-day background location is requested. Operate only while parked.</string>
@@ -217,4 +217,8 @@
     <string name="calendar_loading">Loading workday calendar…</string>
     <string name="calendar_not_bundled">The %1$d calendar is not bundled; workday routes for that year are unavailable.</string>
     <string name="weather_next_hour_rain">Next-hour precipitation chance %1$s</string>
+    <string name="saving_ride">Saving ride…</string>
+    <string name="save_ride_failed">Saving failed. Location collection has stopped. Retry to save with the original finish time.</string>
+    <string name="retry_save_ride">Retry save</string>
+    <string name="candidate_title">Candidate routes · overlap</string>
 </resources>

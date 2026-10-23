@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "allRowsIdentical": true,
+  "counts": {
+    "rides": 3,
+    "points": 4978,
+    "segments": 75,
+    "routes": 2
+  },
+  "quickCheck": "ok"
+}

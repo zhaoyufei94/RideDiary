@@ -11,6 +11,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,6 +27,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -38,13 +40,19 @@ import com.ridediary.data.*
 import com.ridediary.recording.RecordingService
 import com.ridediary.weather.*
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import android.os.SystemClock
 
 @Composable fun RideDiaryScreen(onStart: ()->Unit,onStop: ()->Unit,onLanguage: ()->Unit,onDiscard: ()->Unit={},stopReviewToken: Int=0,vm: RideViewModel=viewModel(),onStartRoute: (String)->Unit={ onStart() },weather: WeatherViewModel=viewModel()) {
     val context=LocalContext.current
     val rides by vm.rides.collectAsStateWithLifecycle()
     val routes by vm.routes.collectAsStateWithLifecycle()
+    val matching by vm.matching.collectAsStateWithLifecycle()
     val error by vm.error.collectAsStateWithLifecycle()
     val quality by RecordingService.quality.collectAsStateWithLifecycle()
+    val saving by RecordingService.saving.collectAsStateWithLifecycle()
+    val stopPending by RecordingService.stopPending.collectAsStateWithLifecycle()
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var selected by rememberSaveable { mutableStateOf<String?>(null) }
     var selectedRoute by rememberSaveable { mutableStateOf<String?>(null) }
@@ -118,8 +126,8 @@ import kotlinx.coroutines.delay
             if(error) Panel { Text(stringResource(R.string.error)); TextButton(onClick={ vm.error.value=false }) { Text(stringResource(R.string.dismiss)) } }
             when(tab) {
                 0 -> {
-                    Text(stringResource(if(active==null) R.string.ready else R.string.ride_title),style=MaterialTheme.typography.headlineMedium)
-                    if(active!=null) LiveRide(active,routes,rides,quality)
+                    if(active==null) Text(stringResource(R.string.ready),style=MaterialTheme.typography.headlineMedium)
+                    if(active!=null) LiveRide(active,routes,rides,quality,matching)
                     val dashboard=rememberRecordDashboard(weather,rides,routes,active,refreshToken)
                     LaunchedEffect(dashboard.data.token,dashboard.data.loading,refreshToken) {
                         refreshing=refreshToken>0 && (dashboard.data.token!=refreshToken || dashboard.data.loading)
@@ -137,7 +145,10 @@ import kotlinx.coroutines.delay
                         Text(stringResource(R.string.start))
                     }
                     if(active!=null) {
-                        OutlinedButton(onClick={ finishDialog=true },modifier=Modifier.fillMaxWidth().heightIn(min=52.dp)) { Text(stringResource(R.string.finish)) }
+                        if(stopPending) Note(stringResource(if(saving) R.string.saving_ride else R.string.save_ride_failed))
+                        OutlinedButton(enabled=!saving,onClick={ if(stopPending) onStop() else finishDialog=true },modifier=Modifier.fillMaxWidth().heightIn(min=52.dp)) {
+                            Text(stringResource(if(saving) R.string.saving_ride else if(stopPending) R.string.retry_save_ride else R.string.finish))
+                        }
                         RecordWeather(weather,dashboard,onRefresh={ refreshRecord() }) { settingsOpen=true }
                     } else RouteRecommendations(dashboard,weather) { begin(it) }
                     RecordWeatherSources(weather,dashboard)
@@ -222,7 +233,7 @@ import kotlinx.coroutines.delay
             permission.launch(permissions.toTypedArray())
         }) { Text(stringResource(R.string.permission_allow)) }
     },dismissButton={ TextButton(onClick={ explain=false }) { Text(stringResource(R.string.cancel)) } })
-    if(finishDialog && active!=null) AlertDialog(modifier=Modifier.testTag("finish-confirmation"),onDismissRequest={ finishDialog=false },containerColor=Surface,tonalElevation=0.dp,
+    if(finishDialog && active!=null && !stopPending) AlertDialog(modifier=Modifier.testTag("finish-confirmation"),onDismissRequest={ finishDialog=false },containerColor=Surface,tonalElevation=0.dp,
         title={ Text(stringResource(if(active.ride.arrivalSuggested) R.string.arrival_review_title else R.string.finish_confirm)) },
         text={ Text(stringResource(R.string.finish_options_body)) },
         confirmButton={ TextButton(onClick={ finishDialog=false; onStop() }) { Text(stringResource(R.string.save)) } },
@@ -239,30 +250,59 @@ import kotlinx.coroutines.delay
     }
 }
 
-@Composable private fun LiveRide(data: RideData,routes: List<RouteRecord>,all: List<RideData>,quality: String) {
-    val sample=data.sample(); val metrics=sample.metrics
-    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
-    LaunchedEffect(Unit) { while(true) { now=System.currentTimeMillis(); delay(1_000) } }
-    val points=sample.points
-    val latest=points.lastOrNull()
-    val fresh=(latest!=null && good(latest) && data.ride.elapsed-latest.t in 0..15_000)
-    val route=routes.firstOrNull { it.id==sample.routeId }?.route()
-    val match=route?.let { Routing.follow(points,it) }
+private data class LiveAnalysis(val sample: Sample)
+
+@Composable private fun LiveRide(data: RideData,routes: List<RouteRecord>,all: List<RideData>,quality: String,matching: LiveRouteMatch?) {
+    val analysis by produceState<LiveAnalysis?>(null,data) {
+        value=withContext(Dispatchers.Default) { LiveAnalysis(data.sample()) }
+    }
+    val view=analysis
+    if(view==null) { LinearProgressIndicator(Modifier.fillMaxWidth()); return }
+    val sample=view.sample; val metrics=sample.metrics
+    val snapshot=matching?.takeIf { it.rideId==data.ride.id }
+    val report=snapshot?.report
+    val fixedCandidate=report?.candidates?.firstOrNull { it.route.id==snapshot.boundRouteId }
+    val match=if(snapshot?.boundRouteId!=null) fixedCandidate?.takeIf { it.eligible }?.match else report?.match
+    val route=match?.route ?: routes.firstOrNull { it.id==sample.routeId }?.route()
+    val history=remember(all,data.ride.id) { all.filter { it.ride.id!=data.ride.id } }
+    val estimate by produceState<Statistics.Estimate?>(null,snapshot,history) {
+        value=if(match!=null && !match.deviated) withContext(Dispatchers.Default) {
+            val current=data.sample().copy(routeId=match.route.id,direction=match.route.direction)
+            Statistics.estimate(current,history.map { it.sample() },match)
+        } else null
+    }
+    var clocks by remember { mutableStateOf(System.currentTimeMillis() to SystemClock.elapsedRealtime()) }
+    LaunchedEffect(Unit) { while(true) { clocks=System.currentTimeMillis() to SystemClock.elapsedRealtime(); delay(1_000) } }
+    val now=clocks.first
+    val receivedRealtime by RecordingService.latestFixRealtime.collectAsStateWithLifecycle()
+    val serviceActive by RecordingService.active.collectAsStateWithLifecycle()
+    // Read acquisition time, independently of database/rendering lag.
+    val latest=sample.points.lastOrNull()
+    val fixAge=if(serviceActive) receivedRealtime?.let { (clocks.second-it).coerceAtLeast(0) }
+        else latest?.let { data.ride.elapsed-it.t }
+    val fresh=fixAge!=null && fixAge in 0..15_000 && if(serviceActive) quality=="GOOD" else latest?.let(::good)==true
     val uncertain=!fresh || match==null || match.deviated
-    val eta=if(!uncertain) Statistics.estimate(sample,all.map { it.sample() },match) else null
-    val status=when { quality=="STORAGE_ERROR"->R.string.error; quality=="LOCATION_OFF"->R.string.quality_off; quality=="PERMISSION_LOST" || quality=="PRECISE_REQUIRED"->R.string.quality_permission; quality=="START_FAILED"->R.string.quality_start; !fresh->R.string.quality_searching; quality=="POOR" || quality=="STALE"->R.string.quality_poor; else->R.string.quality_good }
-    Note(stringResource(status))
-    Surface(color=RideCard,contentColor=Surface,shape=RoundedCornerShape(16.dp)) {
+    val eta=if(uncertain) null else estimate
+    val status=when { quality=="STORAGE_ERROR"->R.string.error; quality=="LOCATION_OFF"->R.string.quality_off; quality=="PERMISSION_LOST" || quality=="PRECISE_REQUIRED"->R.string.quality_permission; quality=="START_FAILED"->R.string.quality_start; quality=="POOR" || quality=="STALE"->R.string.quality_poor; !fresh->R.string.quality_searching; else->R.string.quality_good }
+    Row(Modifier.fillMaxWidth().testTag("live-recording-header"),horizontalArrangement=Arrangement.spacedBy(16.dp),verticalAlignment=Alignment.CenterVertically) {
+        Text(stringResource(R.string.ride_title),style=MaterialTheme.typography.headlineMedium)
+        Row(Modifier.weight(1f),horizontalArrangement=Arrangement.spacedBy(6.dp,Alignment.End),verticalAlignment=Alignment.CenterVertically) {
+            val locationNormal=status==R.string.quality_good
+            Box(Modifier.size(8.dp).background(if(locationNormal) Color(0xff32945a) else Danger,CircleShape)
+                .testTag(if(locationNormal) "location-status-good" else "location-status-problem"))
+            Text(stringResource(status),color=Muted,fontSize=14.sp,lineHeight=21.sp)
+        }
+    }
+    Surface(modifier=Modifier.testTag("live-ride-overview"),color=RideCard,contentColor=Surface,shape=RoundedCornerShape(16.dp)) {
         Column(Modifier.fillMaxWidth().padding(20.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
             Text(if(route!=null) routeName(route.name)+" · "+directionName(route.direction) else stringResource(R.string.ordinary),fontSize=18.sp)
             Text(stringResource(R.string.elapsed),color=Accent,fontSize=14.sp)
             LargeTime(metrics.elapsed)
-            Text(stringResource(if(route==null) R.string.matching else if(uncertain) R.string.deviated else R.string.matched),fontSize=14.sp,color=Accent)
             if(match!=null && !uncertain) {
                 Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) { Text(stringResource(R.string.progress),modifier=Modifier.weight(1f)); Text("${(match.progress*100).toInt()}%",fontFamily=FontFamily.Monospace) }
                 MotorcycleProgress(match.progress)
                 Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) { Text(stringResource(R.string.origin)); Text(stringResource(R.string.remaining,(route!!.length-match.along).coerceAtLeast(0.0)/1000)) }
-            } else Text(stringResource(if(route==null) R.string.unavailable else R.string.deviated),fontSize=14.sp)
+            }
             HorizontalDivider(color=Color(0xff50654d))
             Text(stringResource(R.string.eta),color=Accent)
             Text(if(eta==null) stringResource(R.string.learning) else {
@@ -272,10 +312,25 @@ import kotlinx.coroutines.delay
             if(eta!=null) Text(stringResource(R.string.comparison_position,delta(eta.elapsedDifference),eta.n),fontSize=14.sp)
         }
     }
+    RouteCandidatePanel(snapshot,fresh)
     MetricPair(stringResource(R.string.average_speed),metrics.averageKmh?.let { decimal(it)+" km/h" } ?: "—",stringResource(R.string.waiting),duration(metrics.waiting))
     val last=metrics.segments.lastOrNull { it.motion != Motion.UNKNOWN }
     if(fresh && latest?.speed != null && latest.speed < Policy.STOP_EXIT && last?.motion==Motion.WAITING) Note(stringResource(R.string.current_wait,duration(last.duration)))
     SectionTitle(stringResource(R.string.time_split)); TimeBar(metrics)
+}
+
+@Composable private fun RouteCandidatePanel(snapshot: LiveRouteMatch?,fresh: Boolean) {
+    val candidates=snapshot?.report?.candidates.orEmpty().take(2)
+    if(!fresh || candidates.isEmpty()) return
+    Column(Modifier.fillMaxWidth().padding(horizontal=4.dp).testTag("live-route-candidates"),verticalArrangement=Arrangement.spacedBy(4.dp)) {
+        Text(stringResource(R.string.candidate_title),fontSize=11.sp,color=Muted)
+        candidates.forEach { candidate ->
+            Row(Modifier.fillMaxWidth().testTag("live-candidate-${candidate.route.id}"),horizontalArrangement=Arrangement.spacedBy(12.dp),verticalAlignment=Alignment.CenterVertically) {
+                Text(routeName(candidate.route.name)+" · "+directionName(candidate.route.direction),modifier=Modifier.weight(1f),fontSize=13.sp,color=Muted,maxLines=1,overflow=TextOverflow.Ellipsis)
+                Text(decimal(candidate.overlap*100)+"%",fontSize=13.sp,fontFamily=FontFamily.Monospace,color=Muted,maxLines=1)
+            }
+        }
+    }
 }
 
 @Composable private fun History(rides: List<RideData>,routes: List<RouteRecord>,onDelete: ((RideData)->Unit)?=null,

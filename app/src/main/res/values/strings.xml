@@ -37,10 +37,10 @@
     <string name="current_wait">本次已等待 %s</string>
     <string name="comparison_position">与历史同一位置相比 %1$s · %2$d 次</string>
     <string name="quality_good">定位正常</string>
-    <string name="quality_searching">无新定位 · 继续计时，缺口计为未知</string>
-    <string name="quality_poor">定位质量不足 · 该段计为未知</string>
-    <string name="quality_off">定位已关闭 · 请在系统设置开启</string>
-    <string name="quality_permission">需要精确定位 · 请检查系统权限</string>
+    <string name="quality_searching">等待定位</string>
+    <string name="quality_poor">定位信号弱</string>
+    <string name="quality_off">定位已关闭</string>
+    <string name="quality_permission">需精确定位权限</string>
     <string name="quality_start">记录未能启动，请保持页面可见后重试</string>
     <string name="permission_title">记录前的权限说明</string>
     <string name="permission_body">精确定位用于保存轨迹、区分移动与静止，并识别路线。通知用于显示持续记录与结束入口。只在你手动开始后记录；锁屏时由定位前台服务继续，不申请全天后台定位。请停车后操作。</string>
@@ -217,4 +217,8 @@
     <string name="calendar_loading">正在读取工作日安排…</string>
     <string name="calendar_not_bundled">尚未内置 %1$d 年安排，该年的工作日路线暂不推荐。</string>
     <string name="weather_next_hour_rain">未来 1 小时降水概率 %1$s</string>
+    <string name="saving_ride">正在保存行程…</string>
+    <string name="save_ride_failed">保存失败，定位已停止。请重试保存，结束时间不会延后。</string>
+    <string name="retry_save_ride">重试保存</string>
+    <string name="candidate_title">候选路线 · 重合度</string>
 </resources>

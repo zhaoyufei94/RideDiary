@@ -42,7 +42,8 @@ data class Metrics(val elapsed: Long, val distance: Double, val segments: List<S
 }
 data class RouteShape(val id: String, val name: String, val direction: String, val points: List<Fix>,
                       val startRadius: Double = 100.0, val endRadius: Double = 70.0) {
-    val length get() = points.zipWithNext().sumOf { (a,b) -> meters(a,b) }
+    internal val projectionIndex by lazy { Routing.Index(points) }
+    val length get() = projectionIndex.length
 }
 data class Match(val route: RouteShape, val along: Double, val crossTrack: Double, val deviated: Boolean) {
     val progress get() = (along / route.length.coerceAtLeast(1.0)).coerceIn(0.0, 0.99)

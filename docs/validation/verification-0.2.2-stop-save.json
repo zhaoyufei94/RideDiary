@@ -1,0 +1,129 @@
+{
+  "date": "2026-10-23",
+  "version": "0.2.2",
+  "versionCode": 12,
+  "databaseVersion": 4,
+  "environment": {
+    "os": "macOS arm64",
+    "jdk": "Temurin 17.0.20.1",
+    "gradle": "8.11.1",
+    "agp": "8.9.2",
+    "kotlin": "2.1.20",
+    "compileSdk": 35,
+    "targetSdk": 35,
+    "minSdk": 26
+  },
+  "command": "./scripts/gradle-local.sh :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest :app:lintDebug --offline --no-daemon --console=plain",
+  "result": "BUILD SUCCESSFUL",
+  "validationScope": "TARGETED_STOP_SAVE_LOCATION_RECOVERY_AND_DATA_RETENTION",
+  "unitTests": {
+    "status": "PASS",
+    "count": 36,
+    "failures": 0,
+    "includes": [
+      "1800-fix backlog with retained raw data and fixed cutoff through retries",
+      "1200 indexed/exhaustive projection equivalence checks with loops/crossings/duplicate points"
+    ]
+  },
+  "androidInstrumentedTests": {
+    "status": "PASS_FOR_TARGETED_CASES",
+    "count": 15,
+    "groups": [
+      {
+        "scope": "StopSaveTest (2), RecordingReviewTest (1), PersistenceTest (5), RouteWorkflowTest (4)",
+        "count": 12,
+        "seconds": 8.77,
+        "log": "docs/validation/stop-save-device-0.2.2.txt"
+      },
+      {
+        "scope": "UiSmokeTest liveLocationRecoversWhileDatabaseSnapshotIsStale",
+        "count": 1,
+        "seconds": 1.972,
+        "log": "docs/validation/location-ui-0.2.2.txt"
+      },
+      {
+        "scope": "UiSmokeTest arrival save and cancel/discard",
+        "count": 2,
+        "seconds": 5.004,
+        "log": "docs/validation/arrival-ui-0.2.2.txt"
+      }
+    ],
+    "usesDisposableSyntheticDatabases": true,
+    "notPassedOrCompleted": "An additional four-case UI run stalled in the existing notification/recreation case and was terminated. The three relevant remaining UI cases were run separately and passed. Full notification/recreation UI acceptance is not claimed.",
+    "incompleteLog": "docs/validation/notification-ui-interrupted-0.2.2.txt"
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 21,
+    "note": "Four existing Compose LocalContextConfigurationRead errors in settings, plans and weather were corrected by reading LocalConfiguration."
+  },
+  "resourceCheck": {
+    "translatedStrings": 221,
+    "status": "PASS"
+  },
+  "gitDiffCheck": "PASS",
+  "deviceInstallation": {
+    "status": "PASS",
+    "version": "0.2.2",
+    "mode": "in-place adb install --no-streaming -r",
+    "appDataCleared": false,
+    "coldLaunch": "Status ok, 395 ms"
+  },
+  "deviceConnection": {
+    "model": "OPPO PKJ110",
+    "status": "USED"
+  },
+  "dataRetention": {
+    "status": "PASS",
+    "log": "docs/validation/data-retention-0.2.2.json",
+    "allRowsIdentical": true,
+    "existingRideDurationsCorrected": false,
+    "counts": {
+      "rides": 3,
+      "points": 4978,
+      "segments": 75,
+      "routes": 2
+    }
+  },
+  "artifacts": [
+    {
+      "path": "app/build/outputs/apk/debug/app-debug.apk",
+      "bytes": 11569253,
+      "sha256": "733adba748d492aa41cd84d9a94aeb83ce456c0ada41a9239b18294f91bfb51a"
+    },
+    {
+      "path": "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk",
+      "bytes": 1118658,
+      "sha256": "47d29cda07b7a7d480ab83e490a9d587a5ef3927a95b2582768d7e766d7f151e"
+    }
+  ],
+  "signing": {
+    "configuration": ".signing/debug.keystore",
+    "privateKeyCommitted": false,
+    "certificateSha256": "24107b0f1a354d165eb7bae7be2b235752428dae1d4622754e0ebdb84fe110d3",
+    "gradleSigningCheck": "PASS"
+  },
+  "buildLog": "docs/validation/local-build-0.2.2.txt",
+  "testBuildLogs": [
+    "docs/validation/stop-test-build-0.2.2.txt",
+    "docs/validation/location-test-build-0.2.2.txt"
+  ],
+  "previousVersionEvidence": "docs/validation/verification-0.2.1.json",
+  "pendingValidation": [
+    "Workday holidays/make-up weekends/ordinary dates, missing years and custom weekday independence",
+    "Today/Tomorrow planned departures, exact time boundary, midnight, timezone and recreation",
+    "Direction-specific plan updates and same-group legacy references",
+    "Top pull-to-refresh, short pages and scrolling in other tabs",
+    "Current-weather next-hour probability intervals and its sole timestamp",
+    "Route feels-like values, missing data and forecast-window coverage",
+    "One Toast per failed refresh, retained timestamps and absence of cache captions",
+    "Deduplicated progressive requests, footer attribution, weather-off and provider switching",
+    "Encrypted credential persistence, real providers/account quotas and network error paths",
+    "Bound route start through permissions, finish review and interruptions",
+    "Time entry, IME, large text, TalkBack and narrow screens",
+    "Previous unfinished notification/recreation regression",
+    "Full UI, schedule, weather and real-road regressions remain outside this targeted startup fix",
+    "Real-road bridge/tunnel GPS recovery, an hour-long physical ride and battery use",
+    "Complete notification/recreation UI regression; one attempted fixture stalled"
+  ]
+}

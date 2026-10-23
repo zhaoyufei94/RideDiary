@@ -2,6 +2,9 @@ package com.ridediary.data
 
 import androidx.room.withTransaction
 import com.ridediary.core.*
+import android.os.SystemClock
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.time.ZoneId
@@ -14,6 +17,11 @@ class RideRepository(val db: RideDatabase) {
     private val mutex=Mutex()
     val rides=dao.observeRides()
     val routes=dao.observeRoutes()
+    private val liveMatching=MutableStateFlow<LiveRouteMatch?>(null)
+    val matching=liveMatching.asStateFlow()
+    private data class MatchingCache(val rideId: String,val pointCount: Int,val routes: List<RouteRecord>,
+        val fixedId: String?,val snapshot: LiveRouteMatch,val fixedMatch: Match?)
+    private var matchingCache: MatchingCache?=null
     suspend fun recoverInterrupted(now: Long) = mutex.withLock {
         db.withTransaction {
             dao.active().forEach { data ->
@@ -28,6 +36,7 @@ class RideRepository(val db: RideDatabase) {
             dao.active().firstOrNull()?.ride?.id ?: UUID.randomUUID().toString().also {
                 val route=routeId?.let { id -> dao.routes().firstOrNull { it.id==id } ?: throw RouteUnavailableException() }
                 dao.saveRide(RideRecord(it,now,ZoneId.systemDefault().id,routeId=route?.id,direction=route?.direction ?: "OTHER"))
+                matchingCache=null; liveMatching.value=null
             }
         }
     }
@@ -38,29 +47,46 @@ class RideRepository(val db: RideDatabase) {
             SegmentRecord(ride.id,index,s.from,s.to,s.motion.name,s.distance)
         })
     }
-    suspend fun update(id: String, elapsed: Long, now: Long, fix: Fix? = null, finish: Boolean = false,fixedRouteId: String? = null): RideRecord? = mutex.withLock {
-        db.withTransaction {
+    suspend fun update(id: String, elapsed: Long, now: Long, fix: Fix? = null, finish: Boolean = false,fixedRouteId: String? = null, additionalFixes: List<Fix> = emptyList()): RideRecord? = mutex.withLock {
+        var computed: MatchingCache?=null
+        val result=db.withTransaction {
             val data=dao.ride(id) ?: return@withTransaction null
             if (data.ride.state != "RECORDING") return@withTransaction data.ride
             val points=data.fixes().toMutableList()
-            if (fix != null && (points.lastOrNull()?.t ?: -1) < fix.t) {
+            val inserted=mutableListOf<PointRecord>()
+            for (incoming in additionalFixes + listOfNotNull(fix)) {
+                if ((points.lastOrNull()?.t ?: -1) >= incoming.t) continue
+                val fix=incoming
                 val previousGood=points.lastOrNull(::good)
                 val dt=previousGood?.let { fix.t-it.t } ?: 0
                 val tagged=if (good(fix) && previousGood!=null && dt in 1..Policy.MAX_GAP_MS &&
                     meters(previousGood,fix)*1000/dt > Policy.MAX_SPEED) fix.copy(quality="JUMP") else fix
-                dao.insertPoint(PointRecord(id,points.size,tagged.t,tagged.utc,tagged.lat,tagged.lon,tagged.accuracy,tagged.speed,tagged.speedAccuracy,tagged.quality))
+                inserted += PointRecord(id,points.size,tagged.t,tagged.utc,tagged.lat,tagged.lon,tagged.accuracy,tagged.speed,tagged.speedAccuracy,tagged.quality)
                 points += tagged
             }
+            if(inserted.isNotEmpty()) dao.insertPoints(inserted)
             val routes=dao.routes()
             val fixed=routes.firstOrNull { it.id==fixedRouteId }
-            val shapes=routes.filter { fixed==null || it.id==fixed.id }.map { it.route() }
             val reverseSources=if(finish && fixed==null) routes.filter { source ->
                 routes.none { it.groupKey==source.groupKey && it.direction==RouteIdentity.opposite(source.direction) }
             }.associateBy { "reverse:${it.id}" } else emptyMap()
-            val candidates=shapes+reverseSources.values.map { RouteIdentity.reversed(it.route()) }
             val groupKeys=routes.associate { it.id to it.groupKey }+reverseSources.mapValues { it.value.groupKey }
-            var match=if(finish || data.ride.routeId==null) RouteIdentity.match(points,candidates,groupKeys)
-                else shapes.firstOrNull { it.id==data.ride.routeId }?.let { Routing.follow(points,it) }
+            val cached=matchingCache
+            val refresh=finish || cached==null || cached.rideId!=id || cached.routes!=routes || cached.fixedId!=fixedRouteId ||
+                (cached.pointCount!=points.size && elapsed-cached.snapshot.computedElapsed>=cached.snapshot.intervalMs)
+            val evaluated=if(refresh) {
+                val begin=SystemClock.elapsedRealtime()
+                val shapes=routes.map { it.route() }+reverseSources.values.map { RouteIdentity.reversed(it.route()) }
+                val report=RouteIdentity.report(points,shapes,groupKeys)
+                val fixedCandidate=fixed?.let { reference -> report.candidates.firstOrNull { it.route.id==reference.id }
+                    ?: Routing.evaluate(points,reference.route()) }
+                val cost=SystemClock.elapsedRealtime()-begin
+                val interval=(cost*4).coerceIn(5_000L,15_000L)
+                MatchingCache(id,points.size,routes,fixedRouteId,
+                    LiveRouteMatch(id,report,elapsed,SystemClock.elapsedRealtime(),interval,cost,fixedRouteId),
+                    fixedCandidate?.takeIf { it.eligible }?.match)
+            } else cached!!
+            var match=if(fixed!=null) evaluated.fixedMatch else evaluated.snapshot.report.match
             reverseSources[match?.route?.id]?.let { source ->
                 // A reversed reference is only evidence of the group. Save the actual return trace.
                 if(match!!.progress>=Policy.ARRIVAL_PROGRESS && points.count(::good)>=4 && Analyzer.analyze(points,elapsed).distance>=Policy.MIN_ROUTE_DISTANCE_M) {
@@ -81,8 +107,12 @@ class RideRepository(val db: RideDatabase) {
                 excluded=data.ride.excluded || partialOrDeviated,
                 exclusionReason=if(partialOrDeviated && !data.ride.excluded) "AUTO_ROUTE_CHECK" else data.ride.exclusionReason)
             persist(ride,points)
+            computed=evaluated
             ride
         }
+        // A rollback must not publish diagnostics or advance the computation throttle.
+        computed?.let { matchingCache=if(finish) null else it; liveMatching.value=it.snapshot }
+        result
     }
     suspend fun classify(id: String, route: RouteRecord?, direction: String, excluded: Boolean, reason: String) = mutex.withLock {
         db.withTransaction {

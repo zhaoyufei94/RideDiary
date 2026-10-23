@@ -73,6 +73,7 @@ interface RideDao {
     @Query("SELECT * FROM routes") suspend fun routes(): List<RouteRecord>
     @Upsert suspend fun saveRide(ride: RideRecord)
     @Insert suspend fun insertPoint(point: PointRecord)
+    @Insert suspend fun insertPoints(points: List<PointRecord>)
     @Query("DELETE FROM segments WHERE rideId = :id") suspend fun clearSegments(id: String)
     @Insert suspend fun segments(segments: List<SegmentRecord>)
     @Upsert suspend fun saveRoute(route: RouteRecord)

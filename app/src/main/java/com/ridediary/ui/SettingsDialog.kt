@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -29,7 +30,7 @@ import com.ridediary.R
 @Composable fun SettingsDialog(onDismiss: ()->Unit,onLanguage: ()->Unit,weather: WeatherViewModel) {
     val context=LocalContext.current
     val version=remember(context) { context.packageManager.getPackageInfo(context.packageName,0).versionName.orEmpty() }
-    val chinese=context.resources.configuration.locales[0].language=="zh"
+    val chinese=LocalConfiguration.current.locales[0].language=="zh"
     AlertDialog(modifier=Modifier.testTag("settings-dialog"),onDismissRequest=onDismiss,containerColor=Surface,tonalElevation=0.dp,
         title={ Text(stringResource(R.string.settings)) },
         text={

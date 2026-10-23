@@ -1,0 +1,28 @@
+{
+  "beforeIntegrity": "ok",
+  "afterIntegrity": "ok",
+  "tables": {
+    "rides": {
+      "before": 3,
+      "after": 3,
+      "allRowsIdentical": true
+    },
+    "points": {
+      "before": 4978,
+      "after": 4978,
+      "allRowsIdentical": true
+    },
+    "segments": {
+      "before": 75,
+      "after": 75,
+      "allRowsIdentical": true
+    },
+    "routes": {
+      "before": 2,
+      "after": 2,
+      "allRowsIdentical": true
+    }
+  },
+  "oldRideDurationsUnchanged": true,
+  "appDataCleared": false
+}
