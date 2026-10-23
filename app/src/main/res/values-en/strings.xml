@@ -51,9 +51,9 @@
     <string name="cancel">Cancel</string>
     <string name="save">Save</string>
     <string name="back">Back to list</string>
-    <string name="finish_confirm">Finish and save this ride?</string>
+    <string name="finish_confirm">What would you like to do with this ride?</string>
     <string name="empty_rides">No rides yet. Record your first ride, then turn it into a commute route.</string>
-    <string name="empty_routes">Familiar routes begin with one ride. Open a completed ride in Journal to create a route.</string>
+    <string name="empty_routes">Create a route from a ride’s correction list, then add work and home directions under the same name.</string>
     <string name="empty_stats">No valid commutes this month. Link rides to routes. Excluded, interrupted, or incomplete rides are omitted.</string>
     <string name="recording">Recording</string>
     <string name="interrupted">Recording interrupted · no automatic restart; gap counted as unknown</string>
@@ -61,8 +61,8 @@
     <string name="details">A ride to remember</string>
     <string name="history">Recent rides</string>
     <string name="route_name">Route name</string>
-    <string name="route_create">Create commute route</string>
-    <string name="route_create_hint">Confirm endpoint areas. The route uses this ride’s selected boundaries; inspect the trace first.</string>
+    <string name="route_create">Choose or correct route</string>
+    <string name="route_create_hint">Name the recorded track and choose a direction. The same name groups work and home references together.</string>
     <string name="start_radius">Start radius (m)</string>
     <string name="end_radius">End radius (m)</string>
     <string name="endpoint_summary">Endpoints use the first and last valid selected fixes. The hollow marker is the start; the filled marker is the end.</string>
@@ -72,7 +72,6 @@
     <string name="work">To work</string>
     <string name="home">To home</string>
     <string name="other">Other / unclassified</string>
-    <string name="all">All</string>
     <string name="no_route">No route</string>
     <string name="exclude">Exclude unusual stop / detour from baselines and statistics</string>
     <string name="exclusion_reason">Exclusion reason (optional)</string>
@@ -118,8 +117,8 @@
     <string name="delete_ride_message">Delete the ride from %1$s? The ride and raw track will be permanently deleted and statistics updated. Routes created from it will remain.</string>
     <string name="edit_route">Edit route</string>
     <string name="delete_route">Delete route</string>
-    <string name="delete_route_message">Delete “%1$s”? Existing rides and tracks will be kept and unlinked from this route, and omitted from route statistics.</string>
-    <string name="route_edit_hint">Edit the name, direction or endpoint radii. Direction changes also update linked rides; the track is retained.</string>
+    <string name="delete_route_message">Delete “%1$s” and its work/home references? Existing rides and raw tracks remain and are unlinked.</string>
+    <string name="route_edit_hint">Both directions share the name; direction and endpoint settings apply to the selected reference only.</string>
     <string name="route_in_use">This route is being recorded. Finish recording before editing or deleting it.</string>
     <string name="route_unnamed">Unnamed route</string>
     <string name="ride_long_press_hint">Touch and hold a ride to delete it</string>
@@ -128,7 +127,7 @@
     <string name="ride_actions">Ride actions</string>
     <string name="route_actions">Route actions</string>
     <string name="action_edit_route_hint">Adjust the name, direction and endpoint areas</string>
-    <string name="action_delete_route_hint">Keep rides and tracks; remove their route link</string>
+    <string name="action_delete_route_hint">Remove the route and both reference directions; keep rides</string>
     <string name="action_delete_ride_hint">Remove this ride after a separate confirmation</string>
     <string name="action_classify_hint">Change the route, direction or statistics eligibility</string>
     <string name="action_boundary_hint">Choose the time interval used for commute statistics</string>
@@ -136,7 +135,6 @@
     <string name="radius_range">Radii may be 20–500 m. The track is retained.</string>
     <string name="stats_intro">A clearer view of your everyday rides.</string>
     <string name="monthly_review">MONTH IN REVIEW</string>
-    <string name="all_routes">All routes</string>
     <string name="stats_empty_title">No valid commutes this month</string>
     <string name="stats_valid_distance">VALID DISTANCE THIS MONTH</string>
     <string name="stats_time_composition">Where the time goes</string>
@@ -156,4 +154,13 @@
     <string name="ride_trace_caption">Your recorded track, ready to look back on.</string>
     <string name="ride_comparison_caption">Compared only with earlier valid rides on this route and direction.</string>
     <string name="ride_total_comparison">Total time vs historical median</string>
+    <string name="choose_route">Choose a route</string>
+    <string name="create_new_route">Create a new route</string>
+    <string name="add_direction">%s · Add direction</string>
+    <string name="route_direction_missing">No reference track for this direction yet. Open a ride, choose this route in the correction list and add its missing direction.</string>
+    <string name="route_exists_direction">This direction already exists. Select it from the list or add the other direction.</string>
+    <string name="route_auto_hint">Matched from your recorded track. Choose a route and direction, or create a new route at the top.</string>
+    <string name="arrival_review_title">Arrived — finish this ride?</string>
+    <string name="arrival_review_body">Open the app to cancel, discard or save. Recording continues until you confirm.</string>
+    <string name="finish_options_body">Cancel continues recording. Delete ends and discards this ride and its track. Save finishes, matches the route and lets you correct its classification.</string>
 </resources>

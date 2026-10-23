@@ -33,6 +33,16 @@ class StatisticsTest {
         assertTrue(Statistics.month(listOf(a.copy(excluded=true)),YearMonth.of(2026,10),"r").isEmpty())
         assertTrue(Statistics.month(listOf(a.copy(routeId="new")),YearMonth.of(2026,10),"r").isEmpty())
     }
+    @Test fun namedRouteScopeCombinesOnlyItsReferencesAndOneDirection() {
+        val all=listOf(sample("work","2026-10-01T00:00:00Z",route="work"),
+            sample("duplicate","2026-10-02T00:00:00Z",route="duplicate"),
+            sample("home","2026-10-01T10:00:00Z",route="home",direction="HOME"),
+            sample("unrelated","2026-10-03T00:00:00Z",route="another"))
+        val ids=setOf("work","home","duplicate"); val month=YearMonth.of(2026,10)
+        assertEquals(setOf("work","duplicate"),Statistics.monthForRoute(all,month,ids,"WORK").map { it.id }.toSet())
+        assertEquals(listOf("home"),Statistics.monthForRoute(all,month,ids,"HOME").map { it.id })
+        assertTrue(Statistics.monthForRoute(all,month,emptySet(),"WORK").isEmpty())
+    }
     @Test fun midnightClockMeanIsMidnightNotNoon() {
         val a=sample("a","2026-10-01T15:50:00Z"); val b=sample("b","2026-10-01T16:10:00Z")
         assertEquals(0,Statistics.clocks(listOf(a,b),false)!!.first)

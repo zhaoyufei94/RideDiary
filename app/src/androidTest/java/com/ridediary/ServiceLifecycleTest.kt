@@ -87,7 +87,11 @@ class ServiceLifecycleTest {
             val manager=app.getSystemService(NotificationManager::class.java)
             val notification=manager.activeNotifications.single { it.id==1 && it.notification.channelId==RecordingService.CHANNEL }
             notification.notification.actions.single().actionIntent.send()
-            awaitCondition("Notification stop did not complete the ride") {
+            instrumentation.waitForIdleSync()
+            assertEquals("RECORDING",isolated.dao.ride(id)!!.ride.state)
+            // Notification now requests review; the explicit save command alone finishes.
+            scenario.onActivity { it.startService(Intent(it,RecordingService::class.java).setAction(RecordingService.STOP)) }
+            awaitCondition("Explicit save did not complete the ride") {
                 !RecordingService.active.value && isolated.dao.ride(id)?.ride?.state=="COMPLETED"
             }
             awaitScreenOn(scenario,false,"Recording finished")

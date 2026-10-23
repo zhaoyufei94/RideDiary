@@ -2,6 +2,29 @@
 
 This checklist applies across Android brands. Specific models below identify historical test environments, not product restrictions. See [product design](../PRODUCT_DESIGN.md) for product and interaction requirements.
 
+## 0.1.6 route groups, statistics and finish review (2026-10-23)
+
+- Version 0.1.6 / versionCode 7, Room v2. Explicit v1→v2 migration groups same-name legacy references while retaining IDs, ride associations, raw fixes and segments. Each direction keeps actual geometry.
+- All 32 JVM tests pass (analysis 11, projection 9, route identity/ambiguity 3, statistics 9), along with 164 bilingual resources and six brand checks. App/test APK builds and Lint pass: zero errors, seven existing dependency notices. Both APKs use the shared debug.keystore and match the pinned certificate.
+- 20 device cases passed across batches: nine Room/migration, ten UI, one real notification/service. Notification delivery without immediate stop and explicit Save/Delete passed. The additional notification-cancel/recreation/review fixture has no complete result and remains pending, excluded from passes. Interrupted final batches do not establish a full 21-case suite pass.
+- New UI coverage includes route-first statistics, consistent direction/chart scope, unrelated-route empty state, create-first correction list, missing return direction, cancel/continue, post-save correction and notification Intent/recreation review (pending). New repository tests cover arrival remaining active, explicit save, discard cascades, actual return geometry, grouped rename/delete retention and a real v1 database migration.
+- The final app was updated using `adb install --no-streaming -r`, preserving data. UI/service fixtures use disposable databases and verify original history afterward. No precise coordinates are published. Notification routing, confirmation controls and service Save/Delete are verified separately.
+- **Screen-awake behavior has been verified by the user; ServiceLifecycleTest and display-awake acceptance were not repeated.** Earlier pending entries remain historical snapshots; this paragraph is current.
+- Field validation remains for parallel roads, first reverse matching with only one reference, endpoint false positives, recording during review, long screen-off continuity and battery use. Synthetic tests do not establish road accuracy.
+
+The final layout adjustment (combined-direction route overview above tabs and merged time/stops detail card) passed assembleDebug only. Tests were not rerun at the user’s request; the results above predate this layout adjustment.
+
+To reproduce the device scope, first finish any real recording:
+
+```sh
+./scripts/gradle-local.sh :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest :app:lintDebug --no-daemon --console=plain
+.tooling/android-sdk/platform-tools/adb install --no-streaming -r app/build/outputs/apk/debug/app-debug.apk
+.tooling/android-sdk/platform-tools/adb install --no-streaming -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+.tooling/android-sdk/platform-tools/adb shell am instrument -w -r -e class com.ridediary.PersistenceTest,com.ridediary.RouteWorkflowTest,com.ridediary.UiSmokeTest,com.ridediary.RecordingReviewTest com.ridediary.test/androidx.test.runner.AndroidJUnitRunner
+```
+
+Evidence: [current verification](verification.json), [build](validation/local-build-0.1.6.txt), [final build](validation/final-build-0.1.6.txt), [device results](validation/android-routes-0.1.6.txt). Incomplete batches affected by USB interruption or framework waiting are archived separately and are not counted as passes. Older entries below describe their respective versions.
+
 ## 0.1.5 brand and signing integration (2026-10-23)
 
 - Local branding/icons were rebased onto origin/main `aa08a14` (0.1.4), retaining remote ride/route management, statistics and screen-awake behavior. The new version is 0.1.5 / versionCode 6.

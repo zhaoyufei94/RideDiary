@@ -1,8 +1,20 @@
 # RideDiary / 途记 Product Design
 
-Version: v0.1.5 product baseline · Updated: 2026-10-23 · [中文](PRODUCT_DESIGN.zh-CN.md)
+Version: v0.1.6 product baseline · Updated: 2026-10-23 · [中文](PRODUCT_DESIGN.zh-CN.md)
 
 This document guides product decisions, UI design and future development. **“Current” describes existing behavior; “requirements” constrain future changes and do not imply completed implementation or acceptance; “planned” means not delivered.** The product targets Android phones across brands, cities, motorcycle models and commute routes.
+
+## 0.1.6 route and finish contract
+
+- **Route before direction:** Select a route first: the overview below the route selector and above direction tabs combines both directions for valid distance, commute days and ride count in the selected month. Charts and duration metrics below the tabs use To work / To home separately, without cross-route aggregation. Routes shows one card per name with separate directional samples and tracks.
+- **Logical route versus actual reference:** groupId identifies the named route; each direction retains actual geometry, endpoint radii and historical links. Creating the same name reuses the group, while existing directions are selected rather than recreated. Migration normalizes trailing direction labels, whitespace and English case to group legacy references, preserving IDs and raw records.
+- **Every finish requires review:** manual stop, notification finish and arrival detection open Cancel / Delete / Save. Cancel or Back continues; Delete stops and removes the current ride and raw points; only Save completes and retains it. Timing and location continue during review. Arrival prompts once; after cancelling, manual finish remains available.
+- **Classification after saving:** match the complete track again. When a group has only one direction and the complete reverse trace clearly matches it, create the missing reference from this ride's actual points. A reversed reference is inference only, never stored as fabricated travel. Ambiguous groups/directions remain unassigned.
+- **Correction:** saving opens the route list, also reachable via Select or correct route in details. Create new route is the first item; existing routes expose both directions. Selecting a missing direction opens a form locked to that group name and creates it from the current ride. Dismissing correction does not undo the saved ride.
+- **Management:** rename all directions together; edit endpoint radii for the selected reference. Deleting a group unlinks rides and retains history/raw fixes. A group in active use is protected. Short tracks can be saved or classified, but cannot create a reference.
+- **Android interaction:** use Material 3 dialogs, scrolling lists and bottom forms. Direction has text and selected semantics as well as color. Back closes overlays and keeps recording. Preserve the palette, graph-paper logo and motorcycle progress. Large text, TalkBack and landscape still require broader coverage.
+
+Room v2 explicitly migrates v1 with groupId and arrivalSuggested. ETA continues using strictly earlier histories of the concrete directional reference, avoiding position comparisons between different geometries. The user has verified screen-awake behavior; it is not retested in this iteration. Recording remains active during finish review.
 
 ## 1. Product identity
 
@@ -45,21 +57,21 @@ Allow browsing and empty states before authorization. Ride offers **Start record
 
 ### First real ride
 
-While parked, tap Start → explain location and notifications → request permissions as needed → start recording and its system notification. Without a route, show an ordinary ride, elapsed/stationary time and location quality, without invented progress or ETA. Timing continues without fixes; missing intervals are not stationary. Finish manually and open details.
+While parked, tap Start → explain location and notifications → request permissions as needed → start recording and its system notification. Without a route, show an ordinary ride, elapsed/stationary time and location quality, without invented progress or ETA. Timing continues without fixes; missing intervals are not stationary. Choose Save to finish and open details/correction; Cancel continues and Delete discards.
 
-Choose **Create commute route**, name it, select To work / To home and confirm endpoint areas. Current minimums are four valid fixes and 150 m; endpoint radii are 20–500 m, defaulting to 100 m at the start and 70 m at the end. Work/home are independent directions; multiple routes per direction are allowed.
+Choose **Select or correct route** from the post-save list or details, name it, select To work / To home and confirm endpoint areas. Current minimums are four valid fixes and 150 m; endpoint radii are 20–500 m, defaulting to 100 m at the start and 70 m at the end. Work/home are independent directions; multiple routes per direction are allowed.
 
 ### Subsequent commutes
 
 Manual start → recognition from start area and ordered observations → route name and motorcycle progress → historical comparison/ETA when enough samples exist → confirmed arrival after sustained low speed near the endpoint.
 
-Recognition needs some travel; departure clock time is not a hard filter. Ambiguous candidates stay uncertain. Deviation, turnback or stale fixes suppress unreliable progress and ETA. Current arrival needs at least 92% ordered progress, endpoint proximity and at least three fresh low-speed fixes spanning 30 seconds without long gaps. Progress stays at or below 99% until confirmation, then becomes 100%. Passing the endpoint briefly must not finish a ride; manual finish always remains available.
+Recognition needs some travel; departure clock time is not a hard filter. Ambiguous candidates stay uncertain. Deviation, turnback or stale fixes suppress unreliable progress and ETA. Current arrival needs at least 92% ordered progress, endpoint proximity and at least three fresh low-speed fixes spanning 30 seconds without long gaps. Progress stays at or below 99% until confirmation, then becomes 100% after saving. Passing the endpoint briefly must not finish a ride; manual finish always remains available.
 
 ### Review
 
 Show actual elapsed, moving/stationary/unknown time, historical differences and real sample counts. Explain the learning state when history is insufficient. Allow route/direction correction, exclusion of unusual stops/detours and commute-boundary adjustment in seconds relative to the original start. Recalculate details/statistics and retain raw data.
 
-Mark interrupted rides separately, retain saved points and never automatically resume them or use them as normal completed baselines. A recognized ride manually finished while deviating or substantially incomplete is currently auto-excluded, with later review/correction available.
+Mark interrupted rides separately, retain saved points and never automatically resume them or use them as normal completed baselines. A saved ride still matching a reference but substantially incomplete is currently auto-excluded, with later review/correction available.
 
 ## 4. Information architecture
 
@@ -76,7 +88,7 @@ Journal list cards and detail summary cards expose correction/deletion menus on 
 
 ## 5. Recording states and failures
 
-Lifecycle: idle → permission request → recording → completed, with interruption as an alternative outcome. Location quality, moving/stationary/unknown classification and route matching are independent states. “Matching” does not mean recording has stopped; “stationary” does not mean arrived.
+Lifecycle: idle → permission request → recording → finish review (still recording) → saved or discarded, with interruption as an alternative outcome. Location quality, moving/stationary/unknown classification and route matching are independent states. “Matching” does not mean recording has stopped; “stationary” does not mean arrived.
 
 | Situation | Expected experience |
 |---|---|
@@ -109,7 +121,7 @@ Continuous location consumes power and processing. No wake lock or battery-optim
 - Baselines use strictly earlier rides of the same route and direction, newest 20 maximum. At least three usable samples are required for conclusions/ETA. Total and component medians are independent; component differences need not sum to the total difference.
 - ETA uses historical remaining-time median and quartiles at the current position, without live traffic. Identify sample count and estimation.
 - Group months by local departure date in the recorded timezone. Count unique commute dates; two rides on one date mean one day/two rides. Unwrap clocks across midnight before aggregation.
-- Apply month, direction and route filters consistently to charts and tables. Recalculate from raw data after corrections, rather than editing display totals.
+- Scope the overview to month and route across directions; apply the direction filter to charts and duration metrics below the tabs. Recalculate from raw data after corrections, rather than editing display totals.
 - Use monotonic time for uninterrupted elapsed duration, UTC/timezone for clock labels and grouping. Mark interruption gaps uncertain; never join monotonic origins from separate processes.
 
 Exact quality, hysteresis, jump and projection thresholds live in [technical design](docs/design.en.md) and `core/Models.kt`. Metric changes require matching copy, algorithm-version and meaningful test updates.
@@ -162,7 +174,7 @@ Explain that uninstalling/clearing storage loses records, with no current export
 
 ## 11. Acceptance and priorities
 
-The [test record](docs/testing.en.md) documents 28 JVM tests and four device tests passed. One device does not establish all-device or real-road reliability. Brand names identify actual test environments, not product scope.
+The [test record](docs/testing.en.md) documents actual automated and device results. One device does not establish all-device or real-road reliability. Brand names identify actual test environments, not product scope.
 
 | Priority | Acceptance focus |
 |---|---|
@@ -200,4 +212,4 @@ Statistics and details use light cards with 24 dp corners, forest-green hero car
 
 ## Keep screen awake during recording (0.1.4)
 
-Keep the visible app awake automatically after the recording service starts, consistently across all four tabs. Restore normal timeout on finish, confirmed arrival, service stop or backgrounding. Foreground return, rotation and language recreation restore the current recording behavior. The Ride screen explains that the power button can still lock the phone. No setting toggle or permission prompt is added. Continuous screen use increases power consumption.
+Keep the visible app awake automatically after the recording service starts, consistently across all four tabs. Restore normal timeout on save, discard, service stop or backgrounding. Foreground return, rotation and language recreation restore the current recording behavior. The Ride screen explains that the power button can still lock the phone. No setting toggle or permission prompt is added. Continuous screen use increases power consumption.

@@ -33,12 +33,24 @@ import kotlin.math.min
 
 @Composable fun StatsScreen(rides: List<RideData>,routes: List<RouteRecord>) {
     var monthText by rememberSaveable { mutableStateOf(YearMonth.now().toString()) }
-    var direction by rememberSaveable { mutableStateOf<String?>(null) }
+    var direction by rememberSaveable { mutableStateOf("WORK") }
     var route by rememberSaveable { mutableStateOf<String?>(null) }
+    var routePicker by remember { mutableStateOf(false) }
+    val groups=remember(routes) { routeGroups(routes) }
+    val selectedGroup=groups.firstOrNull { it.id==route } ?: groups.firstOrNull()
     val month=YearMonth.parse(monthText)
     val all=remember(rides) { rides.map { it.sample() } }
-    val samples=remember(all,month,route,direction) { Statistics.month(all,month,route,direction).sortedBy { it.startUtc } }
-    LaunchedEffect(routes) { if(route!=null && routes.none { it.id==route }) route=null }
+    val routeSamples=remember(all,month,selectedGroup) {
+        val routeIds=selectedGroup?.routeIds.orEmpty()
+        Statistics.month(all,month).filter { it.routeId in routeIds }.sortedBy { it.startUtc }
+    }
+    val samples=remember(routeSamples,direction) { routeSamples.filter { it.direction==direction } }
+    LaunchedEffect(groups) {
+        if(groups.none { it.id==route }) {
+            route=selectedGroup?.id
+            direction=if(selectedGroup?.direction("WORK").isNullOrEmpty()) "HOME" else "WORK"
+        }
+    }
     Column(verticalArrangement=Arrangement.spacedBy(6.dp)) {
         Text(stringResource(R.string.statistics),fontSize=30.sp,fontWeight=FontWeight.SemiBold)
         Text(stringResource(R.string.stats_intro),fontSize=14.sp,color=Muted)
@@ -57,21 +69,47 @@ import kotlin.math.min
             IconButton(onClick={ monthText=month.plusMonths(1).toString() },modifier=Modifier.semantics { contentDescription=next }) { AppGlyph(Glyph.RIGHT) }
         }
     }
-    // Segmented direction controls keep the active scope readable without a row of outlined chips.
+    OutlinedButton(onClick={ routePicker=true },modifier=Modifier.fillMaxWidth().heightIn(min=56.dp).testTag("stats-route-picker"),shape=RoundedCornerShape(16.dp)) {
+        Text(selectedGroup?.name ?: stringResource(R.string.choose_route),Modifier.weight(1f),fontSize=17.sp)
+        AppGlyph(Glyph.RIGHT)
+    }
+    if(routePicker) RouteListPicker(groups,selectedGroup?.id,onDismiss={ routePicker=false }) { group ->
+        route=group.id; direction=if(group.direction("WORK").isEmpty()) "HOME" else "WORK"; routePicker=false
+    }
+    // The overview combines both directions within the selected route and month.
+    Surface(shape=RoundedCornerShape(26.dp),color=RideCard) {
+        Column(Modifier.fillMaxWidth().testTag("stats-overview").padding(24.dp),verticalArrangement=Arrangement.spacedBy(20.dp)) {
+            Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween) {
+                Text(stringResource(R.string.stats_valid_distance),Modifier.weight(1f).padding(end=12.dp),fontSize=14.sp,lineHeight=21.sp,color=Accent)
+                AppGlyph(Glyph.ROUTE,Modifier.size(24.dp),Accent.copy(alpha=.8f))
+            }
+            val distance=decimal(routeSamples.sumOf { it.metrics.distance }/1000)
+            val fontScale=LocalDensity.current.fontScale
+            BoxWithConstraints(Modifier.fillMaxWidth()) {
+                val size=min(48f,(maxWidth.value-40)/(distance.length*.62f*fontScale)).coerceAtLeast(24f)
+                Row(verticalAlignment=Alignment.Bottom,horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+                    Text(distance,fontSize=size.sp,fontWeight=FontWeight.Light,color=Surface,fontFamily=FontFamily.Monospace)
+                    Text("km",Modifier.padding(bottom=7.dp),fontSize=16.sp,color=Accent)
+                }
+            }
+            HorizontalDivider(color=Surface.copy(alpha=.16f))
+            Row(Modifier.fillMaxWidth()) {
+                HeroCount(stringResource(R.string.commute_days),Statistics.days(routeSamples),Modifier.weight(1f).testTag("stats-day-count"))
+                HeroCount(stringResource(R.string.ride_count),routeSamples.size,Modifier.weight(1f).testTag("stats-ride-count"))
+            }
+        }
+    }
+    // Detailed charts and durations below use only the chosen direction.
     Surface(shape=RoundedCornerShape(16.dp),color=Soft.copy(alpha=.7f)) {
         Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min).padding(4.dp),horizontalArrangement=Arrangement.spacedBy(4.dp)) {
-            listOf<String?>(null,"WORK","HOME").forEach { d ->
-                Surface(onClick={ direction=d },modifier=Modifier.weight(1f).fillMaxHeight().testTag("stats-direction-${d ?: "ALL"}").semantics { selected=direction==d },shape=RoundedCornerShape(12.dp),color=if(direction==d) Ink else Color.Transparent) {
+            listOf("WORK","HOME").forEach { d ->
+                Surface(onClick={ direction=d },modifier=Modifier.weight(1f).fillMaxHeight().testTag("stats-direction-$d").semantics { selected=direction==d },shape=RoundedCornerShape(12.dp),color=if(direction==d) Ink else Color.Transparent) {
                     Box(Modifier.fillMaxHeight().heightIn(min=48.dp).padding(horizontal=8.dp,vertical=12.dp),contentAlignment=Alignment.Center) {
-                        Text(if(d==null) stringResource(R.string.all) else directionName(d),fontSize=14.sp,fontWeight=if(direction==d) FontWeight.Medium else FontWeight.Normal,color=if(direction==d) Surface else Muted)
+                        Text(directionName(d),fontSize=14.sp,fontWeight=if(direction==d) FontWeight.Medium else FontWeight.Normal,color=if(direction==d) Surface else Muted)
                     }
                 }
             }
         }
-    }
-    Row(Modifier.horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-        RouteFilter(stringResource(R.string.all_routes),route==null,Modifier.testTag("stats-route-ALL")) { route=null }
-        routes.forEach { r -> RouteFilter(routeName(r.name),route==r.id,Modifier.testTag("stats-route-${r.id}")) { route=r.id } }
     }
     if(samples.isEmpty()) {
         DataCard {
@@ -84,28 +122,6 @@ import kotlin.math.min
     val total=samples.sumOf { it.metrics.elapsed }
     val moving=samples.sumOf { it.metrics.moving }; val waiting=samples.sumOf { it.metrics.waiting }; val unknown=samples.sumOf { it.metrics.unknown }
     val totals=samples.map { it.metrics.elapsed }; val waits=samples.map { it.metrics.waiting }
-    Surface(shape=RoundedCornerShape(26.dp),color=RideCard) {
-        Column(Modifier.fillMaxWidth().testTag("stats-overview").padding(24.dp),verticalArrangement=Arrangement.spacedBy(20.dp)) {
-            Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween) {
-                Text(stringResource(R.string.stats_valid_distance),Modifier.weight(1f).padding(end=12.dp),fontSize=14.sp,lineHeight=21.sp,color=Accent)
-                AppGlyph(Glyph.ROUTE,Modifier.size(24.dp),Accent.copy(alpha=.8f))
-            }
-            val distance=decimal(samples.sumOf { it.metrics.distance }/1000)
-            val fontScale=LocalDensity.current.fontScale
-            BoxWithConstraints(Modifier.fillMaxWidth()) {
-                val size=min(48f,(maxWidth.value-40)/(distance.length*.62f*fontScale)).coerceAtLeast(24f)
-                Row(verticalAlignment=Alignment.Bottom,horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-                    Text(distance,fontSize=size.sp,fontWeight=FontWeight.Light,color=Surface,fontFamily=FontFamily.Monospace)
-                    Text("km",Modifier.padding(bottom=7.dp),fontSize=16.sp,color=Accent)
-                }
-            }
-            HorizontalDivider(color=Surface.copy(alpha=.16f))
-            Row(Modifier.fillMaxWidth()) {
-                HeroCount(stringResource(R.string.commute_days),Statistics.days(samples),Modifier.weight(1f).testTag("stats-day-count"))
-                HeroCount(stringResource(R.string.ride_count),samples.size,Modifier.weight(1f).testTag("stats-ride-count"))
-            }
-        }
-    }
     AdaptivePair(
         first={ MetricTile(stringResource(R.string.total_time),duration(total),Glyph.CLOCK) },
         second={ MetricTile(stringResource(R.string.median),duration(median(totals)!!),Glyph.CHART) }
@@ -131,11 +147,6 @@ import kotlin.math.min
     Text(stringResource(R.string.clock_note),fontSize=12.sp,lineHeight=20.sp,color=Muted)
 }
 
-@Composable private fun RouteFilter(label: String,selected: Boolean,modifier: Modifier,onClick: ()->Unit) {
-    Surface(onClick=onClick,modifier=modifier.semantics { this.selected=selected },shape=RoundedCornerShape(50),color=if(selected) Surface else Color.Transparent,border=BorderStroke(1.dp,if(selected) Ink else Line)) {
-        Text(label,Modifier.heightIn(min=48.dp).padding(horizontal=15.dp,vertical=14.dp),fontSize=13.sp,color=if(selected) Ink else Muted)
-    }
-}
 @Composable private fun HeroCount(label: String,value: Int,modifier: Modifier) {
     Column(modifier.semantics(mergeDescendants=true) {},verticalArrangement=Arrangement.spacedBy(7.dp)) {
         Text(label,fontSize=13.sp,color=Surface.copy(alpha=.7f))

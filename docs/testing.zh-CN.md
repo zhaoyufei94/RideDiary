@@ -2,6 +2,29 @@
 
 本清单适用于不同品牌的 Android 设备。下文的具体型号仅标识历史测试环境，不是产品限制。产品设计与交互规范见[产品设计](../PRODUCT_DESIGN.zh-CN.md)。
 
+## 0.1.6 路线归组、统计与结束确认（2026-10-23）
+
+- 版本 0.1.6 / versionCode 7，Room v2。显式 v1→v2 迁移为同名旧参考建立分组，保留原路线 ID、关联行程、原始点与分段；上班/下班分别保存实际轨迹。
+- 32 项 JVM 测试通过（分析 11、路线投影 9、路线身份/歧义 3、统计 9）；164 条双语资源、6 个品牌资源检查通过。应用/测试 APK 编译和 Lint 通过：0 错误，7 条既有依赖更新提示。两个 APK 均用共用 debug.keystore，实际签名与固定证书一致。
+- 20 项设备用例跨批次通过：Room/迁移 9 项、UI 10 项、真实通知服务 1 项。通知已验证跳转且不立即停止，显式保存/删除通过；额外的“通知取消后重建页面再确认”用例未取得完整结果，仍待复验，未计为通过。最终整批回归受到会话中断影响，不能声称 21 项全套通过。
+- 界面新增覆盖：路线先选、方向标签与图表同范围；其他路线空状态；修正列表首项新建；补充同名下班方向；取消后继续；保存后自动结果可修正；通知 Intent 和重建后的结束确认（该项待复验）。仓库新增覆盖：到达只提示、显式保存、删除记录级联、反向识别保存实际轨迹、同组改名/删除保留历史及真实旧库迁移。
+- 已用 `adb install --no-streaming -r` 覆盖安装最终应用，保留现有数据。UI 和服务测试均使用临时库，结束后检查日常行程不变；不采集公开坐标日志。通知路由、界面确认按钮、服务保存/删除分别验证。
+- **亮屏功能已由用户验证，本轮没有运行 ServiceLifecycleTest 或重复亮屏验收。** 历史记录中的亮屏待测状态保留为当时快照，以本条说明为当前状态。
+- 仍待实路验证：不同道路/平行道路、只有单向参考时的首次返程识别、终点误判与确认等待期间轨迹、长时锁屏连续性和耗电。合成轨迹测试不等同于道路精度验收。
+
+最新布局调整（路线双向总览前移、详情时间与停车卡片合并）仅执行 assembleDebug，编译通过；按用户要求未重跑测试，上述测试结果来自该布局调整之前。
+
+复现本轮设备范围（先结束正在进行的真实记录）：
+
+```sh
+./scripts/gradle-local.sh :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest :app:lintDebug --no-daemon --console=plain
+.tooling/android-sdk/platform-tools/adb install --no-streaming -r app/build/outputs/apk/debug/app-debug.apk
+.tooling/android-sdk/platform-tools/adb install --no-streaming -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+.tooling/android-sdk/platform-tools/adb shell am instrument -w -r -e class com.ridediary.PersistenceTest,com.ridediary.RouteWorkflowTest,com.ridediary.UiSmokeTest,com.ridediary.RecordingReviewTest com.ridediary.test/androidx.test.runner.AndroidJUnitRunner
+```
+
+证据：[当前验证记录](verification.json)、[构建](validation/local-build-0.1.6.txt)、[最终构建](validation/final-build-0.1.6.txt)、[设备结果](validation/android-routes-0.1.6.txt)。USB 中断和测试框架等待的未完成批次单独归档，不计为通过。以下旧版记录只描述各自版本。
+
 ## 0.1.5 品牌更新与签名集成（2026-10-23）
 
 - 本地品牌与图标提交已 rebase 到 origin/main 的 `aa08a14`（0.1.4）之上，保留远程行程/路线管理、统计与记录亮屏行为；新版本为 0.1.5 / versionCode 6。

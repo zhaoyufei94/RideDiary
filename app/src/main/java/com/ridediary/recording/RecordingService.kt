@@ -20,6 +20,7 @@ class RecordingService: Service() {
     private var source: LocationSource? = null
     private var rideId: String? = null
     private var starting=false
+    private var arrivalReview=false
     private var origin=0L
     private var ticker: Job? = null
     private var worker: Job? = null
@@ -40,13 +41,16 @@ class RecordingService: Service() {
         }
     }
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == STOP) {
+        if (intent?.action == STOP || intent?.action == DISCARD) {
             operations.trySend {
                 app.ready.await()
                 if (rideId == null) {
                     // A recreated stop-only service must finalize the saved session without
                     // pretending it continued collecting locations.
                     app.repository.recoverInterrupted(System.currentTimeMillis())
+                    close()
+                } else if(intent.action==DISCARD) {
+                    app.repository.discardActive(rideId!!)
                     close()
                 } else finish()
             }
@@ -71,6 +75,10 @@ class RecordingService: Service() {
                     operations.trySend {
                         val id=rideId ?: return@trySend
                         val ride=app.repository.update(id,elapsed(),System.currentTimeMillis(),fix)
+                        if(ride?.arrivalSuggested==true && !arrivalReview) {
+                            arrivalReview=true
+                            getSystemService(NotificationManager::class.java).notify(1,notification())
+                        }
                         if (ride?.state == "COMPLETED") close()
                     }
                 },{ quality.value=it })
@@ -102,10 +110,11 @@ class RecordingService: Service() {
         stopForeground(STOP_FOREGROUND_REMOVE); stopSelf()
     }
     private fun notification(): Notification {
-        val stop=PendingIntent.getService(this,2,Intent(this,RecordingService::class.java).setAction(STOP),PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-        val open=PendingIntent.getActivity(this,1,Intent(this,MainActivity::class.java),PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-        return NotificationCompat.Builder(this,CHANNEL).setSmallIcon(R.drawable.ic_ridediary_notification).setContentTitle(getString(R.string.recording_title))
-            .setContentText(getString(R.string.recording_body)).setOngoing(true).setContentIntent(open)
+        val reviewIntent=Intent(this,MainActivity::class.java).setAction(REVIEW_STOP).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        val stop=PendingIntent.getActivity(this,2,reviewIntent,PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        val open=if(arrivalReview) stop else PendingIntent.getActivity(this,1,Intent(this,MainActivity::class.java),PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        return NotificationCompat.Builder(this,CHANNEL).setSmallIcon(R.drawable.ic_ridediary_notification).setContentTitle(getString(if(arrivalReview) R.string.arrival_review_title else R.string.recording_title))
+            .setContentText(getString(if(arrivalReview) R.string.arrival_review_body else R.string.recording_body)).setOngoing(true).setContentIntent(open)
             .addAction(android.R.drawable.ic_menu_close_clear_cancel,getString(R.string.finish),stop).build()
     }
     override fun onDestroy() {
@@ -115,6 +124,8 @@ class RecordingService: Service() {
     companion object {
         const val CHANNEL="ride_recording"
         const val STOP="com.ridediary.STOP"
+        const val DISCARD="com.ridediary.DISCARD"
+        const val REVIEW_STOP="com.ridediary.REVIEW_STOP"
         val quality=MutableStateFlow("SEARCHING")
         val active=MutableStateFlow(false)
     }

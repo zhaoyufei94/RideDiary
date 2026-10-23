@@ -22,8 +22,9 @@ class RideViewModel(application: Application): AndroidViewModel(application) {
             catch (_: Exception) { error.value=true }
         }
     }
-    fun createRoute(id: String,name: String,direction: String,start: Double,end: Double) = task {
-        repository.createRoute(id,name,direction,start,end)
+    fun createRoute(id: String,name: String,direction: String,start: Double,end: Double,groupId: String?=null,
+        excluded: Boolean?=null,reason: String?=null) = task {
+        repository.createRoute(id,name,direction,start,end,groupId,excluded,reason)
     }
     fun classify(id: String,route: RouteRecord?,direction: String,excluded: Boolean,reason: String) = task {
         repository.classify(id,route,direction,excluded,reason)
@@ -34,4 +35,5 @@ class RideViewModel(application: Application): AndroidViewModel(application) {
         repository.editRoute(id,name,direction,start,end)
     }
     fun deleteRoute(id: String) = task { repository.deleteRoute(id) }
+    fun deleteRouteGroup(id: String) = task { repository.deleteRouteGroup(id) }
 }

@@ -4,7 +4,7 @@
 
 **Your everyday rides, a little better understood.** · [中文说明](README.zh-CN.md)
 
-Current version: **0.1.5**. The graph-paper logo is used across the launcher, app header, notification and project branding.
+Current version: **0.1.6**. The graph-paper logo is used across the launcher, app header, notification and project branding.
 
 RideDiary is an offline, native Android commute journal. Record everyday rides with your phone, split elapsed time into moving, stationary and unknown intervals, and compare each commute with your own history.
 
@@ -16,20 +16,22 @@ For Android 8.0 and later, across Android phone brands. No extra hardware, accou
 |---|---|
 | Ride | Manual recording, elapsed time, average speed, stationary time and location status; motorcycle progress, historical comparison and arrival estimates after route recognition |
 | Journal | Ride history and arrival summaries; correct route, direction and commute boundaries, exclude unusual rides, or delete a ride |
-| Statistics | Filter by month, route and direction; view commute days, rides, distance, elapsed time, stationary share and per-ride time breakdowns |
-| Routes | Create work/home routes from recorded rides; inspect local track sketches and historical samples; edit and delete routes |
+| Statistics | Choose a route from a list, then To work / To home; view monthly days, rides, distance, elapsed time and per-ride breakdowns |
+| Routes | Group actual work/home tracks under one name; inspect directional samples, edit or delete the named route |
 
 The cream, forest-green, light-green and sand palette pairs with a motorcycle progress indicator. Screens use Jetpack Compose / Material 3. Chinese is the default language; the top-right control switches to English.
 
-## Keep the recording screen awake (0.1.4)
+## Keep the recording screen awake
 
-After recording starts, RideDiary automatically keeps its visible screen awake across all four tabs. Finishing, confirmed arrival, or leaving the app restores normal screen timeout; returning during recording keeps it awake again. You can still lock the phone with the power button while background recording continues. No additional permission is needed; keeping the screen on consumes more power.
+After recording starts, RideDiary automatically keeps its visible screen awake across all four tabs. Saving or discarding the recording, or leaving the app, restores normal screen timeout; returning during recording keeps it awake again. You can still lock the phone with the power button while background recording continues. No additional permission is needed; keeping the screen on consumes more power.
 
 ## Manage rides and routes
 
 - Touch and hold a ride card in Journal or the summary card in details, choose **Delete ride** and confirm. The ride and raw fixes are removed and statistics refresh; routes created from it remain available.
 - The detail back button, Android Back button and back gesture return to the Journal list.
-- Touch and hold a route card in Routes to edit its name, work/home direction or endpoint radii, or delete it. Direction changes update linked rides. Deleting a route preserves rides and tracks but unlinks them. Finish recording before changing a route currently in use.
+- Routes lists named routes with To work / To home tags and separate actual tracks and sample counts. Hold a card to edit: names apply to both directions, endpoint settings to the selected direction. Deleting a named route removes both references and unlinks rides while preserving history and raw fixes. Finish recording before changing a route in use.
+- Saving automatically matches the recorded track and opens a correction list. Its first entry is **Create new route**; alternatively select an existing route and direction. A missing direction is created from the current actual track under the same name. Reopen this list later using **Select or correct route** in ride details.
+- Upgrading groups legacy references with the same name (including trailing work/home labels) while preserving rides, directions, reference geometry and links. Statistics shows one route and direction at a time.
 - The in-app replay feature has been removed. Synthetic tracks are test fixtures and are excluded from the application APK.
 
 The [HTML prototype](docs/prototype/ui-prototype.html) remains a historical visual reference; its demo controls do not describe current app features.
@@ -43,23 +45,24 @@ The [HTML prototype](docs/prototype/ui-prototype.html) remains a historical visu
 | System location enabled | During real recording | Required for normal fixes. If disabled, the app explains the issue; timing continues and unclassifiable intervals remain unknown |
 | Location foreground service | After permission and manual start | Continues recording in the background and with the screen off; managed by Android, without a separate permission dialog |
 
-No “Allow all the time” location permission, boot startup, all-day listening or automatic ride start. Recording starts with your action and stops after arrival confirmation or manual finish.
+No “Allow all the time” location permission, boot startup, all-day listening or automatic ride start. Recording starts with your action. Manual finish, the notification finish entry and detected arrival all open **Cancel / Delete / Save**; recording continues while waiting for your choice.
 
 ## Using RideDiary
 
-1. **Record the first ride.** While parked, tap **Start recording**, grant precise location and enable system location. With no saved route, view actual elapsed and stationary time, then finish manually.
-2. **Save a commute route.** Open the ride in Journal, choose **Create commute route**, name it, select To work / To home and confirm endpoint radii. A route needs at least four valid fixes and 150 m; radii can be 20–500 m. Multiple routes per direction are supported.
-3. **Record another commute.** Start manually again. Recognition uses the start area and observed track, so it needs some travel; nearly identical candidates remain uncertain.
-4. **View progress and estimates.** Recognized rides show route progress. At least three usable histories for the same route and direction are needed for historical comparison and an arrival estimate.
-5. **Arrive and review.** Arrival requires near-complete route progress, presence inside the endpoint area and at least 30 seconds of continuous fresh low-speed fixes. Manual finish remains available in the app or notification. Correct classification and boundaries or exclude unusual rides afterward; raw fixes are retained and statistics recalculate.
+1. **Record the first ride.** While parked, tap Start recording, grant precise location and enable system location. Without a saved route, see actual elapsed and stationary time.
+2. **Choose how to finish.** Manual stop, notification finish and arrival detection open the same dialog. **Cancel** continues; **Delete** stops and removes this ride and its raw fixes; **Save** finishes and retains it. Location and timing continue while the dialog is open.
+3. **Select or correct the route.** Saving tries to match the complete track and opens a route list. The first entry creates a named route; existing routes offer To work / To home. A missing direction uses the current actual track. A matching reverse ride can automatically add the opposite direction to the same route; ambiguous candidates remain unassigned. Dismissing correction keeps the saved ride and automatic result for later review.
+4. **Record subsequent rides.** Start manually. Recognition needs some travel before motorcycle progress appears. Historical comparison and ETA need three usable histories for the same directional reference.
+5. **View statistics.** Select month, choose a route from the list, then select To work / To home. The route overview combines both directions for the selected month; charts and duration metrics below use the selected direction. Correct classification/boundaries or exclude unusual rides in details without losing raw fixes.
 
+Creating a direction needs four valid fixes and 150 m of track; endpoint radii are 20–500 m. Work/home retain separate actual geometry; ETA history remains scoped to its directional reference.
 Operate the app while parked. Automatic recognition happens after you manually start recording.
 
 ## Timing, location and battery use
 
 - **Total elapsed = moving + stationary + unknown.** Stationary time can include congestion, brief stops or parking; it does not identify red lights. Missing location is not treated as zero speed.
 - Time to the first usable fix varies with surroundings and system behavior. Tunnels, garages, buildings and adjacent roads can affect location and recognition. Progress and arrival estimates are temporarily suppressed when off-route or using stale fixes.
-- Arrival confirmation waits for sustained stopping, so the summary does not appear immediately when passing the endpoint. Estimates use your historical remaining time, without live traffic or second-level guarantees.
+- Arrival detection requires near-complete progress and at least 30 seconds of sustained fresh low-speed fixes. It prompts for Save/Delete rather than ending recording immediately. Estimates use your historical remaining time, without live traffic or second-level guarantees.
 - Continuous location increases battery use. Fixes are requested about every two seconds, but Android controls delivery. Power use and long screen-off continuity still need measurement across devices, systems and real routes.
 - Start with normal battery settings; inspect app-specific battery/background restrictions if recording is interrupted. The app currently holds no wake lock and requests no battery-optimization exemption.
 - If permission is revoked or the process is terminated, reopening marks the unfinished ride interrupted and retains saved data. It does not resume automatically; interrupted rides are excluded from valid commute statistics.
@@ -95,9 +98,9 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 
 Add `--no-streaming` if streamed installation fails. Alternatively, transfer the APK to the phone and allow installation from that source when Android prompts. USB debugging is for development installation, not everyday use. This build uses a development signing key.
 
-## Statistics and ride detail presentation (0.1.3)
+## Statistics and ride detail presentation
 
-Statistics uses a monthly distance overview, time-composition ring, selectable per-ride bars and departure/arrival rhythm cards. Month, route and direction filters continue to apply consistently across every metric and chart. Empty scopes show an honest empty state, and enlarged text switches metrics to vertical layouts.
+Statistics uses a monthly distance overview, time-composition ring, selectable per-ride bars and departure/arrival rhythm cards. The route overview combines both directions within the selected month; direction tabs filter the charts and duration metrics below. Empty scopes show an honest empty state, and enlarged text switches metrics to vertical layouts.
 
 Ride details share the forest-green overview and grouped cards for time, distance, speed, moving/stationary/unknown intervals, stops, the recorded track and same-route historical comparison. Holding a card opens a bottom action sheet with icons and explanations; edit forms and deletion confirmations share the palette and rounded shapes.
 
@@ -110,7 +113,7 @@ python3 scripts/import-debug-signing.py "$HOME/Downloads/debug.keystore"
 ./scripts/gradle-local.sh :app:assembleDebug
 ```
 
-This retains the certificate used by version 0.1.1 currently installed on the phone, so no uninstall is needed. See [shared signing setup](docs/signing.en.md) for transfer, verification and troubleshooting.
+Both Macs use the same certificate, so signed updates can preserve installed data without uninstalling. See [shared signing setup](docs/signing.en.md) for transfer, verification and troubleshooting.
 
 ## Data and current limits
 

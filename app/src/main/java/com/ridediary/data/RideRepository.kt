@@ -48,15 +48,32 @@ class RideRepository(val db: RideDatabase) {
                 dao.insertPoint(PointRecord(id,points.size,tagged.t,tagged.utc,tagged.lat,tagged.lon,tagged.accuracy,tagged.speed,tagged.speedAccuracy,tagged.quality))
                 points += tagged
             }
-            val shapes=dao.routes().map { it.route() }
-            val match=if (data.ride.routeId == null) Routing.recognize(points,shapes)
-                else shapes.firstOrNull { it.id == data.ride.routeId }?.let { Routing.follow(points,it) }
-            val arrived=fix != null && match != null && Routing.arrived(points,match,elapsed)
-            val partialOrDeviated=finish && data.ride.routeId!=null && (match==null || match.deviated || match.progress<Policy.ARRIVAL_PROGRESS)
+            val routes=dao.routes()
+            val shapes=routes.map { it.route() }
+            val reverseSources=if(finish) routes.filter { source ->
+                routes.none { it.groupKey==source.groupKey && it.direction==RouteIdentity.opposite(source.direction) }
+            }.associateBy { "reverse:${it.id}" } else emptyMap()
+            val candidates=shapes+reverseSources.values.map { RouteIdentity.reversed(it.route()) }
+            val groupKeys=routes.associate { it.id to it.groupKey }+reverseSources.mapValues { it.value.groupKey }
+            var match=if(finish || data.ride.routeId==null) RouteIdentity.match(points,candidates,groupKeys)
+                else shapes.firstOrNull { it.id==data.ride.routeId }?.let { Routing.follow(points,it) }
+            reverseSources[match?.route?.id]?.let { source ->
+                // A reversed reference is only evidence of the group. Save the actual return trace.
+                if(match!!.progress>=Policy.ARRIVAL_PROGRESS && points.count(::good)>=4 && Analyzer.analyze(points,elapsed).distance>=Policy.MIN_ROUTE_DISTANCE_M) {
+                    val variant=RouteRecord(UUID.randomUUID().toString(),RouteIdentity.name(source.name),RouteIdentity.opposite(source.direction),
+                        id,RouteRecord.encode(points.filter(::good)),source.endRadius,source.startRadius,groupId=source.groupKey)
+                    dao.saveRoute(variant)
+                    match=Routing.follow(points,variant.route())
+                } else match=null
+            }
+            val arrived=match!=null && Routing.arrived(points,match!!,elapsed)
+            val selectedRoute=if(finish) match?.route?.id else data.ride.routeId ?: match?.route?.id
+            val partialOrDeviated=finish && selectedRoute!=null && (match==null || match!!.deviated || match!!.progress<Policy.ARRIVAL_PROGRESS)
             val ride=data.ride.copy(elapsed=elapsed.coerceAtLeast(data.ride.elapsed),lastSavedUtc=now,
-                routeId=data.ride.routeId ?: match?.route?.id, direction=match?.route?.direction ?: data.ride.direction,
-                state=if (finish || arrived) "COMPLETED" else "RECORDING",endUtc=if (finish || arrived) now else null,
-                arrivalConfirmed=arrived,
+                routeId=selectedRoute, direction=match?.route?.direction ?: if(finish) "OTHER" else data.ride.direction,
+                state=if(finish) "COMPLETED" else "RECORDING",endUtc=if(finish) now else null,
+                arrivalConfirmed=finish && (arrived || data.ride.arrivalSuggested) && match!=null && !match!!.deviated && match!!.progress>=Policy.ARRIVAL_PROGRESS,
+                arrivalSuggested=data.ride.arrivalSuggested || arrived,
                 excluded=data.ride.excluded || partialOrDeviated,
                 exclusionReason=if(partialOrDeviated && !data.ride.excluded) "AUTO_ROUTE_CHECK" else data.ride.exclusionReason)
             persist(ride,points)
@@ -74,16 +91,23 @@ class RideRepository(val db: RideDatabase) {
         require(data.ride.state != "RECORDING" && start >= 0 && end > start && end <= data.ride.elapsed)
         dao.saveRide(data.ride.copy(boundaryStart=start,boundaryEnd=end))
     }
-    suspend fun createRoute(id: String, name: String, direction: String, startRadius: Double, endRadius: Double) = mutex.withLock {
+    suspend fun createRoute(id: String, name: String, direction: String, startRadius: Double, endRadius: Double,
+        groupId: String?=null,excluded: Boolean?=null,reason: String?=null) = mutex.withLock {
         db.withTransaction {
             validateRoute(name,direction,startRadius,endRadius)
             val data=dao.ride(id) ?: return@withTransaction
             require(data.ride.state != "RECORDING")
             val fixes=data.sample().points.filter(::good)
             require(fixes.size >= 4 && Analyzer.analyze(fixes,data.sample().metrics.elapsed).distance >= Policy.MIN_ROUTE_DISTANCE_M)
-            val route=RouteRecord(UUID.randomUUID().toString(),name.trim(),direction,id,RouteRecord.encode(fixes),startRadius,endRadius)
+            val groups=routeGroups(dao.routes())
+            val group=groupId?.let { key -> groups.firstOrNull { it.id==key } ?: error("Route group no longer exists") }
+                ?: groups.firstOrNull { RouteIdentity.key(it.name)==RouteIdentity.key(name) }
+            require(group?.direction(direction).isNullOrEmpty()) { "This direction already exists; select it from the route list" }
+            val route=RouteRecord(UUID.randomUUID().toString(),group?.name ?: RouteIdentity.name(name),direction,id,RouteRecord.encode(fixes),
+                startRadius,endRadius,groupId=group?.id ?: UUID.randomUUID().toString())
             dao.saveRoute(route)
-            dao.saveRide(data.ride.copy(routeId=route.id,direction=direction))
+            dao.saveRide(data.ride.copy(routeId=route.id,direction=direction,
+                excluded=excluded ?: data.ride.excluded,exclusionReason=reason ?: data.ride.exclusionReason))
         }
     }
     suspend fun deleteRide(id: String) = mutex.withLock {
@@ -99,7 +123,14 @@ class RideRepository(val db: RideDatabase) {
             validateRoute(name,direction,startRadius,endRadius)
             require(dao.active().none { it.ride.routeId==id })
             val route=dao.routes().firstOrNull { it.id==id } ?: return@withTransaction
-            dao.saveRoute(route.copy(name=name.trim(),direction=direction,startRadius=startRadius,endRadius=endRadius,version=route.version+1))
+            val siblings=dao.routes().filter { it.groupKey==route.groupKey }
+            require(dao.active().none { it.ride.routeId in siblings.map { variant -> variant.id } })
+            require(direction==route.direction || siblings.none { it.id!=id && it.direction==direction })
+            require(dao.routes().none { it.groupKey!=route.groupKey && RouteIdentity.key(it.name)==RouteIdentity.key(name) })
+            siblings.forEach { variant ->
+                dao.saveRoute(if(variant.id==id) variant.copy(name=RouteIdentity.name(name),direction=direction,startRadius=startRadius,endRadius=endRadius,version=variant.version+1)
+                    else variant.copy(name=RouteIdentity.name(name),version=variant.version+1))
+            }
             dao.updateRouteDirection(id,direction)
         }
     }
@@ -110,6 +141,16 @@ class RideRepository(val db: RideDatabase) {
             dao.unlinkRoute(id)
             dao.deleteRoute(id)
         }
+    }
+    suspend fun deleteRouteGroup(groupId: String) = mutex.withLock {
+        db.withTransaction {
+            val variants=dao.routes().filter { it.groupKey==groupId }
+            require(dao.active().none { it.ride.routeId in variants.map { route -> route.id } })
+            variants.forEach { dao.unlinkRoute(it.id); dao.deleteRoute(it.id) }
+        }
+    }
+    suspend fun discardActive(id: String) = mutex.withLock {
+        db.withTransaction { dao.discardActive(id) }
     }
     private fun validateRoute(name: String, direction: String, startRadius: Double, endRadius: Double) {
         require(name.isNotBlank() && direction in listOf("WORK","HOME"))

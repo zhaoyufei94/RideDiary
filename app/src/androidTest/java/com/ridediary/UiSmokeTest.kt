@@ -41,6 +41,7 @@ class UiSmokeTest {
     private lateinit var activity: MainActivity
     private lateinit var id: String
     private lateinit var routeId: String
+    private lateinit var routeGroupId: String
     private var previewContext: android.content.Context?=null
     private lateinit var originalRides: List<RideData>
 
@@ -58,6 +59,7 @@ class UiSmokeTest {
         repository.update(id,220_000,start+220_000,finish=true)
         repository.createRoute(id,"东环通勤","WORK",100.0,70.0)
         routeId=repository.dao.routes().single().id
+        routeGroupId=repository.dao.routes().single().groupKey
         app.repository=repository
         scenario=ActivityScenario.launch(MainActivity::class.java)
         scenario.onActivity {
@@ -75,7 +77,7 @@ class UiSmokeTest {
     }
     private fun text(res: Int)=(previewContext ?: activity).getString(res)
     private fun click(res: Int)=compose.onNodeWithText(text(if(res==R.string.statistics) R.string.nav_statistics else res)).performClick()
-    private fun hold(tag: String)=compose.onNodeWithTag(tag).performScrollTo().performTouchInput { longClick() }
+    private fun hold(tag: String)=compose.onNodeWithTag(tag).performScrollTo().performTouchInput { longClick(androidx.compose.ui.geometry.Offset(24f,24f)) }
     private fun awaitRideDeleted() {
         compose.waitUntil(5_000) { runBlocking { repository.dao.ride(id)==null } }
         awaitText(R.string.empty_rides)
@@ -124,7 +126,8 @@ class UiSmokeTest {
     private fun seedStatistics()=runBlocking {
         val source=repository.dao.ride(id)!!
         val base=repository.dao.routes().single()
-        repository.dao.saveRoute(base.copy(id="stats-home",name="沿河返程",direction="HOME"))
+        repository.dao.saveRoute(base.copy(id="stats-home",name=base.name,direction="HOME"))
+        repository.dao.saveRoute(base.copy(id="other-route",name="另一条路线",groupId="other-group"))
         repository.classify(id,base,"WORK",true,"Preview source")
         for(day in 1..8) {
             val rideId="stats-$day"; val home=day%2==0; val factor=4L+day%3
@@ -144,7 +147,7 @@ class UiSmokeTest {
     @Test fun statisticsFiltersAndSelectableChartKeepTheSameDataScope() {
         seedStatistics()
         click(R.string.statistics)
-        awaitCount(8)
+        awaitCount(4)
         capture("statistics-overview")
         compose.onNodeWithTag("stats-composition").performScrollTo()
         capture("statistics-composition")
@@ -155,9 +158,12 @@ class UiSmokeTest {
         capture("statistics-rhythm")
         compose.onNodeWithTag("stats-direction-HOME").performScrollTo().performClick()
         awaitCount(4)
-        compose.onNodeWithTag("stats-route-$routeId").performScrollTo().performClick()
+        compose.onNodeWithTag("stats-route-picker").performScrollTo().performClick()
+        compose.onNodeWithTag("stats-route-other-group").performClick()
         compose.onNodeWithText(text(R.string.stats_empty_title)).assertExists()
-        compose.onNodeWithTag("stats-direction-ALL").performScrollTo().performClick()
+        compose.onNodeWithTag("stats-route-picker").performScrollTo().performClick()
+        compose.onNodeWithTag("stats-route-$routeGroupId").performClick()
+        compose.onNodeWithTag("stats-direction-WORK").performScrollTo().performClick()
         awaitCount(4)
         compose.onNodeWithContentDescription(text(R.string.previous_month)).performScrollTo().performClick()
         compose.onNodeWithText(text(R.string.stats_empty_title)).assertExists()
@@ -186,12 +192,12 @@ class UiSmokeTest {
             }
         }
         click(R.string.statistics)
-        awaitCount(8)
+        awaitCount(4)
         capture("statistics-english-large")
         compose.onNodeWithText(text(R.string.clock_note)).performScrollTo()
         capture("statistics-english-large-details")
         click(R.string.routes)
-        hold("route-$routeId")
+        hold("route-$routeGroupId")
         capture("actions-english-large","action-sheet")
         compose.onNodeWithText(text(R.string.edit_route)).performScrollTo().assertIsDisplayed()
         androidx.test.espresso.Espresso.pressBack()
@@ -216,7 +222,7 @@ class UiSmokeTest {
         compose.onNodeWithText(text(R.string.details)).assertExists()
         scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
         compose.onNodeWithText(text(R.string.history)).assertExists()
-        compose.onNodeWithTag("route-$routeId").assertDoesNotExist()
+        compose.onNodeWithTag("route-$routeGroupId").assertDoesNotExist()
         click(R.string.commute)
         compose.onNodeWithText(text(R.string.start)).performScrollTo().assertIsDisplayed()
     }
@@ -258,11 +264,80 @@ class UiSmokeTest {
         compose.onNodeWithText(text(R.string.history)).assertExists()
         compose.onNodeWithText(text(R.string.details)).assertDoesNotExist()
     }
+    private fun showPendingRecording(): String=runBlocking {
+        val start=System.currentTimeMillis()
+        val activeId=repository.start(start)
+        Replay.points().forEach { repository.update(activeId,it.t,start+it.t,it) }
+        scenario.onActivity { current -> current.setContent { RideDiaryTheme {
+            RideDiaryScreen(onStart={},onLanguage={},
+                onStop={ runBlocking { repository.update(activeId,220_000,start+220_000,finish=true) } },
+                onDiscard={ runBlocking { repository.discardActive(activeId) } })
+        } } }
+        activeId
+    }
+    @Test fun notificationIntentOpensReviewAgainAfterCancelAndRecreation() {
+        val activeId=runBlocking { repository.start(System.currentTimeMillis()) }
+        fun request() { scenario.onActivity { it.startActivity(android.content.Intent(it,MainActivity::class.java).setAction(RecordingService.REVIEW_STOP).addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP)) } }
+        request()
+        awaitText(R.string.finish_confirm)
+        click(R.string.cancel)
+        assertEquals("RECORDING",runBlocking { repository.dao.ride(activeId)!!.ride.state })
+        scenario.recreate(); scenario.onActivity { activity=it }
+        request()
+        awaitText(R.string.finish_confirm)
+        compose.onNodeWithText(text(R.string.delete)).assertExists()
+        compose.onNodeWithText(text(R.string.save)).assertExists()
+        click(R.string.cancel)
+    }
+    @Test fun arrivalConfirmationCanCancelThenDiscardWithoutSaving() {
+        val activeId=showPendingRecording()
+        awaitText(R.string.arrival_review_title)
+        compose.onNodeWithText(text(R.string.save)).assertExists()
+        compose.onNodeWithText(text(R.string.delete)).assertExists()
+        capture("recording-finish-confirmation","finish-confirmation")
+        click(R.string.cancel)
+        compose.onNodeWithText(text(R.string.arrival_review_title)).assertDoesNotExist()
+        assertEquals("RECORDING",runBlocking { repository.dao.ride(activeId)!!.ride.state })
+        compose.onNodeWithText(text(R.string.finish)).performScrollTo().performClick()
+        awaitText(R.string.delete)
+        click(R.string.delete)
+        compose.waitUntil(5_000) { runBlocking { repository.dao.ride(activeId)==null } }
+        assertNotNull(runBlocking { repository.dao.ride(id) })
+    }
+    @Test fun arrivalSaveCompletesAndOpensAutomaticRouteCorrection() {
+        val activeId=showPendingRecording()
+        awaitText(R.string.arrival_review_title)
+        click(R.string.save)
+        compose.waitUntil(5_000) { runBlocking { repository.dao.ride(activeId)?.ride?.state=="COMPLETED" } }
+        awaitText(R.string.choose_route)
+        compose.onNodeWithTag("route-create-new").assertExists()
+        compose.onNodeWithTag("route-choice-$routeGroupId-WORK").assertIsSelected()
+        click(R.string.cancel)
+        assertEquals(routeId,runBlocking { repository.dao.ride(activeId)!!.ride.routeId })
+    }
+    @Test fun routeCorrectionListsGroupsAndCreatesMissingDirection() {
+        click(R.string.summary)
+        compose.onNodeWithTag("ride-$id").performScrollTo().performClick()
+        hold("ride-detail-$id")
+        click(R.string.route_edit)
+        compose.onNodeWithTag("route-create-new").assertExists()
+        compose.onNodeWithTag("route-choice-$routeGroupId").assertExists()
+        compose.onNodeWithTag("route-choice-$routeGroupId-HOME").performScrollTo().performClick()
+        click(R.string.save)
+        compose.onNodeWithText(text(R.string.route_name)).assertTextContains("东环通勤")
+        capture("route-add-return","editor-sheet")
+        click(R.string.save)
+        compose.waitUntil(5_000) { runBlocking { repository.dao.routes().size==2 } }
+        val variants=runBlocking { repository.dao.routes() }
+        assertEquals(setOf(routeGroupId),variants.map { it.groupKey }.toSet())
+        assertEquals(setOf("WORK","HOME"),variants.map { it.direction }.toSet())
+        assertEquals("HOME",runBlocking { repository.dao.ride(id)!!.ride.direction })
+    }
     @Test fun editAndDeleteRouteKeepRideAndUpdateAssociation() {
         click(R.string.routes)
         compose.onNodeWithText(text(R.string.edit_route)).assertDoesNotExist()
         compose.onNodeWithText(text(R.string.delete_route)).assertDoesNotExist()
-        hold("route-$routeId")
+        hold("route-$routeGroupId")
         capture("route-actions","action-sheet")
         click(R.string.edit_route)
         capture("route-editor","editor-sheet")
@@ -277,11 +352,11 @@ class UiSmokeTest {
         assertEquals(120.0,edited.startRadius,0.0)
         assertEquals(80.0,edited.endRadius,0.0)
         assertEquals("HOME",runBlocking { repository.dao.ride(id)!!.ride.direction })
-        hold("route-$routeId")
+        hold("route-$routeGroupId")
         click(R.string.delete_route)
         click(R.string.cancel)
-        compose.onNodeWithTag("route-$routeId").assertExists()
-        hold("route-$routeId")
+        compose.onNodeWithTag("route-$routeGroupId").assertExists()
+        hold("route-$routeGroupId")
         click(R.string.delete_route)
         click(R.string.delete)
         compose.waitUntil(5_000) { runBlocking { repository.dao.routes().isEmpty() } }

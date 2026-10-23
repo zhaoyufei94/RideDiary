@@ -51,9 +51,9 @@
     <string name="cancel">取消</string>
     <string name="save">保存</string>
     <string name="back">返回列表</string>
-    <string name="finish_confirm">结束并保存这一趟？</string>
+    <string name="finish_confirm">如何处理本次记录？</string>
     <string name="empty_rides">还没有行程。手动开始第一趟，结束后即可创建通勤路线。</string>
-    <string name="empty_routes">熟悉的路，从第一趟开始。前往小结，选择行程并设为路线。</string>
+    <string name="empty_routes">从行程的“选择或修正路线”列表创建路线，同一名称下可以分别添加上班和下班方向。</string>
     <string name="empty_stats">本月暂无有效通勤。先关联路线；被排除、中断或缺失过多的行程不计入。</string>
     <string name="recording">记录中</string>
     <string name="interrupted">记录被中断 · 未自动恢复，数据缺口计为未知</string>
@@ -61,8 +61,8 @@
     <string name="details">这一趟，留下来了</string>
     <string name="history">最近行程</string>
     <string name="route_name">路线名称</string>
-    <string name="route_create">设为通勤路线</string>
-    <string name="route_create_hint">确认起终点范围。轨迹来自此行程的通勤边界；建议先检查轨迹。</string>
+    <string name="route_create">选择或修正路线</string>
+    <string name="route_create_hint">为实际轨迹命名并选择方向。同名路线会归入同一条路线的上下班记录。</string>
     <string name="start_radius">起点半径（米）</string>
     <string name="end_radius">终点半径（米）</string>
     <string name="endpoint_summary">起终点取自选定轨迹首尾有效点，图中空心为起点、实心为终点。</string>
@@ -72,7 +72,6 @@
     <string name="work">上班</string>
     <string name="home">下班</string>
     <string name="other">普通 / 未归类</string>
-    <string name="all">全部</string>
     <string name="no_route">不关联路线</string>
     <string name="exclude">异常临停 / 绕路，不计入基准和统计</string>
     <string name="exclusion_reason">排除原因（可选）</string>
@@ -118,8 +117,8 @@
     <string name="delete_ride_message">删除 %1$s 的行程？该行程及原始轨迹将永久删除，统计会更新。由此创建的路线仍会保留。</string>
     <string name="edit_route">编辑路线</string>
     <string name="delete_route">删除路线</string>
-    <string name="delete_route_message">删除“%1$s”？已有行程和轨迹会保留，并解除与该路线的关联，不再计入路线统计。</string>
-    <string name="route_edit_hint">修改名称、方向或起终点范围。方向修改会同步到关联行程，轨迹保持不变。</string>
+    <string name="delete_route_message">删除“%1$s”及其上下班参考轨迹？已有行程和原始轨迹会保留，并解除路线关联。</string>
+    <string name="route_edit_hint">路线名称对上下班共用；方向和起终点范围只作用于当前参考轨迹。</string>
     <string name="route_in_use">此路线正在记录中，请结束记录后再编辑或删除。</string>
     <string name="route_unnamed">未命名路线</string>
     <string name="ride_long_press_hint">长按行程可删除</string>
@@ -128,7 +127,7 @@
     <string name="ride_actions">行程操作</string>
     <string name="route_actions">路线操作</string>
     <string name="action_edit_route_hint">调整名称、方向和起终点范围</string>
-    <string name="action_delete_route_hint">保留行程与轨迹，仅解除路线关联</string>
+    <string name="action_delete_route_hint">删除整条路线及两个方向的参考轨迹，保留行程</string>
     <string name="action_delete_ride_hint">删除这次行程，操作前仍会再次确认</string>
     <string name="action_classify_hint">调整关联路线、方向及统计参与状态</string>
     <string name="action_boundary_hint">选择计入通勤统计的起止区间</string>
@@ -136,7 +135,6 @@
     <string name="radius_range">半径范围 20–500 米，轨迹保持不变。</string>
     <string name="stats_intro">每一次通勤，都有迹可循。</string>
     <string name="monthly_review">月度回顾</string>
-    <string name="all_routes">全部路线</string>
     <string name="stats_empty_title">这个月，还没有有效通勤</string>
     <string name="stats_valid_distance">本月有效里程</string>
     <string name="stats_time_composition">时间都花在哪里</string>
@@ -156,4 +154,13 @@
     <string name="ride_trace_caption">保留真实轨迹，回看熟悉的每一段。</string>
     <string name="ride_comparison_caption">只比较同路线、同方向且早于这次的有效行程。</string>
     <string name="ride_total_comparison">总用时较历史中位数</string>
+    <string name="choose_route">选择路线</string>
+    <string name="create_new_route">创建新路线</string>
+    <string name="add_direction">%s · 添加方向</string>
+    <string name="route_direction_missing">此方向尚无参考轨迹。打开对应行程，在修正路线的列表中选择本路线并添加该方向。</string>
+    <string name="route_exists_direction">该路线已有此方向，请返回列表选择已有路线，或添加另一方向。</string>
+    <string name="route_auto_hint">已按实际轨迹自动匹配；可选择已有路线及方向，或在顶部创建新路线。</string>
+    <string name="arrival_review_title">已到达，确认结束？</string>
+    <string name="arrival_review_body">请打开应用，选择取消、删除或保存。记录会持续到你确认结束。</string>
+    <string name="finish_options_body">取消：继续记录。删除：结束并删除本次行程及轨迹。保存：结束记录，自动匹配路线后可修正归类。</string>
 </resources>

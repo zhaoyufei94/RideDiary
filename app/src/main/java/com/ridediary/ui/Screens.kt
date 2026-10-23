@@ -36,7 +36,7 @@ import com.ridediary.data.*
 import com.ridediary.recording.RecordingService
 import kotlinx.coroutines.delay
 
-@Composable fun RideDiaryScreen(onStart: ()->Unit,onStop: ()->Unit,onLanguage: ()->Unit,vm: RideViewModel=viewModel()) {
+@Composable fun RideDiaryScreen(onStart: ()->Unit,onStop: ()->Unit,onLanguage: ()->Unit,onDiscard: ()->Unit={},stopReviewToken: Int=0,vm: RideViewModel=viewModel()) {
     val context=LocalContext.current
     val rides by vm.rides.collectAsStateWithLifecycle()
     val routes by vm.routes.collectAsStateWithLifecycle()
@@ -51,7 +51,10 @@ import kotlinx.coroutines.delay
     var explain by remember { mutableStateOf(false) }
     var denied by remember { mutableStateOf(false) }
     var notificationsDenied by remember { mutableStateOf(false) }
-    var finishDialog by remember { mutableStateOf(false) }
+    var finishDialog by rememberSaveable { mutableStateOf(false) }
+    var handledStop by rememberSaveable { mutableIntStateOf(0) }
+    var handledArrival by rememberSaveable { mutableStateOf<String?>(null) }
+    var classifyAfterSave by rememberSaveable { mutableStateOf<String?>(null) }
     val permission=rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { results ->
         val precise=results[Manifest.permission.ACCESS_FINE_LOCATION] == true || ContextCompat.checkSelfPermission(context,Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED
         denied=!precise
@@ -59,11 +62,17 @@ import kotlinx.coroutines.delay
         if(precise) onStart()
     }
     val active=rides.firstOrNull { it.ride.state=="RECORDING" }
+    LaunchedEffect(stopReviewToken,active?.ride?.id,active?.ride?.arrivalSuggested) {
+        if(active!=null && ((stopReviewToken>handledStop) || (active.ride.arrivalSuggested && handledArrival!=active.ride.id))) {
+            handledStop=stopReviewToken; handledArrival=active.ride.id.takeIf { active.ride.arrivalSuggested }
+            finishDialog=true
+        }
+    }
     var previous by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(active?.ride?.id) {
         if(previous!=null && active==null) {
             val finished=rides.firstOrNull { it.ride.id==previous }
-            if(finished!=null) { selected=finished.ride.id; tab=1 }
+            if(finished!=null) { selected=finished.ride.id; tab=1; classifyAfterSave=finished.ride.id }
         }
         previous=active?.ride?.id
     }
@@ -133,22 +142,36 @@ import kotlinx.coroutines.delay
                     Text(stringResource(R.string.routes),style=MaterialTheme.typography.headlineMedium)
                     if(routes.isEmpty()) Panel { Text(stringResource(R.string.empty_routes)) }
                     if(routes.isNotEmpty()) Note(stringResource(R.string.route_long_press_hint))
-                    routes.forEach { route -> key(route.id) {
-                        val inUse=active?.ride?.routeId==route.id
+                    routeGroups(routes).forEach { group -> key(group.id) {
+                        var shownDirection by remember(group.id) { mutableStateOf(group.variants.first().direction) }
+                        val route=group.direction(shownDirection).firstOrNull() ?: group.variants.first()
+                        val inUse=active?.ride?.routeId in group.routeIds
                         ContextMenuPanel(
-                            modifier=Modifier.testTag("route-${route.id}"),
+                            modifier=Modifier.testTag("route-${group.id}"),
                             onLongClickLabel=stringResource(R.string.route_actions),
-                            title=routeName(route.name),subtitle=directionName(route.direction)+" · "+decimal(route.route().length/1000)+" km",
+                            title=group.name,subtitle=directionName(route.direction),
                             menu={ dismiss ->
                                 SheetAction(title=stringResource(R.string.edit_route),subtitle=stringResource(if(inUse) R.string.route_in_use else R.string.action_edit_route_hint),glyph=Glyph.EDIT,enabled=!inUse,onClick={ dismiss(); editingRoute=route })
                                 SheetAction(title=stringResource(R.string.delete_route),subtitle=stringResource(R.string.action_delete_route_hint),glyph=Glyph.DELETE,enabled=!inUse,destructive=true,onClick={ dismiss(); deletingRoute=route })
                             }
                         ) {
-                            Text(routeName(route.name)+" · "+directionName(route.direction),style=MaterialTheme.typography.titleMedium)
-                            Trace(route.route().points)
-                            val count=rides.map { it.sample() }.count { Statistics.valid(it) && it.routeId==route.id && it.direction==route.direction }
-                            Note(stringResource(R.string.route_metadata,route.route().length/1000,count))
-                            Note(stringResource(R.string.start_radius)+": ${route.startRadius.toInt()} m · "+stringResource(R.string.end_radius)+": ${route.endRadius.toInt()} m")
+                            Text(group.name,style=MaterialTheme.typography.titleMedium)
+                            Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+                                listOf("WORK","HOME").forEach { d ->
+                                    val variants=group.direction(d)
+                                    val count=rides.count { Statistics.valid(it.sample()) && it.ride.routeId in variants.map { v -> v.id } }
+                                    FilterChip(selected=shownDirection==d,onClick={ shownDirection=d },
+                                        label={ Text(directionName(d)+" · "+count) })
+                                }
+                            }
+                            val shown=group.direction(shownDirection)
+                            if(shown.isEmpty()) Note(stringResource(R.string.route_direction_missing))
+                            else {
+                                Trace(shown.first().route().points)
+                                val count=rides.count { Statistics.valid(it.sample()) && it.ride.routeId in shown.map { v -> v.id } }
+                                Note(stringResource(R.string.route_metadata,shown.first().route().length/1000,count))
+                                Note(stringResource(R.string.start_radius)+": ${shown.first().startRadius.toInt()} m · "+stringResource(R.string.end_radius)+": ${shown.first().endRadius.toInt()} m")
+                            }
                             if(inUse) Note(stringResource(R.string.route_in_use))
                         }
                     } }
@@ -160,13 +183,13 @@ import kotlinx.coroutines.delay
         }
     }
     editingRoute?.let { route ->
-        RouteDialog(points=route.route().points,route=route,onDismiss={ editingRoute=null },onSave={ name,direction,start,end ->
+        RouteDialog(points=route.route().points,route=route,groups=routeGroups(routes),onDismiss={ editingRoute=null },onSave={ name,direction,start,end ->
             vm.editRoute(route.id,name,direction,start,end); editingRoute=null
         })
     }
     deletingRoute?.let { route ->
         DeleteDialog(title=stringResource(R.string.delete_route),message=stringResource(R.string.delete_route_message,routeName(route.name)),onDismiss={ deletingRoute=null }) {
-            vm.deleteRoute(route.id); deletingRoute=null
+            vm.deleteRouteGroup(route.groupKey); deletingRoute=null
         }
     }
     deletingRide?.let { data ->
@@ -184,7 +207,21 @@ import kotlinx.coroutines.delay
             permission.launch(permissions.toTypedArray())
         }) { Text(stringResource(R.string.permission_allow)) }
     },dismissButton={ TextButton(onClick={ explain=false }) { Text(stringResource(R.string.cancel)) } })
-    if(finishDialog) AlertDialog(onDismissRequest={ finishDialog=false },title={ Text(stringResource(R.string.finish_confirm)) },confirmButton={ TextButton(onClick={ finishDialog=false; onStop() }) { Text(stringResource(R.string.finish)) } },dismissButton={ TextButton(onClick={ finishDialog=false }) { Text(stringResource(R.string.cancel)) } })
+    if(finishDialog && active!=null) AlertDialog(modifier=Modifier.testTag("finish-confirmation"),onDismissRequest={ finishDialog=false },containerColor=Surface,tonalElevation=0.dp,
+        title={ Text(stringResource(if(active.ride.arrivalSuggested) R.string.arrival_review_title else R.string.finish_confirm)) },
+        text={ Text(stringResource(R.string.finish_options_body)) },
+        confirmButton={ TextButton(onClick={ finishDialog=false; onStop() }) { Text(stringResource(R.string.save)) } },
+        dismissButton={ Row {
+            TextButton(onClick={ finishDialog=false }) { Text(stringResource(R.string.cancel)) }
+            TextButton(onClick={ finishDialog=false; onDiscard() }) { Text(stringResource(R.string.delete),color=Danger) }
+        } })
+    rides.firstOrNull { it.ride.id==classifyAfterSave }?.let { data ->
+        ClassificationDialog(data,routes,onDismiss={ classifyAfterSave=null },onSave={ route,direction,excluded,reason ->
+            vm.classify(data.ride.id,route,direction,excluded,reason); classifyAfterSave=null
+        },onCreate={ name,direction,start,end,group,excluded,reason ->
+            vm.createRoute(data.ride.id,name,direction,start,end,group,excluded,reason); classifyAfterSave=null
+        })
+    }
 }
 
 @Composable private fun LiveRide(data: RideData,routes: List<RouteRecord>,all: List<RideData>,quality: String) {
@@ -252,7 +289,6 @@ import kotlinx.coroutines.delay
 @Composable private fun RideDetail(data: RideData,routes: List<RouteRecord>,all: List<RideData>,vm: RideViewModel,onDelete: ()->Unit) {
     val s=data.sample(); val m=s.metrics
     val route=routes.firstOrNull { it.id==s.routeId }
-    var create by remember(s.id) { mutableStateOf(false) }
     var edit by remember(s.id) { mutableStateOf(false) }
     var trim by remember(s.id) { mutableStateOf(false) }
     Text(stringResource(if(data.ride.arrivalConfirmed) R.string.arrival else R.string.details),fontSize=28.sp,fontWeight=FontWeight.SemiBold)
@@ -302,9 +338,11 @@ import kotlinx.coroutines.delay
         }
     }
     SectionHeading(stringResource(R.string.stats_time_composition),stringResource(R.string.ride_time_caption))
-    DataCard { TimeComposition(m.elapsed,m.moving,m.waiting,m.unknown) }
-    SectionHeading(stringResource(R.string.ride_stops_title),stringResource(R.string.wait_note))
     DataCard(Modifier.testTag("ride-stops")) {
+        TimeComposition(m.elapsed,m.moving,m.waiting,m.unknown)
+        HorizontalDivider(Modifier.padding(vertical=6.dp),color=Line.copy(alpha=.6f))
+        Text(stringResource(R.string.ride_stops_title),fontSize=16.sp,fontWeight=FontWeight.Medium)
+        Note(stringResource(R.string.wait_note))
         val entries=listOf(
             stringResource(R.string.stops) to m.stops.toString(),
             stringResource(R.string.longest_wait) to duration(m.longestWait),
@@ -345,14 +383,14 @@ import kotlinx.coroutines.delay
     }
     if(s.state!="RECORDING") {
         val canCreate=s.points.count(::good)>=4 && m.distance>=Policy.MIN_ROUTE_DISTANCE_M
-        Button(onClick={ create=true },enabled=canCreate,modifier=Modifier.fillMaxWidth().heightIn(min=54.dp),shape=RoundedCornerShape(16.dp)) {
+        Button(onClick={ edit=true },enabled=canCreate,modifier=Modifier.fillMaxWidth().heightIn(min=54.dp),shape=RoundedCornerShape(16.dp)) {
             AppGlyph(Glyph.ROUTE,Modifier.size(20.dp),if(canCreate) Surface else Muted)
             Spacer(Modifier.width(10.dp)); Text(stringResource(R.string.route_create))
         }
         if(!canCreate) Note(stringResource(R.string.route_too_short))
     }
-    if(create) RouteDialog(points=s.points,onDismiss={ create=false },onSave={ name,direction,start,end -> vm.createRoute(s.id,name,direction,start,end); create=false })
-    if(edit) ClassificationDialog(data,routes,onDismiss={ edit=false },onSave={ selectedRoute,direction,excluded,reason -> vm.classify(s.id,selectedRoute,direction,excluded,reason); edit=false })
+    if(edit) ClassificationDialog(data,routes,onDismiss={ edit=false },onSave={ selectedRoute,direction,excluded,reason -> vm.classify(s.id,selectedRoute,direction,excluded,reason); edit=false },
+        onCreate={ name,direction,start,end,group,excluded,reason -> vm.createRoute(s.id,name,direction,start,end,group,excluded,reason); edit=false })
     if(trim) BoundaryDialog(data,onDismiss={ trim=false },onSave={ start,end -> vm.boundaries(s.id,start,end); trim=false })
 }
 @Composable private fun RideHeroMetric(label: String,value: String,modifier: Modifier=Modifier) {

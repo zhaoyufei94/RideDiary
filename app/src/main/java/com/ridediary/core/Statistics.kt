@@ -39,6 +39,8 @@ object Statistics {
         valid(it) && YearMonth.from(date(it)) == month && (routeId == null || routeId == it.routeId) && (direction == null || direction == it.direction)
     }
     fun days(samples: List<Sample>) = samples.map(::date).distinct().size
+    fun monthForRoute(all: List<Sample>,month: YearMonth,routeIds: Set<String>,direction: String)=
+        month(all,month,direction=direction).filter { it.routeId in routeIds }
     /** Unwrap clock minutes around a circular mean, then average/min/max on that timeline. */
     fun clocks(samples: List<Sample>, arrival: Boolean): Triple<Int,Int,Int>? {
         if (samples.isEmpty()) return null

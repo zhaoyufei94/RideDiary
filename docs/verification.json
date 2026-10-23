@@ -1,7 +1,7 @@
 {
   "date": "2026-10-23",
-  "version": "0.1.5",
-  "versionCode": 6,
+  "version": "0.1.6",
+  "versionCode": 7,
   "environment": {
     "os": "macOS arm64",
     "jdk": "Temurin 17.0.20.1",
@@ -13,12 +13,19 @@
     "minSdk": 26
   },
   "rebasedOnOriginMain": "aa08a141153dfe5636c3aaa95489418ce521d8a6",
-  "command": "./scripts/gradle-local.sh :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest :app:lintDebug :app:signingReport --no-daemon --console=plain",
+  "command": "./scripts/gradle-local.sh :app:assembleDebug :app:assembleDebugAndroidTest :app:testDebugUnitTest :app:lintDebug --no-daemon --console=plain",
   "result": "BUILD SUCCESSFUL",
   "unitTests": [
     {
       "name": "com.ridediary.core.AnalysisTest",
       "tests": "11",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.ridediary.core.RouteIdentityTest",
+      "tests": "3",
       "failures": "0",
       "errors": "0",
       "skipped": "0"
@@ -32,13 +39,13 @@
     },
     {
       "name": "com.ridediary.core.StatisticsTest",
-      "tests": "8",
+      "tests": "9",
       "failures": "0",
       "errors": "0",
       "skipped": "0"
     }
   ],
-  "unitTestsSourceVersion": "0.1.5; rerun after rebase",
+  "unitTestsSourceVersion": "0.1.6; 32 passed",
   "lint": {
     "errors": 0,
     "warnings": 7,
@@ -47,7 +54,7 @@
     ]
   },
   "resourceCheck": {
-    "translatedStrings": 157,
+    "translatedStrings": 164,
     "result": "PASS"
   },
   "brandResourceCheck": {
@@ -60,15 +67,15 @@
   "artifacts": [
     {
       "path": "app/build/outputs/apk/debug/app-debug.apk",
-      "bytes": 10945551,
-      "sha256": "371fac95fde19ccf40a8c6388bf11e54952eee85a09a39af54b84b1ac2636cf9",
+      "bytes": 11244199,
+      "sha256": "c8c1337427915b425aa391a9736be5e29dda08bba1db8f6f3ad17b3e6307e74f",
       "certificateSha256": "24107b0f1a354d165eb7bae7be2b235752428dae1d4622754e0ebdb84fe110d3",
       "signatureVerification": "v2 verified with apksigner"
     },
     {
       "path": "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk",
-      "bytes": 1036734,
-      "sha256": "919f590250ab30cfc4b7c0dd90f7cc89da84cdba485911ef07d7653fac659d46",
+      "bytes": 1116610,
+      "sha256": "da4a0d801267f341d75bde0115641f7003ccefd1b6714c79988612258173ede1",
       "certificateSha256": "24107b0f1a354d165eb7bae7be2b235752428dae1d4622754e0ebdb84fe110d3",
       "signatureVerification": "v2 verified with apksigner"
     }
@@ -84,16 +91,128 @@
     "result": "PASS"
   },
   "androidInstrumentedTests": {
-    "status": "NOT_RUN_FOR_0.1.5",
+    "status": "PARTIAL_20_OF_21",
     "compiled": true,
-    "latestTestSourceCompiled": true,
-    "testCount": 13,
-    "previousVersionEvidence": "docs/validation/verification-0.1.4.json",
-    "screenAwakeDeviceAcceptance": "PENDING"
+    "compiledTestCountIncludingExcluded": 22,
+    "passedCount": 20,
+    "completedTests": [
+      {
+        "class": "com.ridediary.PersistenceTest",
+        "test": "routeEditsPersistAndDeletionUnlinksRidesWithoutLosingTracks"
+      },
+      {
+        "class": "com.ridediary.PersistenceTest",
+        "test": "duplicateStartReturnsSameRideAndRecoveryCreatesUnknownGap"
+      },
+      {
+        "class": "com.ridediary.PersistenceTest",
+        "test": "reopensRawPointsRoutesSegmentsAndRebuildsAfterCorrection"
+      },
+      {
+        "class": "com.ridediary.PersistenceTest",
+        "test": "activeRideAndItsRouteAreProtectedAndInvalidEditsDoNotPersist"
+      },
+      {
+        "class": "com.ridediary.PersistenceTest",
+        "test": "deletingRideCascadesPointsAndSegmentsButPreservesRouteAcrossReopen"
+      },
+      {
+        "class": "com.ridediary.RouteWorkflowTest",
+        "test": "arrivalWaitsForSaveAndDiscardCascadesOnlyCurrentRide"
+      },
+      {
+        "class": "com.ridediary.RouteWorkflowTest",
+        "test": "manualCorrectionCanCreateMissingDirectionOrNewNamedRoute"
+      },
+      {
+        "class": "com.ridediary.RouteWorkflowTest",
+        "test": "returnTripCreatesActualGeometryWithinGroupAndGroupDeletionKeepsHistory"
+      },
+      {
+        "class": "com.ridediary.RouteWorkflowTest",
+        "test": "versionOneMigrationGroupsNamesAndPreservesEveryReferenceAndRawPoint"
+      },
+      {
+        "class": "com.ridediary.UiSmokeTest",
+        "test": "statisticsFiltersAndSelectableChartKeepTheSameDataScope"
+      },
+      {
+        "class": "com.ridediary.UiSmokeTest",
+        "test": "arrivalSaveCompletesAndOpensAutomaticRouteCorrection"
+      },
+      {
+        "class": "com.ridediary.UiSmokeTest",
+        "test": "editAndDeleteRouteKeepRideAndUpdateAssociation"
+      },
+      {
+        "class": "com.ridediary.UiSmokeTest",
+        "test": "cancelAndConfirmRideDeletionFromJournal"
+      },
+      {
+        "class": "com.ridediary.UiSmokeTest",
+        "test": "fourTabsAndSystemBackReturnToJournalAfterRecreation"
+      },
+      {
+        "class": "com.ridediary.UiSmokeTest",
+        "test": "deleteFromDetailReturnsToJournal"
+      },
+      {
+        "class": "com.ridediary.UiSmokeTest",
+        "test": "arrivalConfirmationCanCancelThenDiscardWithoutSaving"
+      },
+      {
+        "class": "com.ridediary.UiSmokeTest",
+        "test": "englishLargeTextStatisticsAndActionSheetRemainUsable"
+      },
+      {
+        "class": "com.ridediary.UiSmokeTest",
+        "test": "longPressShowsMenuWithoutOpeningDetailsAndBackDismissesIt"
+      },
+      {
+        "class": "com.ridediary.UiSmokeTest",
+        "test": "routeCorrectionListsGroupsAndCreatesMissingDirection"
+      },
+      {
+        "class": "com.ridediary.RecordingReviewTest",
+        "test": "notificationRequiresReviewAndServiceHandlesSaveAndDiscard"
+      }
+    ],
+    "excludedTests": [
+      "ServiceLifecycleTest: screen-awake verified by user; do not repeat"
+    ],
+    "pending": [
+      "UiSmokeTest.notificationIntentOpensReviewAgainAfterCancelAndRecreation: isolated session did not return complete results; pending revalidation"
+    ],
+    "screenAwakeDeviceAcceptance": "USER_VERIFIED_NOT_RETESTED",
+    "evidence": [
+      "docs/validation/android-routes-preliminary-0.1.6.txt",
+      "docs/validation/android-ui-preliminary-0.1.6.txt",
+      "docs/validation/android-service-0.1.6.txt",
+      "docs/validation/android-intent-incomplete-0.1.6.txt"
+    ],
+    "originalHistoryUnchanged": "Asserted by each completed UI/service fixture",
+    "notes": "Completed cases counted across batches. Interrupted/crashed sessions and preliminary failures are not counted as passes. Final changes after earlier UI batch were dialog colors/titles and removal of unused resources; latest intent and service fixtures compiled. Latest route overview/detail-card layout was compiled only; prior passed cases were not rerun for this layout."
   },
   "deviceInstallation": {
-    "status": "NOT_RUN_FOR_0.1.5"
+    "status": "PASS",
+    "version": "0.1.6",
+    "versionCode": 7,
+    "mode": "adb install --no-streaming -r",
+    "uninstalledMainApp": false,
+    "deviceModel": "PKJ110"
   },
-  "fieldValidation": "PENDING: screen-off continuity, real-road accuracy, route/arrival calibration and battery use across devices",
-  "previousVersionEvidence": "docs/validation/verification-0.1.4.json"
+  "fieldValidation": "PENDING: parallel roads, first reverse matching, endpoint/review behavior on real rides, screen-off continuity, battery use across devices; screen-awake separately user verified",
+  "previousVersionEvidence": "docs/validation/verification-0.1.5.json",
+  "databaseVersion": 2,
+  "latestLayoutBuild": {
+    "command": "./scripts/gradle-local.sh :app:assembleDebug --no-daemon --console=plain",
+    "result": "BUILD SUCCESSFUL",
+    "tests": "NOT_RUN: user requested compilation only",
+    "changes": [
+      "Route overview aggregates both directions for selected month above direction tabs",
+      "Ride time composition and stop metrics share one card"
+    ],
+    "priorTestEvidence": "docs/validation/verification-0.1.6.json",
+    "buildLog": "docs/validation/layout-build-0.1.6.txt"
+  }
 }
