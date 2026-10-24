@@ -2,6 +2,20 @@
 
 本清单适用于不同品牌的 Android 设备。下文的具体型号仅标识历史测试环境，不是产品限制。产品设计与交互规范见[产品设计](../PRODUCT_DESIGN.zh-CN.md)。
 
+## 0.3.0 轨迹大图与百度地图（2026-10-24）
+
+- 版本 0.3.0 / versionCode 16，Room 保持 v4，无数据库迁移；原始定位、速度／停车分析及历史记录未改写。
+- 最终 Debug／Release 构建通过；67 项 JVM 测试全部通过，无失败或跳过；Lint 0 错误／35 警告，287 条双语资源和 Kotlin 引用检查通过，Git 空白检查通过。
+- 本版新增 26 项本地测试：11 项轨迹展示几何（无效点、跳点、缺口、未知速度、停留阈值与位置、重访、参考路线及色标）；3 项百度折线颜色、追加与分块；3 项风格迁移、显式选择和小图停留抑制；9 项气泡避让（竖向／横向／斜向／交叉轨迹、其他标记、边缘、密集轨迹、放大长线与缺口、密度、数量上限、线段相交）。
+- 生成 `RideDiary-release-v0.3.0.apk`，19,970,636 字节（约 19.05 MiB），仅含 arm64-v8a；原生库压缩，SDK 模块限于地图、坐标工具与必要基础依赖。APK v2／v3 签名验证通过，沿用既有共享证书。
+- 仅在原权限基础上新增 ACCESS_NETWORK_STATE，无额外定位服务、后台位置、电话或存储权限。地图 AK 由用户在应用内填写，未提交真实 AK、样式 ID、签名私钥或手机轨迹。
+- 已确认无运行中的记录服务后，向连接的 PKJ110 执行同签名覆盖安装；安装成功，包内及安装后版本均为 0.3.0 / code 16。未卸载、清除数据或启动应用；未进行数据库逐行保留核验，不将覆盖安装成功等同于数据验收。
+- 按用户要求未执行实机／模拟器测试或视觉验收；在线鉴权、自定义样式、路况、缩放／避让视觉、显示选项持久化、前后台生命周期、功耗及真实骑行仍不计为通过项。用户已自行配置 AK，此事实不替代开发侧运行验收。此前开发轮次的测试包编译不作为最终代码的设备回归证据。
+- 百度 common 组件的 D8 stack-map 警告曾在构建中出现，构建成功；不据此推断运行时兼容性。
+- 复现：`python3 scripts/check-resources.py`；`./scripts/gradle-local.sh :app:assembleDebug :app:testDebugUnitTest :app:lintDebug -Pkotlin.compiler.execution.strategy=in-process --console=plain`；`./scripts/package-release.sh`；`git diff --check`。本地构建日志位于忽略目录 `.tooling/stop-placement-validation-0.3.0.log`、`.tooling/stop-placement-release-0.3.0.log`。
+
+证据：[0.3.0 构建与测试摘要](validation/maps-0.3.0.json)、[当前验证记录](verification.json)、[地图设置指南](baidu-map-setup.zh-CN.md)。
+
 ## 0.2.3 界面密度、滑动导航与详情过渡（2026-10-24）
 
 - 版本 0.2.3 / versionCode 13，数据库仍为 v4；未修改数据库结构、记录服务、匹配和统计口径。Debug APK、AndroidTest APK、JVM 单元测试与 Lint 通过。

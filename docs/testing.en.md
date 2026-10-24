@@ -2,6 +2,20 @@
 
 This checklist applies across Android brands. Specific models below identify historical test environments, not product restrictions. See [product design](../PRODUCT_DESIGN.md) for product and interaction requirements.
 
+## 0.3.0 expanded tracks and Baidu maps (2026-10-24)
+
+- Version 0.3.0 / versionCode 16; Room remains v4 without migration. Original fixes, speed/stop analysis and historical records are unchanged.
+- Final Debug/Release builds pass. All 67 JVM tests pass, without failures or skips. Lint reports 0 errors/35 warnings; 287 bilingual resources/Kotlin references and Git whitespace checks pass.
+- This version adds 26 local cases: 11 presentation-geometry cases (invalid fixes, jumps, gaps, unknown speeds, stop threshold/position, revisits, references and palette), 3 native polyline color/append/chunk cases, 3 style migration/selection/preview-suppression cases and 9 callout-layout cases (vertical/horizontal/diagonal/crossing tracks, markers, viewport edges, density, crowded tracks, zoomed edges/gaps, label limit and intersections).
+- `RideDiary-release-v0.3.0.apk` is 19,970,636 bytes (about 19.05 MiB), contains only arm64-v8a and compresses native libraries. Dependencies are limited to map/coordinate tools and required base modules. APK v2/v3 verification passes with the existing shared certificate.
+- ACCESS_NETWORK_STATE is the only added permission; no extra location service, background-location, phone or storage permission is introduced. Users enter AKs inside the app; no real AK, style ID, private signing key or phone track is committed.
+- With no recording service running, the connected PKJ110 received an in-place update signed with the same certificate. Installation succeeded; APK/installed versions are 0.3.0 / code 16. The app was not uninstalled, cleared or launched. No row-by-row data-retention audit was performed; installation success does not establish data acceptance.
+- No device/emulator tests or visual acceptance were performed, as requested. Online authentication, custom styles, traffic, zoom/collision appearance, display-preference persistence, lifecycle, power use and real rides remain unverified. The user configured their own AK; this does not substitute for development runtime validation. Earlier test-APK compilation is not final-code device regression evidence.
+- Baidu's common component emitted D8 stack-map warnings during development, while builds succeeded; no runtime compatibility claim follows from that.
+- Reproduce with `python3 scripts/check-resources.py`, `./scripts/gradle-local.sh :app:assembleDebug :app:testDebugUnitTest :app:lintDebug -Pkotlin.compiler.execution.strategy=in-process --console=plain`, `./scripts/package-release.sh` and `git diff --check`. Local logs remain in ignored `.tooling/stop-placement-validation-0.3.0.log` and `.tooling/stop-placement-release-0.3.0.log`.
+
+Evidence: [0.3.0 build/test summary](validation/maps-0.3.0.json), [current verification](verification.json), [map setup guide](baidu-map-setup.en.md).
+
 ## 0.2.3 interface density, swipe navigation and detail transitions (2026-10-24)
 
 - Version 0.2.3 / versionCode 13, Room remains v4; database schema, recording service, matching and statistic contracts are unchanged. Debug APK, AndroidTest APK, JVM unit tests and Lint pass.

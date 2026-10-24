@@ -6,6 +6,7 @@ import com.ridediary.data.*
 import kotlinx.coroutines.*
 
 class RideDiaryApp : Application() {
+    val mapSettings by lazy { com.ridediary.maps.MapSettings(this) }
     private val scope=CoroutineScope(SupervisorJob()+Dispatchers.IO)
     lateinit var repository: RideRepository
     lateinit var ready: Deferred<Unit>

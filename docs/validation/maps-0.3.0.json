@@ -1,0 +1,169 @@
+{
+  "date": "2026-10-24",
+  "version": "0.3.0",
+  "version_code": 16,
+  "room_version": 4,
+  "validation": {
+    "debug_apk": "passed",
+    "android_test_apk": "not_rebuilt_or_run_for_final_iteration",
+    "jvm_tests": 67,
+    "jvm_failures": 0,
+    "jvm_errors": 0,
+    "track_geometry_tests": 11,
+    "lint_errors": 0,
+    "lint_warnings": 35,
+    "bilingual_resources": 287,
+    "release_apk": "passed",
+    "apksigner_v2": "passed",
+    "apksigner_v3": "passed",
+    "device_or_emulator_tests": "not_run_as_requested",
+    "online_map_auth_and_styles": "not_runtime_verified_by_agent",
+    "jvm_skipped": 0,
+    "git_whitespace": "passed",
+    "test_suites": [
+      {
+        "class": "com.ridediary.core.AnalysisTest",
+        "tests": 11,
+        "failures": 0,
+        "errors": 0
+      },
+      {
+        "class": "com.ridediary.core.RecordingBufferTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0
+      },
+      {
+        "class": "com.ridediary.core.RouteIdentityTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0
+      },
+      {
+        "class": "com.ridediary.core.RouteRecoveryTest",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0
+      },
+      {
+        "class": "com.ridediary.core.RoutingIndexTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0
+      },
+      {
+        "class": "com.ridediary.core.RoutingTest",
+        "tests": 9,
+        "failures": 0,
+        "errors": 0
+      },
+      {
+        "class": "com.ridediary.core.StatisticsTest",
+        "tests": 9,
+        "failures": 0,
+        "errors": 0
+      },
+      {
+        "class": "com.ridediary.core.TrackGeometryTest",
+        "tests": 11,
+        "failures": 0,
+        "errors": 0
+      },
+      {
+        "class": "com.ridediary.maps.BaiduTrackLineTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0
+      },
+      {
+        "class": "com.ridediary.maps.MapAppearanceTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0
+      },
+      {
+        "class": "com.ridediary.maps.StopCalloutLayoutTest",
+        "tests": 9,
+        "failures": 0,
+        "errors": 0
+      }
+    ]
+  },
+  "apk": {
+    "path": "app/build/outputs/apk/release/RideDiary-release-v0.3.0.apk",
+    "bytes": 19970636,
+    "mib": 19.05,
+    "sha256": "86a222be46969a53eb215360b3577f90a03a88bcccf356ede1f80f0fd2cde16b",
+    "abis": [
+      "arm64-v8a"
+    ],
+    "native_libraries": [
+      {
+        "file": "lib/arm64-v8a/libBaiduMapSDK_base_v8_2_0.so",
+        "bytes": 583288,
+        "compressed_bytes": 287168,
+        "zip_method": 8
+      },
+      {
+        "file": "lib/arm64-v8a/libBaiduMapSDK_map_v8_2_0.so",
+        "bytes": 17023288,
+        "compressed_bytes": 7116540,
+        "zip_method": 8
+      },
+      {
+        "file": "lib/arm64-v8a/libandroidx.graphics.path.so",
+        "bytes": 10096,
+        "compressed_bytes": 4386,
+        "zip_method": 8
+      },
+      {
+        "file": "lib/arm64-v8a/libc++_shared.so",
+        "bytes": 1292440,
+        "compressed_bytes": 406344,
+        "zip_method": 8
+      },
+      {
+        "file": "lib/arm64-v8a/libtiny_magic.so",
+        "bytes": 84168,
+        "compressed_bytes": 35227,
+        "zip_method": 8
+      }
+    ]
+  },
+  "notes": [
+    "Baidu Map and Util 8.2.0 with base/common dependencies only.",
+    "Maps default off; each user enters their own Android SDK AK and style ID in the app.",
+    "Local previews hide stops without changing the expanded-map preference.",
+    "No phone/emulator tests or visual acceptance were performed, as requested.",
+    "The phone was updated in place; no row-by-row database verification was performed.",
+    "Vendor common component emitted D8 stack-map warnings during development; builds completed."
+  ],
+  "signing": {
+    "certificate_sha256": "24107b0f1a354d165eb7bae7be2b235752428dae1d4622754e0ebdb84fe110d3",
+    "private_key_committed": false
+  },
+  "installation": {
+    "status": "passed_in_previous_implementation_turn",
+    "device_model": "PKJ110",
+    "version": "0.3.0",
+    "version_code": 16,
+    "mode": "adb install --no-streaming -r",
+    "app_data_cleared": false,
+    "app_launched": false,
+    "recording_service_running_before_install": false,
+    "row_by_row_retention_audit": "not_performed"
+  },
+  "reproduce": [
+    "python3 scripts/check-resources.py",
+    "./scripts/gradle-local.sh :app:assembleDebug :app:testDebugUnitTest :app:lintDebug -Pkotlin.compiler.execution.strategy=in-process --console=plain",
+    "./scripts/package-release.sh",
+    "git diff --check"
+  ],
+  "pending_runtime_validation": [
+    "Online map authentication and real account/network failure behavior",
+    "Custom style and live traffic rendering",
+    "Zoom, pan, callout avoidance and display-control appearance",
+    "Display preference and encrypted credential persistence",
+    "Map lifecycle, real riding and power use"
+  ]
+}

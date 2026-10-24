@@ -222,7 +222,7 @@ import java.time.YearMonth
                             refreshing=refreshToken>0 && (dashboard.data.token!=refreshToken || dashboard.data.loading)
                         }
                         if(active!=null) {
-                            LiveRide(active,routes,rides,quality,matching)
+                            LiveRide(active,routes,rides,quality,matching,mapVisible=pagerState.currentPage==0)
                             if(stopPending) Note(stringResource(if(saving) R.string.saving_ride else R.string.save_ride_failed))
                             OutlinedButton(enabled=!saving,onClick={ if(stopPending) onStop() else finishDialog=true },modifier=Modifier.fillMaxWidth().heightIn(min=50.dp),shape=RoundedCornerShape(14.dp)) {
                                 Text(stringResource(if(saving) R.string.saving_ride else if(stopPending) R.string.retry_save_ride else R.string.finish))
@@ -381,7 +381,7 @@ import java.time.YearMonth
 
 private data class LiveAnalysis(val sample: Sample)
 
-@Composable private fun LiveRide(data: RideData,routes: List<RouteRecord>,all: List<RideData>,quality: String,matching: LiveRouteMatch?) {
+@Composable private fun LiveRide(data: RideData,routes: List<RouteRecord>,all: List<RideData>,quality: String,matching: LiveRouteMatch?,mapVisible: Boolean) {
     val analysis by produceState<LiveAnalysis?>(null,data) {
         value=withContext(Dispatchers.Default) { LiveAnalysis(data.sample()) }
     }
@@ -472,6 +472,9 @@ private data class LiveAnalysis(val sample: Sample)
     }
     val last=metrics.segments.lastOrNull { it.motion != Motion.UNKNOWN }
     if(fresh && latest?.speed != null && latest.speed < Policy.STOP_EXIT && last?.motion==Motion.WAITING) Note(stringResource(R.string.current_wait,duration(last.duration)))
+    val liveFix by RecordingService.latestFix.collectAsStateWithLifecycle()
+    SectionHeading(stringResource(R.string.track_live_title))
+    DataCard(padding=10) { Trace(sample.points,height=190.dp,metrics=metrics,live=true,current=liveFix?.takeIf { fresh && good(it) },visible=mapVisible) }
     SectionTitle(stringResource(R.string.time_split)); DataCard(padding=14) { TimeBar(metrics) }
 }
 
@@ -657,7 +660,7 @@ private data class LiveAnalysis(val sample: Sample)
             }
         }
         item { SectionHeading(stringResource(R.string.ride_trace_title)) }
-        item { DataCard(Modifier.testTag("ride-trace"),padding=14) { Trace(s.points,height=140.dp) } }
+        item { DataCard(Modifier.testTag("ride-trace"),padding=14) { Trace(s.points,height=160.dp,metrics=m) } }
         item { RideComparisonSection(s,all) }
         if(s.state!="RECORDING") {
             item {

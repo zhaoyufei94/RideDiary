@@ -4,7 +4,7 @@
 
 **Your everyday rides, a little better understood.** · [中文说明](README.zh-CN.md) · [Changelog](CHANGELOG.md)
 
-Current version: **0.2.3**
+Current version: **0.3.0**
 
 RideDiary is an offline-first trip journal that helps you understand your commute and compare it with earlier trips on the same route. For Android 8.0 and later; no account, extra hardware or Google Play services needed.
 
@@ -16,6 +16,9 @@ RideDiary is an offline-first trip journal that helps you understand your commut
 - **Manage routes:** keep work/home tracks under one route name, with automatic matching and manual correction.
 - **Explore statistics:** view monthly distance, commute days and trip count across both directions, then select a direction for durations and charts.
 - **Review history:** inspect time breakdowns, stops, tracks and historical comparisons; correct classification, adjust boundaries, exclude or delete trips.
+- **Expand tracks:** tap a trip or route preview to pinch, pan and fit the full track. Trip speed runs from red (slow) to green (fast), with gray for unknown speed and labels for stops of at least 30 seconds.
+- **Optional Baidu basemap:** enter your own Android SDK AK in the APK. Recording can show your current position and live track; recording, statistics and local tracks work without a key, with maps disabled or offline.
+- **Map display choices:** expanded maps offer minimal, standard, satellite or custom styles, with speed colors, stops, endpoints, place names and live traffic. Stop bubbles avoid the track while previews stay uncluttered.
 
 ## Getting started
 
@@ -27,6 +30,10 @@ RideDiary is an offline-first trip journal that helps you understand your commut
 
 Chinese is the default; change language and weather service in Settings at the top right. Open-Meteo is the default; QWeather requires your API Host and API Key from the [QWeather console](https://id.qweather.com/), followed by Save weather settings. Weather can be turned off. Operate the app while parked.
 
+Baidu maps are disabled by default. In Settings → Baidu Maps, copy this APK’s package and SHA1, create an **Android SDK** AK in your own [Baidu console](https://lbsyun.baidu.com/apiconsole/key), bind those values, then enter the AK, enable and save. Map settings are also available at the top right of the expanded track. The default is minimal. To use Tea Field or another style, publish it in your account's [style editor](https://lbsyun.baidu.com/index.php?title=open/custom), enter and save its ID in map settings, then choose Custom under Display in the expanded map. Style failures do not affect tracks. APKs signed with different certificates require matching SHA1 entries.
+
+See the [Baidu Maps setup guide](docs/baidu-map-setup.en.md) for steps and copyable signing details.
+
 Weekday plans from earlier versions remain as Custom weekdays. To follow holidays and make-up workdays, switch the route's travel plan to Workdays.
 
 ## Permissions and conditions
@@ -35,7 +42,7 @@ Weekday plans from earlier versions remain as Custom weekdays. To follow holiday
 |---|---|
 | Precise location | Records tracks and recognizes routes; denied or approximate-only access prevents recording, but history remains available |
 | Approximate location, weather only | Shows local weather; granting weather location never starts recording, and existing route-origin weather works without it |
-| Internet | Fetches weather; recording and history still work offline or with weather turned off |
+| Internet and network state | Fetch weather and the optional Baidu basemap; local tracks, recording and history remain available offline |
 | Notifications, Android 13+ | Shows recording status and a finish entry; if denied, return to the app to finish |
 | System location enabled | Supplies fixes; when disabled or unavailable, timing continues and unclassifiable intervals are unknown |
 
@@ -50,17 +57,20 @@ No “Allow all the time” location access is required; trips never start autom
 - **Routes and history:** creating a route needs four valid fixes and 150 m of track; endpoint radii are 20–500 m, and historical comparison/arrival estimates need three usable histories for the same direction.
 - **Arrival prompts:** near-complete progress and at least 30 seconds of sustained low speed may trigger review, but Save/Delete still requires your choice; similar routes, deviation or poor fixes can prevent recognition and estimates.
 - **Time breakdown:** elapsed time equals moving, stationary and unknown time; estimates do not include live traffic.
+- **Maps and stops:** Display at the top right of expanded maps changes styles and contents, with choices saved locally. The stop toggle applies to expanded maps; previews hide stop dots and bubbles. Bubbles hide when no free space fits; zoom in to reveal them. Live traffic shows current road conditions, not historical trip speeds.
 - **Screen and battery:** the visible app stays awake during recording and restores normal timeout when you leave or finish; the power button can lock the screen while background recording continues, and location/screen use increases battery consumption.
 - **Edits and deletion:** hold a trip or route card for management, or browse linked trips inside a route, open details or hold to unlink; deleting a route keeps trips, while deleting a trip removes its raw track.
 - **Interruptions:** time to the first fix depends on surroundings; if recording is interrupted, check location and app background restrictions, then reopen to inspect saved data without automatic resumption.
 
 ## Data and limits
 
-Trips and full tracks stay on your phone. Weather queries send current or route-endpoint coordinates rounded to two decimal places to the selected provider; QWeather credentials are encrypted locally. **Uninstalling or clearing app data loses records; export, import and cloud recovery are not available yet.**
+Trips and full tracks stay on your phone; no track cloud is used. Weather queries send current or route-endpoint coordinates rounded to two decimal places to the selected provider. QWeather and Baidu credentials are encrypted using Android Keystore and excluded from backups, logs and saved UI state. The Baidu SDK is initialized only when maps are enabled, an AK is configured and a map is viewed. It processes location/viewed-area, IP and device information under its [privacy policy](https://lbsyun.baidu.com/index.php?title=openprivacy), so using the online basemap is not fully offline. Speed and stop analysis stays local. Original WGS84 fixes are converted using Baidu tools for display only; historical data is not rewritten. **Uninstalling or clearing app data loses records; export, import and cloud recovery are not available yet.**
 
 [Open-Meteo’s free API](https://open-meteo.com/en/pricing) is for non-commercial use; QWeather access and quotas depend on your account. Weather is a grid forecast; endpoint previews do not cover every location along the route or describe road-surface conditions.
 
-Track sketches are available; map basemaps, navigation, live traffic and red-light detection are not. Location accuracy and background continuity depend on surroundings and your phone's system.
+Expanded tracks, speed colors and stop labels work offline. Baidu basemaps and live traffic require your own valid AK, network access and account entitlement. Stale locations hide the live marker; gaps and jumps never gain invented connecting lines, and unknown speed is not zero. Reference routes do not borrow trip-specific speed or stops. Navigation and signal-light detection are not available. Location accuracy and background continuity depend on surroundings and your phone’s system.
+
+Default APKs target **arm64-v8a** to avoid shipping unused CPU architectures. For an APK supporting 32-bit ARM as well, use `./scripts/gradle-local.sh :app:assembleDebug -PrideDiaryAbis=arm64-v8a,armeabi-v7a`; this increases package size. No device tests were run for this change.
 
 ## Planned features
 

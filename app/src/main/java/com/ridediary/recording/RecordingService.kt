@@ -69,7 +69,7 @@ class RecordingService: Service() {
         origin=SystemClock.elapsedRealtime()
         val startUtc=System.currentTimeMillis()
         buffer=RecordingBuffer().also { it.checkpoint(0,startUtc) }
-        quality.value="SEARCHING"; latestFixRealtime.value=null; stopPending.value=false; saving.value=false
+        quality.value="SEARCHING"; latestFixRealtime.value=null; latestFix.value=null; stopPending.value=false; saving.value=false
         try {
             if (Build.VERSION.SDK_INT >= 29) startForeground(1,notification(),ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
             else startForeground(1,notification())
@@ -92,6 +92,7 @@ class RecordingService: Service() {
                         location.start(origin,{ fix ->
                             if(buffer.cutoff==null) {
                                 latestFixRealtime.value=origin+fix.t
+                                latestFix.value=fix
                                 buffer.checkpoint(elapsed(),System.currentTimeMillis(),fix)
                                 wakeups.trySend(Unit)
                             }
@@ -115,7 +116,7 @@ class RecordingService: Service() {
     }
     private fun elapsed()=SystemClock.elapsedRealtime()-origin
     private fun close() {
-        source?.stop(); ticker?.cancel(); rideId=null; active.value=false; saving.value=false; stopPending.value=false
+        source?.stop(); ticker?.cancel(); rideId=null; active.value=false; latestFix.value=null; saving.value=false; stopPending.value=false
         stopForeground(STOP_FOREGROUND_REMOVE); stopSelf()
     }
     private fun notification(): Notification {
@@ -127,7 +128,7 @@ class RecordingService: Service() {
             .addAction(android.R.drawable.ic_menu_close_clear_cancel,getString(R.string.finish),stop).build()
     }
     override fun onDestroy() {
-        source?.stop(); active.value=false; saving.value=false; stopPending.value=false; wakeups.close(); scope.cancel(); super.onDestroy()
+        source?.stop(); active.value=false; latestFix.value=null; saving.value=false; stopPending.value=false; wakeups.close(); scope.cancel(); super.onDestroy()
     }
     override fun onBind(intent: Intent?): IBinder? = null
     companion object {
@@ -141,5 +142,6 @@ class RecordingService: Service() {
         val saving=MutableStateFlow(false)
         val stopPending=MutableStateFlow(false)
         val latestFixRealtime=MutableStateFlow<Long?>(null)
+        val latestFix=MutableStateFlow<com.ridediary.core.Fix?>(null)
     }
 }

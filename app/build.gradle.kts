@@ -46,8 +46,11 @@ android {
         applicationId = "com.ridediary"
         minSdk = 26
         targetSdk = 35
-        versionCode = 13
-        versionName = "0.2.3"
+        // Retain the internal code of already installed development builds for in-place updates.
+        versionCode = 16
+        versionName = "0.3.0"
+        // Sideload APKs target modern phones; other ABIs can be selected explicitly.
+        ndk { abiFilters += providers.gradleProperty("rideDiaryAbis").orElse("arm64-v8a").get().split(",") }
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     sourceSets {
@@ -69,10 +72,14 @@ android {
         }
     }
     buildTypes { release { isMinifyEnabled = false } }
+    // Compress native libraries in sideload APKs instead of shipping them uncompressed.
+    packaging { jniLibs.useLegacyPackaging = true }
 }
 ksp { arg("room.schemaLocation", "$projectDir/schemas") }
 
 dependencies {
+    implementation("com.baidu.lbsyun:BaiduMapSDK_Map:8.2.0")
+    implementation("com.baidu.lbsyun:BaiduMapSDK_Util:8.2.0")
     val bom = platform("androidx.compose:compose-bom:2025.04.01")
     implementation(bom)
     androidTestImplementation(bom)

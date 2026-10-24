@@ -2,6 +2,18 @@
 
 [中文](CHANGELOG.zh-CN.md)
 
+## 0.3.0 · Expanded tracks and Baidu maps (2026-10-24)
+
+- Trip and reference-route previews open full screen with pinch zoom, pan and fit-to-track controls. Recording shows live tracks and fresh positions; expanded maps can resume following.
+- Trip speeds use a fixed red-to-green 0–60+ km/h scale, with gray for unknown speed. Reference routes remain monochrome and do not borrow trip speed or stop data.
+- Expanded maps label stops of at least 30 seconds with small rounded bubbles and leaders to their true locations. Bubbles avoid tracks, other markers and viewport edges; unavailable bubbles retain their dots. Previews hide stop markers.
+- Optional Baidu basemaps accept each user's Android SDK AK in the APK, with copyable package/SHA1 details and Android Keystore encryption. See the [setup guide](docs/baidu-map-setup.en.md).
+- The expanded Display panel persists minimal, standard, satellite and custom styles, plus speed colors, expanded-map stops, endpoints, place names and live traffic. Tea Field and other custom styles use an ID published in your account. Live traffic shows current road conditions and does not change historical speeds or arrival estimates.
+- Improved track palette and widths in previews/expanded maps. Local casings draw in a separate pass; native maps use per-segment colored polylines, improving overview readability and fixing missing native track lines.
+- Baidu maps default off. Missing keys, offline access or map failures retain local expanded tracks, speed colors and stop labels. Recording, weather and statistics do not depend on the map SDK.
+- Original fixes and historical analysis remain unchanged; coordinate conversion is display-only. Invalid fixes, jumps and long gaps never gain connecting lines. Only map/coordinate tools and required dependencies are included, with compressed native libraries and arm64-v8a by default; `rideDiaryAbis` selects other architectures.
+- Validation: Debug/Release builds, all 67 local JVM tests, Lint and 287 bilingual resources pass. In-place installation retains the existing certificate. No device/emulator tests or visual acceptance were performed, as requested; see the [test record](docs/testing.en.md).
+
 ## 0.2.3 · Interface and interaction refinement (2026-10-24)
 
 - Removed the fixed brand bar on every page and the large page titles that repeated the bottom tabs (“Record / Trips / Statistics / Routes”). The header now carries useful context such as the date, this month’s trip count and distance, or linked route trips.

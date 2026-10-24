@@ -46,6 +46,8 @@ import com.ridediary.R
                 }
                 WeatherSettingsSection(weather)
                 HorizontalDivider(color=Line)
+                MapSettingsSection()
+                HorizontalDivider(color=Line)
                 Text(stringResource(R.string.language_setting),style=MaterialTheme.typography.titleMedium,color=Ink)
                 Column(Modifier.fillMaxWidth().selectableGroup()) {
                     listOf(true to R.string.language_chinese,false to R.string.language_english).forEach { (value,label) ->

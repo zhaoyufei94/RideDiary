@@ -1,6 +1,24 @@
-# Design and implementation / v0.2
+# Design and implementation / v0.3
 
 This document describes implementation. See [product design](../PRODUCT_DESIGN.md) for product scope, visual style and Android interaction requirements.
+
+## 0.3.0 expanded tracks and optional maps
+
+`core/TrackGeometry.kt` produces presentation geometry without changing recorded analysis. It validates original adjacent fixes, refusing to bridge invalid points, jumps or gaps exceeding 15 seconds. Speeds follow existing moving/waiting/unknown segments, using displacement only when it exceeds positioning uncertainty. Unknown speed remains gray; a fixed red-to-green scale covers 0/20/40/60+ km/h. Reference routes stay monochrome. Labels use confirmed WAITING intervals of at least 30 seconds and median valid coordinates; revisits remain separate. Isolated jumps do not enlarge fitted bounds.
+
+`ui/TrackViews.kt` supplies previews, a full-screen Dialog and independent local Canvas with pinch, pan and fit controls. Recording reuses `RecordingService.latestFix` and freshness checks without another location provider. Native maps exist only in the visible recording preview or an expanded view; opening the live expanded view removes the preview's native map. Missing keys, disabled maps, offline access, SDK/authentication failure and loading timeout preserve local viewing. Both renderers share geometry.
+
+`maps/MapSettings.kt` defaults off and accepts each APK user's Android SDK AK and published style ID. A separate Keystore AES-GCM key protects the AK; credentials never enter SavedState, logs or Room. Saving with maps enabled accepts the linked SDK privacy policy. `BaiduRuntime.ensure` runs only when an enabled/configured map is viewed; neither Application nor the recording Service initializes the SDK. Maps do not supply recording location, route recognition or statistics. Authentication failures expose no raw SDK messages and allow fallback/retry. Settings copy this APK's package and SHA1 for AK registration.
+
+`BaiduTrackController` owns TextureMapView and host resume/pause/destroy. Official CoordinateConverter converts raw WGS84 to display-only BD09LL, cached in memory. Continuous polylines are split into at most 1000 vertices; stable chunks are reused and changed tails updated. Stop labels are culled by screen collision and duration. SDK branding/scale remain visible, with POIs, buildings, indoor maps and live traffic off by default. A published Tea Field or other style ID loads online and falls back to the minimal basemap on failure.
+
+The expanded view's Display panel persists minimal (no 3D buildings), standard, satellite and custom basemaps, plus speed colors, stops, endpoints, place names and live traffic. `MapAppearance` shares a persistence mutex with credentials but writes its own preference fields without re-encrypting or overwriting the AK. Existing style IDs default to Custom on migration. Track choices apply to local Canvas as well; basemap controls affect Baidu only and add no modules. Live traffic is identified as current road conditions, not historical speeds.
+
+`StopCalloutPainter` shares 11 sp rounded bubbles, leaders and location dots. `StopCalloutLayout` searches eight directions at 16/32/48 dp gaps. Candidate bodies must avoid the real track edges plus 5 dp clearance, other bubbles, endpoint/current/stop markers and viewport edges. Only `TrackGeometry.edges` are indexed, without bridging gaps. Edges are clipped near the viewport and bucketed in 64 dp screen cells, bounding searches on long/zoomed trips. If none fits, only the bubble is hidden; up to 30 bubbles are shown.
+
+Native bitmap bounds include the complete bubble and leader. Each Marker's relative anchor always references the true stop, including sideways/below placements. Bitmaps are reused within the same slot and recycled/replaced when direction or gap changes. Markers move with geographic coordinates during gestures and are laid out again at gesture completion. Local expanded maps share layout and drawing; stop coordinates and analysis stay unchanged. `MapAppearance.forSurface` temporarily suppresses stops in previews without changing the saved expanded-map preference.
+
+Version is 0.3.0 with internal versionCode 16, supporting replacement of installed development builds. Room stays at v4 with no migration. Dependencies are limited to map/coordinate utilities and required base modules, excluding navigation, Baidu location, track cloud and traffic signals. Default APKs include arm64-v8a and compressed native libraries; `rideDiaryAbis` selects other architectures. Online maps process location/area and device information under SDK policy, superseding early-version statements about having no map API.
 
 ## 0.2.1 startup crash repair
 

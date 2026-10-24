@@ -209,28 +209,6 @@ fun weekdayText(utc: Long,zone: String,locale: Locale)=Instant.ofEpochMilli(utc)
         drawPath(path,Accent,style=style); drawCircle(Accent,2.8f*scale,xy(23f,4f))
     }
 }
-@Composable fun Trace(points: List<Fix>,height: Dp=150.dp) {
-    val valid=points.filter(::good)
-    val label=stringResource(if(valid.size<2) R.string.no_trace else R.string.route_sketch)
-    Column(verticalArrangement=Arrangement.spacedBy(6.dp)) {
-        Canvas(Modifier.fillMaxWidth().height(height).background(Soft,RoundedCornerShape(10.dp)).semantics { contentDescription=label }) {
-            if(valid.size<2) return@Canvas
-            val cosLat=cos(Math.toRadians(valid.first().lat))
-            val xs=valid.map { it.lon*cosLat }; val ys=valid.map { it.lat }
-            val minX=xs.min(); val minY=ys.min(); val rangeX=(xs.max()-minX).coerceAtLeast(0.00001); val rangeY=(ys.max()-minY).coerceAtLeast(0.00001)
-            val padding=18.dp.toPx(); val scale=min((size.width-padding*2)/rangeX,(size.height-padding*2)/rangeY)
-            fun position(f: Fix)=Offset(((f.lon*cosLat-minX)*scale+(size.width-rangeX*scale)/2).toFloat(),(size.height-(f.lat-minY)*scale-(size.height-rangeY*scale)/2).toFloat())
-            valid.zipWithNext().forEach { (a,b) ->
-                if(b.t-a.t in 1..Policy.MAX_GAP_MS && meters(a,b)/(b.t-a.t)*1000<=Policy.MAX_SPEED)
-                    drawLine(Ink,position(a),position(b),3.dp.toPx(),StrokeCap.Round)
-            }
-            drawCircle(Surface,6.dp.toPx(),position(valid.first())); drawCircle(Ink,6.dp.toPx(),position(valid.first()),style=Stroke(2.dp.toPx()))
-            drawCircle(Ink,6.dp.toPx(),position(valid.last()))
-        }
-        Note(label)
-    }
-}
-
 @Composable fun DataCard(modifier: Modifier=Modifier,padding: Int=16,content: @Composable ColumnScope.()->Unit) {
     Surface(modifier.fillMaxWidth(),shape=RoundedCornerShape(18.dp),color=Surface,border=BorderStroke(1.dp,Line.copy(alpha=.65f))) {
         Column(Modifier.padding(padding.dp),verticalArrangement=Arrangement.spacedBy(10.dp),content=content)
