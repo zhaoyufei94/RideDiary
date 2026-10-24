@@ -17,6 +17,16 @@ Pinned certificate SHA-256:
 24107b0f1a354d165eb7bae7be2b235752428dae1d4622754e0ebdb84fe110d3
 ```
 
+## Local Release package naming
+
+Local performance-test packages are named `RideDiary-release-v<versionName>.apk`, for example `RideDiary-release-v0.2.3.apk`. Build and sign with:
+
+```sh
+./scripts/package-release.sh
+```
+
+The output is `app/build/outputs/apk/release/RideDiary-release-v0.2.3.apk`. The script uses the shared debug certificate and is intended only for in-place installation and performance checks; it is not a distribution build. Formal Release signing still needs separate configuration.
+
 ## One-time setup on the other Mac
 
 1. Sync these code changes, including the Gradle configuration, public certificate pin and importer.

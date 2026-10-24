@@ -17,6 +17,16 @@ Android 更新同一个包名的应用时要求签名一致。每台电脑默认
 24107b0f1a354d165eb7bae7be2b235752428dae1d4622754e0ebdb84fe110d3
 ```
 
+## 本地 Release 包命名
+
+本地性能验证包统一命名为 `RideDiary-release-v<versionName>.apk`，例如 `RideDiary-release-v0.2.3.apk`。构建并签名：
+
+```sh
+./scripts/package-release.sh
+```
+
+输出为 `app/build/outputs/apk/release/RideDiary-release-v0.2.3.apk`。脚本使用共享 debug 证书，仅用于覆盖安装和性能验证；它不是正式分发包，正式 Release 签名仍需另行配置。
+
 ## 另一台 Mac 的一次性配置
 
 1. 同步本次代码修改，包括 Gradle 配置、`signing/debug-certificate.sha256` 和导入脚本。

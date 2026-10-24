@@ -16,6 +16,7 @@
 - 优化：详情页改为 LazyColumn 按需组合；统计与路线有效样本移入后台计算，历史比较延迟到卡片附近再算，减少进入详情时的主线程工作。
 - 优化：设置入口只保留在记录空闲、行程列表和路线列表；进入记录中、统计或任何详情页后隐藏。齿轮图标改为带实体齿块的轮廓，不再使用放射状单线。
 - 修复：详情返回改为列表常驻、详情作为独立覆盖层平移退出，不再让列表参与退出转场；同时保留当前行程样本并稳定详情回调，消除详情内容在退出动画中的闪动。
+- 构建：本地 release 性能包统一命名为 `RideDiary-release-v<version>.apk`，由 `scripts/package-release.sh` 生成。
 - 验证：Debug APK、AndroidTest APK、JVM 单元测试与 Lint 通过；在 PKJ110 上目视检查四个页面、详情和操作面板，`horizontalSwipeChangesTabsAtTopLevel`、`tripListScrollPositionSurvivesDetailReturn`、`statisticsFiltersAndSelectableChartKeepTheSameDataScope`、`fourTabsAndSystemBackReturnToJournalAfterRecreation`、`longPressShowsMenuWithoutOpeningDetailsAndBackDismissesIt`、`settingsOnlyOnTopLevelPages` 六项定向设备测试在详情覆盖层最终改动前通过；最终覆盖层由用户实机验收，设备随后锁屏，未在最终包上重跑自动化用例。使用现有调试证书签名的 release 包测得 6 次 Tab 滑动共 404 帧：90th 8 ms、95th 9 ms、99th 14 ms、掉帧 0.99%；详情进入/返回 90th 12 ms、99th 46 ms。debug 构建明显更慢，性能数据以 release 为准。详情退出闪动的修复已安装；按用户要求未再做动画复测，交由用户自行验收。完整 `UiSmokeTest` 中依赖系统窗口截图的 `englishLargeTextStatisticsAndActionSheetRemainUsable` 未在 5 分钟内结束，完整套件未作为通过项。
 
 ## 0.2.2
