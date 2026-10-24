@@ -135,3 +135,19 @@ RouteShape 懒加载投影索引与路线长度。使用累计长度二分定位
 `Routing.evaluate` 输出可观察候选，不再把未达到匹配门槛等同于没有候选。重合度为已采集有效定位点中通过 25 米走廊、顺序与连续性校验的比例，既非全程进度也非置信度。正式匹配仍要求至少四点、120 米有效匹配移动距离及 75% 重合度。失配后根据已观察移动距离扩大有界搜索（250–1200 米），以至少三个有序连续点、15 米净位移和10米路线推进确认重捕获。定位长缺口不补计移动；短暂向后抖动不会永久锁死，但实际掉头及当前偏离继续阻止进度/ETA。不同路线组/方向的近似候选继续保留歧义。
 
 Repository 将候选结果作为按行程 ID 隔离的临时 StateFlow 发布，UI 复用同一结果，不重复整段匹配。定位和分段仍按独立批次持久化；仅有新点且达到计算间隔才重算，默认5秒，按上次计算耗时的4倍自适应至最多15秒。路线或绑定变化立即失效缓存，结束强制重算。结果只在事务成功后发布。UI 在主记录卡片下方用小字显示最多两个候选路线/方向及重合度，不单独展示卡片、进度条、状态说明或更新时间。无候选或定位失效时隐藏该辅助区域，路线归属仅在主卡片标题展示，不重复显示匹配中、待区分或未匹配提示。定位状态与“记录中”同一行，保留14sp次要文字，绿点表示正常，红点表示异常；弱信号、等待定位、定位关闭或权限异常使用简短状态文字。所有候选仅驻留内存，不对旧行程追溯重分类。
+
+## 0.2.3：界面密度与信息层级
+
+本轮只调整 Compose 展示与导航，不改数据库、记录服务、匹配或统计口径。`Screens.kt` 移除固定品牌栏和重复页面标题，改由 `PageHeader` 承载日期、当月趟数/里程、路线关联数等上下文；`LiveRide` 的页头仍是权威记录状态与定位质量的观察者，定位新鲜度仍按服务时间戳判断。记录页把开始按钮置于页头之后，天气拆为折叠摘要与展开详情，路线推荐改为单行卡片。
+
+`Components.kt` 统一了紧凑尺寸：页面边距 16 dp、区块间距 10 dp、浅色卡片 18/16、次级面板 14/14、主卡 20/18，并新增页头图标、状态胶囊和方向切换。`StatsScreen.kt` 把月份切换放入页头、路线与方向放入同一筛选行；`RouteViews.kt` 将路线列表压缩为两行，并把参考轨迹、端点与出行计划合并到一张卡。`RideDetail` 与路线详情增加页头“更多操作”，长按入口保留。
+
+大字体时统计筛选、实时指标和历史条目改为纵向排列；方向与选中状态继续提供语义。底部导航改用本地 `AppGlyph` 线性图标，摩托车进度使用 650 ms 动画；`Trace`、`TimeBar` 和 `TimeRing` 仅调整视觉尺寸与语义标签。设置页保留紧凑品牌行，主界面不再重复展示品牌。
+
+设置图标由 `HeaderIconButton` 放在记录空闲、行程列表和路线列表的页头；记录中、统计和详情页不渲染该按钮。`Glyph.SETTINGS` 用 8 个梯形齿块组成闭合齿轮轮廓加中心圆孔，不再绘制放射线。
+
+导航层用 `HorizontalPager` 承载四个顶层页面，`pagerState` 同时驱动底栏选中状态。`beyondViewportPageCount=3` 预组合四个页面，`BottomTabs` 和 `DetailBackHandler` 在各自的小作用域读取 `currentPage`，避免滑动时 `RideDiaryScreen` 整体重组。列表页保留 `ScrollState`；详情页改用 `LazyListState` + `LazyColumn`，首次进入时 `scrollToItem(0)`，返回列表不重置列表状态。详情不再用 `AnimatedContent` 与列表互换：列表保持常驻，详情由 `Animatable` 驱动 `graphicsLayer.translationX` 作为独立不透明覆盖层，以约 300 ms 全宽滑入/滑出；位移不经过布局重排；详情打开时暂停 Tab 滑动。覆盖层会阻止点击穿透，并用 `clearAndSetSemantics` 隐藏被盖住的列表语义。
+
+返回时保留当前详情样本，且 `onBack`/`onDelete`/错误关闭回调用 `remember` 稳定，避免退出动画期间参数变化导致 `RideDetail` 重组；列表不参与转场，详情随覆盖层整体平移退出。性能上，`RideDetail` 的轨迹分析只计算当前行程，历史比较只在滚动到比较卡附近时启动后台任务；`StatsScreen` 的样本分析和 `RouteOverview` 的有效样本计数均在 `Dispatchers.Default` 执行；`History` 对当前列表的样本做 `remember` 缓存。这样详情首帧只组合可见的列表项，减少主线程工作。
+
+验证：`assembleDebug`、`assembleDebugAndroidTest`、`testDebugUnitTest`、`lintDebug` 通过；在 PKJ110 上目视检查四个页面、详情和操作面板，并用放慢的动画比例确认过渡方向与边界。`horizontalSwipeChangesTabsAtTopLevel`、`tripListScrollPositionSurvivesDetailReturn`、`statisticsFiltersAndSelectableChartKeepTheSameDataScope`、`fourTabsAndSystemBackReturnToJournalAfterRecreation`、`longPressShowsMenuWithoutOpeningDetailsAndBackDismissesIt`、`settingsOnlyOnTopLevelPages` 六项定向设备测试在详情覆盖层最终改动前通过；最终覆盖层由用户实机验收，设备随后锁屏，未在最终包上重跑自动化用例。使用现有调试证书签名的 release 包在 PKJ110 上测得 6 次 Tab 滑动共 404 帧：90th 8 ms、95th 9 ms、99th 14 ms、掉帧 0.99%；详情进入/返回 90th 12 ms、99th 46 ms。debug 构建明显更慢，性能数据以 release 为准。完整 `UiSmokeTest` 中依赖系统窗口截图的 `englishLargeTextStatisticsAndActionSheetRemainUsable` 未在 5 分钟内结束，完整套件未作为通过项；TalkBack、横屏和大字体全流程仍需单独验收。

@@ -102,11 +102,11 @@ import com.ridediary.core.Fix
 }
 
 @Composable fun RouteListPicker(groups: List<RouteGroup>,selected: String?,onDismiss: ()->Unit,onSelect: (RouteGroup)->Unit) {
-    AlertDialog(onDismissRequest=onDismiss,containerColor=Surface,tonalElevation=0.dp,title={ Text(stringResource(R.string.choose_route)) },text={
-        Column(Modifier.heightIn(max=360.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(8.dp)) {
+    AlertDialog(onDismissRequest=onDismiss,containerColor=Surface,tonalElevation=0.dp,title={ Text(stringResource(R.string.choose_route),fontSize=20.sp) },text={
+        Column(Modifier.heightIn(max=340.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(6.dp)) {
             groups.forEach { group ->
-                OutlinedButton(onClick={ onSelect(group) },modifier=Modifier.fillMaxWidth().heightIn(min=52.dp).testTag("stats-route-${group.id}")) {
-                    Text((if(group.id==selected) "✓ " else "")+group.name)
+                OutlinedButton(onClick={ onSelect(group) },modifier=Modifier.fillMaxWidth().heightIn(min=48.dp).testTag("stats-route-${group.id}")) {
+                    Text((if(group.id==selected) "✓ " else "")+group.name,fontSize=14.sp)
                 }
             }
             if(groups.isEmpty()) Note(stringResource(R.string.empty_routes))
@@ -127,10 +127,10 @@ import com.ridediary.core.Fix
 }
 
 @Composable fun DeleteDialog(title: String,message: String,onDismiss: ()->Unit,onConfirm: ()->Unit) {
-    AlertDialog(modifier=Modifier.testTag("delete-confirmation"),onDismissRequest=onDismiss,shape=RoundedCornerShape(28.dp),containerColor=Surface,tonalElevation=0.dp,
-        icon={ Surface(shape=CircleShape,color=DangerSoft) { AppGlyph(Glyph.DELETE,Modifier.padding(16.dp).size(26.dp),Danger) } },
-        title={ Text(title,fontSize=22.sp,fontWeight=FontWeight.SemiBold) },
-        text={ Text(message,fontSize=15.sp,lineHeight=24.sp,color=Muted) },
-        confirmButton={ Button(onClick=onConfirm,shape=RoundedCornerShape(14.dp),colors=ButtonDefaults.buttonColors(containerColor=Danger)) { Text(stringResource(R.string.delete)) } },
-        dismissButton={ OutlinedButton(onClick=onDismiss,shape=RoundedCornerShape(14.dp)) { Text(stringResource(R.string.cancel)) } })
+    AlertDialog(modifier=Modifier.testTag("delete-confirmation"),onDismissRequest=onDismiss,shape=RoundedCornerShape(24.dp),containerColor=Surface,tonalElevation=0.dp,
+        icon={ Surface(shape=CircleShape,color=DangerSoft) { AppGlyph(Glyph.DELETE,Modifier.padding(14.dp).size(22.dp),Danger) } },
+        title={ Text(title,fontSize=20.sp,fontWeight=FontWeight.SemiBold) },
+        text={ Text(message,fontSize=14.sp,lineHeight=21.sp,color=Muted) },
+        confirmButton={ Button(onClick=onConfirm,shape=RoundedCornerShape(12.dp),colors=ButtonDefaults.buttonColors(containerColor=Danger)) { Text(stringResource(R.string.delete)) } },
+        dismissButton={ OutlinedButton(onClick=onDismiss,shape=RoundedCornerShape(12.dp)) { Text(stringResource(R.string.cancel)) } })
 }

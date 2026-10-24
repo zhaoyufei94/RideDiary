@@ -2,6 +2,22 @@
 
 [中文](CHANGELOG.zh-CN.md)
 
+## 0.2.3 · Interface and interaction refinement (2026-10-24)
+
+- Removed the fixed brand bar on every page and the large page titles that repeated the bottom tabs (“Record / Trips / Statistics / Routes”). The header now carries useful context such as the date, this month’s trip count and distance, or linked route trips.
+- Reduced card radii, inner padding and section spacing. Trips are now two-line, higher-density rows; routes show name, direction samples and linked-trip count in two lines.
+- Record now leads with the start action. Weather collapses into a one-line summary with expandable wind, rain and update details; Today/Tomorrow routes use compact rows with departure time and forecast.
+- Statistics combines month navigation, route selection and direction filtering into a compact header and one filter row. The overview keeps distance, commute days and trip count while leaving more first-screen room for charts.
+- Trip and route details gain a persistent “More actions” entry while retaining long-press management. Back navigation moves into the header instead of a standalone text button.
+- Bottom navigation uses custom line icons consistent with the brand; route progress animates smoothly.
+- Large text switches statistics filters, live metrics and trip rows to vertical layouts to avoid clipping.
+- Fixed: returning from a trip or route detail preserves the list scroll position instead of jumping to the top; each top-level page keeps its own scroll state, while a newly opened detail still starts at the top.
+- Improved: the four top-level pages now use a horizontal pager and follow left/right swipes; pages are precomposed, while the bottom navigation and Back handler read the page index in isolated scopes to avoid whole-screen recomposition during a swipe.
+- Improved: ride details use a LazyColumn, statistics and route sample counts move to background work, and historical comparison is computed only near its card, reducing main-thread work when a detail opens.
+- Improved: the Settings entry appears only on the idle Record, Trips list and Routes list; it is hidden while recording, on Statistics and on every detail page. The gear icon now uses solid gear teeth instead of radial single lines.
+- Fixed: the list now stays composed while a detail slides out as an independent overlay, so the list no longer takes part in the return transition. The current trip sample and callbacks also stay stable, removing the content shimmer during the detail exit.
+- Verification: Debug APK, AndroidTest APK, JVM unit tests and Lint pass. Four pages, details and the action sheet were visually checked on a PKJ110. Six targeted device tests passed before the final detail-overlay change: `horizontalSwipeChangesTabsAtTopLevel`, `tripListScrollPositionSurvivesDetailReturn`, `statisticsFiltersAndSelectableChartKeepTheSameDataScope`, `fourTabsAndSystemBackReturnToJournalAfterRecreation`, `longPressShowsMenuWithoutOpeningDetailsAndBackDismissesIt` and `settingsOnlyOnTopLevelPages`. The final overlay was accepted by the user on-device; the device then locked, so the automated cases were not rerun on the final package. A release APK signed with the existing debug certificate measured 404 frames across six tab swipes: 90th 8 ms, 95th 9 ms, 99th 14 ms, 0.99% janky; detail entry/back measured 90th 12 ms and 99th 46 ms. Debug builds are noticeably slower, so the performance figures refer to release. The detail-exit shimmer fix is installed; per the user’s request no further animation review was performed and device acceptance is left to the user. The full `UiSmokeTest` was not treated as passing: its capture-heavy `englishLargeTextStatisticsAndActionSheetRemainUsable` case did not finish within five minutes.
+
 ## 0.2.2
 
 - Recover from reference-start loops and short deviations using bounded, consecutive-fix reacquisition, while keeping parallel-route ambiguity and gap protections.

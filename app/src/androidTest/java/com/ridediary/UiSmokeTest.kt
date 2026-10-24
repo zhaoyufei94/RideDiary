@@ -85,6 +85,16 @@ class UiSmokeTest {
     private fun awaitText(res: Int)=compose.waitUntil(5_000) {
         compose.onAllNodesWithText(text(res)).fetchSemanticsNodes().isNotEmpty()
     }
+    private fun displayedTag(tag: String): SemanticsNodeInteraction {
+        val width=app.resources.displayMetrics.widthPixels.toFloat()
+        val nodes=compose.onAllNodesWithTag(tag).fetchSemanticsNodes()
+        val index=nodes.indexOfFirst { node ->
+            val b=node.boundsInRoot
+            b.right>0f && b.left<width && b.right>b.left
+        }
+        check(index>=0) { "No displayed node with tag $tag" }
+        return compose.onAllNodesWithTag(tag)[index]
+    }
 
     private fun capture(name: String,tag: String?=null) {
         val target=File(app.cacheDir,"ui-previews").apply { mkdirs() }
@@ -147,7 +157,7 @@ class UiSmokeTest {
     @Test fun statisticsFiltersAndSelectableChartKeepTheSameDataScope() {
         seedStatistics()
         click(R.string.statistics)
-        awaitCount(4)
+        awaitCount(8)
         capture("statistics-overview")
         compose.onNodeWithTag("stats-composition").performScrollTo()
         capture("statistics-composition")
@@ -157,25 +167,25 @@ class UiSmokeTest {
         compose.onNodeWithText(text(R.string.clock_note)).performScrollTo()
         capture("statistics-rhythm")
         compose.onNodeWithTag("stats-direction-HOME").performScrollTo().performClick()
-        awaitCount(4)
+        awaitCount(8)
         compose.onNodeWithTag("stats-route-picker").performScrollTo().performClick()
         compose.onNodeWithTag("stats-route-other-group").performClick()
         compose.onNodeWithText(text(R.string.stats_empty_title)).assertExists()
         compose.onNodeWithTag("stats-route-picker").performScrollTo().performClick()
         compose.onNodeWithTag("stats-route-$routeGroupId").performClick()
         compose.onNodeWithTag("stats-direction-WORK").performScrollTo().performClick()
-        awaitCount(4)
+        awaitCount(8)
         compose.onNodeWithContentDescription(text(R.string.previous_month)).performScrollTo().performClick()
         compose.onNodeWithText(text(R.string.stats_empty_title)).assertExists()
         compose.onNodeWithContentDescription(text(R.string.next_month)).performScrollTo().performClick()
-        awaitCount(4)
+        awaitCount(8)
         click(R.string.summary)
         compose.onNodeWithTag("ride-stats-1").performScrollTo().performClick()
-        compose.onNodeWithText(text(R.string.details)).assertExists()
+        compose.onNodeWithTag("ride-detail-header").assertExists()
         capture("ride-detail-overview")
-        compose.onNodeWithTag("ride-stops").performScrollTo()
+        compose.onNodeWithTag("ride-detail-list").performScrollToNode(hasTestTag("ride-stops"))
         capture("ride-detail-stops")
-        compose.onNodeWithTag("ride-comparison").performScrollTo()
+        compose.onNodeWithTag("ride-detail-list").performScrollToNode(hasTestTag("ride-comparison"))
         capture("ride-detail-comparison")
     }
     @Test fun englishLargeTextStatisticsAndActionSheetRemainUsable() {
@@ -192,7 +202,7 @@ class UiSmokeTest {
             }
         }
         click(R.string.statistics)
-        awaitCount(4)
+        awaitCount(8)
         capture("statistics-english-large")
         compose.onNodeWithText(text(R.string.clock_note)).performScrollTo()
         capture("statistics-english-large-details")
@@ -208,34 +218,70 @@ class UiSmokeTest {
         compose.onNodeWithText("Try replay").assertDoesNotExist()
         click(R.string.summary)
         compose.onNodeWithTag("ride-$id").performScrollTo().performClick()
-        compose.onNodeWithText(text(R.string.details)).assertExists()
+        compose.onNodeWithTag("ride-detail-header").assertExists()
         scenario.recreate()
         scenario.onActivity { activity=it }
-        compose.onNodeWithText(text(R.string.details)).assertExists()
+        compose.onNodeWithTag("ride-detail-header").assertExists()
         scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
-        compose.onNodeWithText(text(R.string.history)).assertExists()
-        compose.onNodeWithText(text(R.string.details)).assertDoesNotExist()
+        compose.onNodeWithTag("trip-journal-header").assertExists()
+        compose.onNodeWithTag("ride-detail-header").assertDoesNotExist()
         click(R.string.statistics)
         compose.onNodeWithText(text(R.string.commute_days)).performScrollTo().assertIsDisplayed()
         click(R.string.routes)
-        compose.onNodeWithTag("ride-$id").performScrollTo().performClick()
-        compose.onNodeWithText(text(R.string.details)).assertExists()
+        compose.onNodeWithTag("route-$routeGroupId").performScrollTo().performClick()
+        displayedTag("ride-$id").performScrollTo().performClick()
+        compose.onNodeWithTag("ride-detail-header").assertExists()
         scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
-        compose.onNodeWithText(text(R.string.history)).assertExists()
+        compose.onNodeWithTag("route-overview-header").assertExists()
         compose.onNodeWithTag("route-$routeGroupId").assertDoesNotExist()
         click(R.string.commute)
         compose.onNodeWithText(text(R.string.start)).performScrollTo().assertIsDisplayed()
+    }
+    @Test fun horizontalSwipeChangesTabsAtTopLevel() {
+        compose.onRoot().performTouchInput { swipeLeft() }
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("trip-journal-header").fetchSemanticsNodes().isNotEmpty() }
+        compose.onRoot().performTouchInput { swipeLeft() }
+        compose.waitUntil(5_000) { compose.onAllNodesWithText(text(R.string.monthly_review)).fetchSemanticsNodes().isNotEmpty() }
+        compose.onRoot().performTouchInput { swipeRight() }
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("trip-journal-header").fetchSemanticsNodes().isNotEmpty() }
+        compose.onRoot().performTouchInput { swipeRight() }
+        compose.waitUntil(5_000) { compose.onAllNodesWithText(text(R.string.start)).fetchSemanticsNodes().isNotEmpty() }
+    }
+    @Test fun settingsOnlyOnTopLevelPages() {
+        fun shownSettings(): Int {
+            val width=app.resources.displayMetrics.widthPixels.toFloat()
+            return compose.onAllNodesWithContentDescription(text(R.string.settings)).fetchSemanticsNodes().count { node ->
+                val b=node.boundsInRoot
+                b.right>0f && b.left<width && b.right>b.left
+            }
+        }
+        assertEquals(1,shownSettings())
+        click(R.string.summary)
+        assertEquals(1,shownSettings())
+        compose.onNodeWithTag("ride-$id").performScrollTo().performClick()
+        assertEquals(0,shownSettings())
+        scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+        assertEquals(1,shownSettings())
+        click(R.string.statistics)
+        assertEquals(0,shownSettings())
+        click(R.string.routes)
+        assertEquals(1,shownSettings())
+        compose.onNodeWithTag("route-$routeGroupId").performScrollTo().performClick()
+        assertEquals(0,shownSettings())
+        click(R.string.commute)
+        showPendingRecording()
+        assertEquals(0,shownSettings())
     }
     @Test fun longPressShowsMenuWithoutOpeningDetailsAndBackDismissesIt() {
         click(R.string.summary)
         compose.onNodeWithText(text(R.string.delete_ride)).assertDoesNotExist()
         hold("ride-$id")
         compose.onNodeWithText(text(R.string.delete_ride)).assertIsDisplayed()
-        compose.onNodeWithText(text(R.string.details)).assertDoesNotExist()
+        compose.onNodeWithTag("ride-detail-header").assertDoesNotExist()
         androidx.test.espresso.Espresso.pressBack()
         compose.onNodeWithText(text(R.string.delete_ride)).assertDoesNotExist()
         compose.onNodeWithTag("ride-$id").performClick()
-        compose.onNodeWithText(text(R.string.details)).assertExists()
+        compose.onNodeWithTag("ride-detail-header").assertExists()
     }
     @Test fun cancelAndConfirmRideDeletionFromJournal() {
         click(R.string.summary)
@@ -261,8 +307,8 @@ class UiSmokeTest {
         click(R.string.delete_ride)
         click(R.string.delete)
         awaitRideDeleted()
-        compose.onNodeWithText(text(R.string.history)).assertExists()
-        compose.onNodeWithText(text(R.string.details)).assertDoesNotExist()
+        compose.onNodeWithTag("trip-journal-header").assertExists()
+        compose.onNodeWithTag("ride-detail-header").assertDoesNotExist()
     }
     private fun showPendingRecording(): String=runBlocking {
         val start=System.currentTimeMillis()
@@ -450,5 +496,19 @@ class UiSmokeTest {
         val ride=runBlocking { repository.dao.ride(id)!! }
         assertNull(ride.ride.routeId)
         assertEquals(111,ride.points.size)
+    }
+    @Test fun tripListScrollPositionSurvivesDetailReturn() {
+        seedStatistics()
+        click(R.string.summary)
+        val target=compose.onNodeWithTag("ride-stats-8").performScrollTo()
+        target.assertIsDisplayed()
+        val before=target.fetchSemanticsNode().boundsInRoot.top
+        target.performClick()
+        compose.onNodeWithTag("ride-detail-header").assertExists()
+        scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("ride-detail-header").fetchSemanticsNodes().isEmpty() }
+        compose.onNodeWithTag("ride-stats-8").assertIsDisplayed()
+        val after=compose.onNodeWithTag("ride-stats-8").fetchSemanticsNode().boundsInRoot.top
+        assertTrue("Trip list scroll position changed: $before -> $after",kotlin.math.abs(after-before)<app.resources.displayMetrics.density*2)
     }
 }

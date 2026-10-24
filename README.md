@@ -4,7 +4,7 @@
 
 **Your everyday rides, a little better understood.** · [中文说明](README.zh-CN.md) · [Changelog](CHANGELOG.md)
 
-Current version: **0.2.2**
+Current version: **0.2.3**
 
 RideDiary is an offline-first trip journal that helps you understand your commute and compare it with earlier trips on the same route. For Android 8.0 and later; no account, extra hardware or Google Play services needed.
 

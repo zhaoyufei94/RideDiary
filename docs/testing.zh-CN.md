@@ -2,6 +2,15 @@
 
 本清单适用于不同品牌的 Android 设备。下文的具体型号仅标识历史测试环境，不是产品限制。产品设计与交互规范见[产品设计](../PRODUCT_DESIGN.zh-CN.md)。
 
+## 0.2.3 界面密度、滑动导航与详情过渡（2026-10-24）
+
+- 版本 0.2.3 / versionCode 13，数据库仍为 v4；未修改数据库结构、记录服务、匹配和统计口径。Debug APK、AndroidTest APK、JVM 单元测试与 Lint 通过。
+- 在 OPPO PKJ110 上目视检查四个一级页面、详情、底部导航和操作面板；左右滑动可切换 Tab，滑动时底部导航同步。用户确认最终安装包可用。
+- 六项定向界面测试在详情覆盖层最终改动前通过：`horizontalSwipeChangesTabsAtTopLevel`、`settingsOnlyOnTopLevelPages`、`tripListScrollPositionSurvivesDetailReturn`、`statisticsFiltersAndSelectableChartKeepTheSameDataScope`、`fourTabsAndSystemBackReturnToJournalAfterRecreation`、`longPressShowsMenuWithoutOpeningDetailsAndBackDismissesIt`。
+- 使用现有调试证书签名的 release 包在 6 次 Tab 滑动中渲染 404 帧：90th 8 ms、95th 9 ms、99th 14 ms、掉帧 0.99%；详情进入/返回 90th 12 ms、95th 29 ms、99th 46 ms。debug 构建明显更慢，性能数据以 release 为准。
+- 详情返回改为列表常驻、详情不透明覆盖层整体平移退出，并保留当前详情样本；用户验收不再出现内容闪动。覆盖安装未清除已有数据。最终覆盖层改动后设备锁屏，六项自动化用例未在最终包上重跑；该项由用户实机验收。
+- 完整 `UiSmokeTest` 未作为通过项：依赖系统窗口截图的 `englishLargeTextStatisticsAndActionSheetRemainUsable` 未在 5 分钟内结束。TalkBack、横屏、大字体全流程、真实天气/计划和实路场景仍需单独验收。
+
 ## 0.2.2 记录页去重与定位指示（2026-10-23）
 
 移除主卡片中重复的匹配、待区分和未匹配说明；定位状态与“记录中”同行，使用绿/红圆点及原有次要文字风格。三个定向真机界面用例通过（5.931秒），涵盖无重复提示、候选列表、标题与定位同行、正常/弱信号/过期定位及恢复指示；检查了合成截图。编译通过，Lint 0错误/15警告（移除展示后多出一项未使用文字提示），222条双语资源通过。已覆盖更新手机，数据库全部行与更新前一致。算法未改，算法回归证据沿用前次构建。

@@ -221,4 +221,23 @@
     <string name="save_ride_failed">保存失败，定位已停止。请重试保存，结束时间不会延后。</string>
     <string name="retry_save_ride">重试保存</string>
     <string name="candidate_title">候选路线 · 重合度</string>
+    <string name="record_ready">准备出发</string>
+    <string name="empty_routes_title">暂无路线</string>
+    <string name="recent_ride">最近行程</string>
+    <string name="no_upcoming_routes">今日与明日暂无出行计划</string>
+    <string name="monthly_summary">本月 %1$d 趟 · %2$s km</string>
+    <string name="all_time_summary">累计 %1$d 趟 · %2$s km</string>
+    <string name="routes_summary">%1$d 条路线 · %2$d 趟关联</string>
+    <string name="route_manage_hint">轻点查看 · 长按管理</string>
+    <string name="more_actions">更多操作</string>
+    <string name="weather_details">天气详情</string>
+    <string name="weather_details_hide">收起天气详情</string>
+    <string name="weather_today_short">今天 %1$s–%2$s</string>
+    <string name="weather_rain_short">降水 %1$s</string>
+    <string name="weather_route_compact">%1$s – %2$s° · 降水 %3$s</string>
+    <string name="weather_gust_short">阵风 %1$s m/s</string>
+    <string name="history_comparison">与历史相比</string>
+    <string name="status_interrupted_short">中断</string>
+    <string name="status_excluded_short">已排除</string>
+    <string name="status_recording_short">记录中</string>
 </resources>

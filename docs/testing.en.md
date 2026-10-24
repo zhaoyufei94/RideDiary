@@ -2,6 +2,15 @@
 
 This checklist applies across Android brands. Specific models below identify historical test environments, not product restrictions. See [product design](../PRODUCT_DESIGN.md) for product and interaction requirements.
 
+## 0.2.3 interface density, swipe navigation and detail transitions (2026-10-24)
+
+- Version 0.2.3 / versionCode 13, Room remains v4; database schema, recording service, matching and statistic contracts are unchanged. Debug APK, AndroidTest APK, JVM unit tests and Lint pass.
+- Four top-level pages, details, bottom navigation and action sheets were visually checked on an OPPO PKJ110; left/right swipes change tabs and the bottom indicator follows. The user accepted the final installed package.
+- Six targeted UI tests passed before the final detail-overlay change: `horizontalSwipeChangesTabsAtTopLevel`, `settingsOnlyOnTopLevelPages`, `tripListScrollPositionSurvivesDetailReturn`, `statisticsFiltersAndSelectableChartKeepTheSameDataScope`, `fourTabsAndSystemBackReturnToJournalAfterRecreation` and `longPressShowsMenuWithoutOpeningDetailsAndBackDismissesIt`.
+- A release APK signed with the existing debug certificate rendered 404 frames across six tab swipes: 90th 8 ms, 95th 9 ms, 99th 14 ms and 0.99% janky; detail entry/back measured 90th 12 ms, 95th 29 ms and 99th 46 ms. Debug builds are noticeably slower, so the performance figures refer to release.
+- The list now stays composed while a detail slides out as an opaque overlay, and the current detail sample is retained; the user confirmed that the detail-exit content shimmer is gone. The in-place install did not clear existing data. The device locked after the final overlay change, so the six automated cases were not rerun on the final package; that change was accepted by the user on-device.
+- The full `UiSmokeTest` is not claimed as passing: its capture-heavy `englishLargeTextStatisticsAndActionSheetRemainUsable` case did not finish within five minutes. TalkBack, landscape, the full large-text flow, real weather/plans and road scenarios still need separate acceptance.
+
 ## 0.2.2 recording-page deduplication and location indicator (2026-10-23)
 
 Removed repeated matching/ambiguous/unmatched explanations inside the main card. Location status shares the recording-title row with a green/red dot and the existing muted text style. Three targeted device UI cases pass (5.931 s), covering label deduplication, candidates, inline alignment, normal/poor/stale acquisition and recovery; synthetic screenshots were inspected. Build passes; Lint has 0 errors/15 warnings (one additional unused string after removing its display), and all 222 bilingual resources pass. Installed in place, with every database row unchanged. Matching algorithms are unchanged; prior algorithm-test evidence remains applicable.

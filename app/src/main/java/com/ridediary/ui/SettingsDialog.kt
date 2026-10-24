@@ -20,8 +20,10 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ridediary.weather.*
 import kotlinx.coroutines.launch
@@ -34,12 +36,13 @@ import com.ridediary.R
     AlertDialog(modifier=Modifier.testTag("settings-dialog"),onDismissRequest=onDismiss,containerColor=Surface,tonalElevation=0.dp,
         title={ Text(stringResource(R.string.settings)) },
         text={
-            Column(Modifier.fillMaxWidth().heightIn(max=460.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(16.dp)) {
-                Column(Modifier.fillMaxWidth(),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(10.dp)) {
-                    Image(painterResource(R.drawable.ic_ridediary_logo),contentDescription=null,modifier=Modifier.size(72.dp))
-                    Text(stringResource(R.string.app_brand),style=MaterialTheme.typography.titleLarge,color=Ink)
-                    Text(stringResource(R.string.app_version,version),style=MaterialTheme.typography.bodyMedium,color=Muted)
-                    Text(stringResource(R.string.tagline),style=MaterialTheme.typography.bodyMedium,color=Muted)
+            Column(Modifier.fillMaxWidth().heightIn(max=460.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(14.dp)) {
+                Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
+                    Image(painterResource(R.drawable.ic_ridediary_logo),contentDescription=null,modifier=Modifier.size(44.dp))
+                    Column(verticalArrangement=Arrangement.spacedBy(2.dp)) {
+                        Text(stringResource(R.string.app_brand),fontSize=16.sp,fontWeight=FontWeight.Medium,color=Ink)
+                        Text(stringResource(R.string.app_version,version),fontSize=11.sp,color=Muted)
+                    }
                 }
                 WeatherSettingsSection(weather)
                 HorizontalDivider(color=Line)

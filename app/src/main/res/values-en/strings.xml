@@ -221,4 +221,23 @@
     <string name="save_ride_failed">Saving failed. Location collection has stopped. Retry to save with the original finish time.</string>
     <string name="retry_save_ride">Retry save</string>
     <string name="candidate_title">Candidate routes · overlap</string>
+    <string name="record_ready">Ready to ride</string>
+    <string name="empty_routes_title">No routes yet</string>
+    <string name="recent_ride">Last trip</string>
+    <string name="no_upcoming_routes">No planned departures today or tomorrow</string>
+    <string name="monthly_summary">This month · %1$d trips · %2$s km</string>
+    <string name="all_time_summary">All time · %1$d trips · %2$s km</string>
+    <string name="routes_summary">%1$d routes · %2$d linked trips</string>
+    <string name="route_manage_hint">Tap to open · press and hold to manage</string>
+    <string name="more_actions">More actions</string>
+    <string name="weather_details">Weather details</string>
+    <string name="weather_details_hide">Hide weather details</string>
+    <string name="weather_today_short">Today %1$s–%2$s</string>
+    <string name="weather_rain_short">Rain %1$s</string>
+    <string name="weather_route_compact">%1$s – %2$s° · Rain %3$s</string>
+    <string name="weather_gust_short">Gusts %1$s m/s</string>
+    <string name="history_comparison">vs history</string>
+    <string name="status_interrupted_short">Interrupted</string>
+    <string name="status_excluded_short">Excluded</string>
+    <string name="status_recording_short">Recording</string>
 </resources>

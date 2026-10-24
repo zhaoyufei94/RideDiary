@@ -5,13 +5,18 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -20,7 +25,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -131,7 +138,7 @@ private fun number(value: Double?,suffix: String=""): String = value?.let { "${i
             withLink(LinkAnnotation.Url(url,TextLinkStyles(style=SpanStyle(color=Muted,textDecoration=TextDecoration.Underline)))) { append(label) }
         }
     }
-    Text(text,Modifier.fillMaxWidth().padding(top=12.dp,bottom=8.dp),style=MaterialTheme.typography.labelSmall,color=Muted)
+    Text(text,Modifier.fillMaxWidth().padding(top=2.dp,bottom=2.dp),style=MaterialTheme.typography.labelSmall,color=Muted)
 }
 
 @Composable fun RecordWeather(vm: WeatherViewModel,dashboard: RecordDashboard,onRefresh: ()->Unit,onSettings: ()->Unit) {
@@ -143,56 +150,109 @@ private fun number(value: Double?,suffix: String=""): String = value?.let { "${i
     val data=dashboard.data
     val result=data.results[data.point]
     val snapshot=result?.snapshot?.takeIf { data.config==config }
+    var expanded by rememberSaveable { mutableStateOf(false) }
     if(!loaded) return
-    Panel(color=Soft.copy(alpha=.65f)) {
-        Text(if(data.position!=null) stringResource(R.string.weather_current)
-            else if(dashboard.fallback!=null) stringResource(R.string.weather_route_origin,dashboard.fallback.name)
-            else stringResource(R.string.weather_title),style=MaterialTheme.typography.titleMedium)
-        when {
-            !config.enabled -> TextButton(onClick=onSettings) { Text(stringResource(R.string.weather_disabled)) }
-            !config.ready -> TextButton(onClick=onSettings) { Text(stringResource(R.string.weather_configuration)) }
-            snapshot!=null -> {
-                snapshot.current?.let { current ->
-                    Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(16.dp)) {
-                        Text(number(current.temperature,"°"),style=MaterialTheme.typography.displaySmall,fontWeight=FontWeight.Medium)
-                        Column {
-                            Text(condition(current),style=MaterialTheme.typography.titleMedium)
-                            Text(stringResource(R.string.weather_feels,number(current.feelsLike,"°C")),style=MaterialTheme.typography.bodyMedium,color=Muted)
+    val hasLocation=ContextCompat.checkSelfPermission(context,Manifest.permission.ACCESS_COARSE_LOCATION)==PackageManager.PERMISSION_GRANTED ||
+        ContextCompat.checkSelfPermission(context,Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED
+    val title=when {
+        data.position!=null -> stringResource(R.string.weather_current)
+        dashboard.fallback!=null -> stringResource(R.string.weather_route_origin,routeName(dashboard.fallback.name))
+        else -> stringResource(R.string.weather_title)
+    }
+    Surface(shape=RoundedCornerShape(14.dp),color=Soft.copy(alpha=.58f)) {
+        Column(Modifier.fillMaxWidth().animateContentSize().padding(horizontal=14.dp,vertical=10.dp),verticalArrangement=Arrangement.spacedBy(5.dp)) {
+            Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
+                Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(2.dp)) {
+                    Text(title,fontSize=10.sp,color=Muted,letterSpacing=.3.sp,maxLines=1,overflow=TextOverflow.Ellipsis)
+                    when {
+                        !config.enabled -> Text(stringResource(R.string.weather_disabled),fontSize=12.sp,color=Muted)
+                        !config.ready -> Text(stringResource(R.string.weather_configuration),fontSize=12.sp,color=Muted)
+                        snapshot!=null -> {
+                            val current=snapshot.current
+                            if(current!=null) {
+                                Row(verticalAlignment=Alignment.Bottom,horizontalArrangement=Arrangement.spacedBy(9.dp)) {
+                                    Text(number(current.temperature,"°"),fontSize=30.sp,lineHeight=34.sp,fontWeight=FontWeight.Medium)
+                                    Column(Modifier.padding(bottom=2.dp),verticalArrangement=Arrangement.spacedBy(1.dp)) {
+                                        Text(condition(current),fontSize=13.sp,lineHeight=17.sp,fontWeight=FontWeight.Medium,maxLines=1)
+                                        val chance=precipitationChance(listOf(snapshot),dashboard.now,dashboard.now+3_600_000)
+                                        Text(stringResource(R.string.weather_feels,number(current.feelsLike,"°C"))+" · "+stringResource(R.string.weather_rain_short,number(chance,"%")),
+                                            fontSize=10.sp,lineHeight=14.sp,color=Muted,maxLines=1)
+                                    }
+                                }
+                            } else Text(stringResource(R.string.weather_data_failed),fontSize=12.sp,color=Muted)
+                        }
+                        data.loading -> Text(stringResource(R.string.weather_loading),fontSize=12.sp,color=Muted)
+                        data.point==null -> Text(stringResource(if(failed) R.string.weather_location_failed else R.string.weather_need_location),fontSize=12.sp,lineHeight=17.sp,color=Muted)
+                        else -> Text(stringResource(R.string.weather_data_failed),fontSize=12.sp,color=Muted)
+                    }
+                }
+                if(snapshot!=null) {
+                    val day=snapshot.days.firstOrNull { it.date==Instant.ofEpochMilli(dashboard.now).atZone(ZoneId.of(snapshot.zone)).toLocalDate() }
+                    Column(horizontalAlignment=Alignment.End,verticalArrangement=Arrangement.spacedBy(0.dp)) {
+                        if(day!=null) Text(stringResource(R.string.weather_today_short,number(day.low,"°"),number(day.high,"°")),fontSize=10.sp,color=Muted,maxLines=1)
+                        IconButton(onClick={ expanded=!expanded },modifier=Modifier.size(36.dp).semantics { contentDescription=context.getString(if(expanded) R.string.weather_details_hide else R.string.weather_details) }) {
+                            AppGlyph(Glyph.DOWN,Modifier.size(17.dp).rotate(if(expanded) 180f else 0f),Muted)
                         }
                     }
-                    Text(stringResource(R.string.weather_wind,number(current.wind),number(current.gust)),style=MaterialTheme.typography.bodyMedium)
+                }
+            }
+            if(expanded && snapshot!=null) {
+                HorizontalDivider(color=Line.copy(alpha=.7f))
+                snapshot.current?.let { current ->
+                    Text(stringResource(R.string.weather_wind,number(current.wind),number(current.gust)),fontSize=11.sp,color=Muted)
                 }
                 val chance=precipitationChance(listOf(snapshot),dashboard.now,dashboard.now+3_600_000)
-                Text(stringResource(R.string.weather_next_hour_rain,number(chance,"%")),style=MaterialTheme.typography.bodyMedium)
-                val day=snapshot.days.firstOrNull { it.date==Instant.ofEpochMilli(dashboard.now).atZone(ZoneId.of(snapshot.zone)).toLocalDate() }
-                if(day!=null) {
-                    HorizontalDivider(color=Line)
-                    Text(stringResource(R.string.weather_today,number(day.low,"°"),number(day.high,"°"),number(day.rainChance,"%")),style=MaterialTheme.typography.bodyMedium)
-                } else Text(stringResource(R.string.weather_today_unavailable),style=MaterialTheme.typography.bodyMedium,color=Muted)
-                Text(stringResource(R.string.weather_updated,clock(snapshot.fetchedAt,snapshot.zone)),style=MaterialTheme.typography.labelSmall,color=Muted)
+                Text(stringResource(R.string.weather_next_hour_rain,number(chance,"%")),fontSize=11.sp,color=Muted)
+                Text(stringResource(R.string.weather_updated,clock(snapshot.fetchedAt,snapshot.zone)),fontSize=10.sp,color=Muted)
             }
-            data.loading -> Text(stringResource(R.string.weather_loading),color=Muted)
-            data.point==null -> Text(stringResource(if(failed) R.string.weather_location_failed else R.string.weather_need_location),color=Muted)
-            else -> Text(stringResource(R.string.weather_data_failed),color=Muted)
+            val needsLocation=!hasLocation || data.position==null
+            if(config.enabled && needsLocation && !data.loading && snapshot==null) {
+                TextButton(onClick={
+                    if(hasLocation) onRefresh() else permission.launch(arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION,Manifest.permission.ACCESS_FINE_LOCATION))
+                },contentPadding=PaddingValues(horizontal=0.dp,vertical=0.dp),modifier=Modifier.height(30.dp)) {
+                    Text(stringResource(R.string.weather_use_location),fontSize=12.sp)
+                }
+            }
+            if(config.enabled && needsLocation && !data.loading && snapshot!=null && expanded) {
+                TextButton(onClick={
+                    if(hasLocation) onRefresh() else permission.launch(arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION,Manifest.permission.ACCESS_FINE_LOCATION))
+                },contentPadding=PaddingValues(horizontal=0.dp,vertical=0.dp),modifier=Modifier.height(30.dp)) {
+                    Text(stringResource(R.string.weather_use_location),fontSize=12.sp)
+                }
+            }
+            if(!config.ready) {
+                TextButton(onClick=onSettings,contentPadding=PaddingValues(horizontal=0.dp,vertical=0.dp),modifier=Modifier.height(30.dp)) {
+                    Text(stringResource(R.string.settings),fontSize=12.sp)
+                }
+            }
         }
-        val hasLocation=ContextCompat.checkSelfPermission(context,Manifest.permission.ACCESS_COARSE_LOCATION)==PackageManager.PERMISSION_GRANTED ||
-            ContextCompat.checkSelfPermission(context,Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED
-        if(config.enabled && (!hasLocation || data.position==null) && !data.loading) TextButton(onClick={
-            if(hasLocation) onRefresh() else permission.launch(arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION,Manifest.permission.ACCESS_FINE_LOCATION))
-        }) { Text(stringResource(R.string.weather_use_location)) }
     }
 }
 
 @Composable fun RouteRecommendations(dashboard: RecordDashboard,vm: WeatherViewModel,onStart: (String)->Unit) {
+    if(dashboard.plans.today.isEmpty() && dashboard.plans.tomorrow.isEmpty()) {
+        val today=Instant.ofEpochMilli(dashboard.now).atZone(ZoneId.systemDefault()).toLocalDate()
+        val tomorrow=today.plusDays(1)
+        val todayUnknown=dashboard.workdayPlans && dashboard.calendar.workday(today)==null
+        val tomorrowUnknown=dashboard.workdayPlans && dashboard.calendar.workday(tomorrow)==null
+        if(todayUnknown || tomorrowUnknown) {
+            if(dashboard.calendar.loading) Text(stringResource(R.string.calendar_loading),fontSize=12.sp,lineHeight=18.sp,color=Muted)
+            else listOfNotNull(today.takeIf { todayUnknown }?.year,tomorrow.takeIf { tomorrowUnknown }?.year).distinct().forEach { year ->
+                Text(stringResource(R.string.calendar_not_bundled,year),fontSize=12.sp,lineHeight=18.sp,color=Muted)
+            }
+        } else Text(stringResource(R.string.no_upcoming_routes),fontSize=12.sp,lineHeight=18.sp,color=Muted)
+        return
+    }
     listOf(R.string.today_routes to dashboard.plans.today,R.string.tomorrow_routes to dashboard.plans.tomorrow).forEach { (heading,items) ->
-        SectionHeading(stringResource(heading))
+        Row(Modifier.fillMaxWidth().padding(top=6.dp),verticalAlignment=Alignment.Bottom) {
+            Text(stringResource(heading),Modifier.weight(1f),fontSize=15.sp,fontWeight=FontWeight.SemiBold,lineHeight=20.sp)
+            if(items.isNotEmpty()) Text(items.size.toString(),fontSize=11.sp,color=Muted)
+        }
         val date=Instant.ofEpochMilli(dashboard.now).atZone(ZoneId.systemDefault()).toLocalDate().let { if(heading==R.string.tomorrow_routes) it.plusDays(1) else it }
         val unknown=dashboard.workdayPlans && dashboard.calendar.workday(date)==null
-        if(unknown) Panel {
-            Text(if(dashboard.calendar.loading) stringResource(R.string.calendar_loading)
-                else stringResource(R.string.calendar_not_bundled,dashboard.calendar.missingYear(date)),color=Muted)
-        }
-        if(items.isEmpty() && !unknown) Panel { Text(stringResource(if(heading==R.string.today_routes) R.string.no_today_routes else R.string.no_tomorrow_routes),color=Muted) }
+        if(unknown) Text(if(dashboard.calendar.loading) stringResource(R.string.calendar_loading)
+            else stringResource(R.string.calendar_not_bundled,dashboard.calendar.missingYear(date)),fontSize=12.sp,lineHeight=18.sp,color=Muted)
+        if(items.isEmpty() && !unknown) Text(stringResource(if(heading==R.string.today_routes) R.string.no_today_routes else R.string.no_tomorrow_routes),fontSize=12.sp,color=Muted)
         items.forEach { item -> key("${item.date}:${item.route.id}") { RouteStartCard(item,dashboard,vm,onStart) } }
     }
 }
@@ -201,36 +261,45 @@ private fun number(value: Double?,suffix: String=""): String = value?.let { "${i
     val config by vm.config.collectAsStateWithLifecycle()
     val points=remember(item.route.shape) { item.route.weatherEnds() }
     val results=points.mapNotNull { dashboard.data.results[it] }
-    Panel {
-        Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
-            Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(4.dp)) {
-                Text(routeName(item.route.name),style=MaterialTheme.typography.titleMedium)
-                Text(directionName(item.route.direction)+" · "+clock(item.departure,ZoneId.systemDefault().id),style=MaterialTheme.typography.labelLarge,color=Muted)
+    val snapshots=if(config.enabled) results.mapNotNull { it.snapshot }.filter { it.provider==config.provider } else emptyList()
+    val until=item.departure+(item.duration ?: 3_600_000)
+    val hours=if(config.enabled) forecastWindow(snapshots,item.departure,until) else emptyList()
+    val complete=if(config.enabled && snapshots.size==2) snapshots.all { snapshot ->
+        val times=forecastWindow(listOf(snapshot),item.departure,until).sortedBy { it.time }
+        times.isNotEmpty() && times.first().time<=item.departure && times.last().time+3_600_000>=until &&
+            times.zipWithNext().all { (a,b) -> b.time-a.time<=3_600_000 }
+    } else false
+    val gust=if(config.enabled && hours.isNotEmpty()) maximumGust(snapshots,item.departure,until) else null
+    val weatherLine=if(config.enabled) when {
+        !config.ready -> stringResource(R.string.weather_configuration)
+        hours.isNotEmpty() -> stringResource(R.string.weather_route_compact,
+            number(hours.mapNotNull { it.feelsLike }.minOrNull(),"°"),
+            number(hours.mapNotNull { it.feelsLike }.maxOrNull(),"°"),
+            number(precipitationChance(snapshots,item.departure,until),"%"))
+        dashboard.data.loading -> stringResource(R.string.weather_loading)
+        else -> stringResource(R.string.weather_no_forecast)
+    } else null
+    Surface(shape=RoundedCornerShape(14.dp),color=Surface,border=BorderStroke(1.dp,Line.copy(alpha=.65f))) {
+        Row(Modifier.fillMaxWidth().padding(horizontal=14.dp,vertical=11.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(10.dp)) {
+            Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(3.dp)) {
+                Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(7.dp)) {
+                    Text(routeName(item.route.name),fontSize=15.sp,fontWeight=FontWeight.Medium,maxLines=1,overflow=TextOverflow.Ellipsis)
+                    Text(directionName(item.route.direction),fontSize=11.sp,color=Moving,maxLines=1)
+                }
+                Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(6.dp)) {
+                    Text(clock(item.departure,ZoneId.systemDefault().id),fontSize=12.sp,lineHeight=16.sp,fontFamily=androidx.compose.ui.text.font.FontFamily.Monospace,fontWeight=FontWeight.Medium,color=Ink,maxLines=1)
+                    if(weatherLine!=null) Text("· "+weatherLine,fontSize=11.sp,lineHeight=16.sp,color=Muted,maxLines=1,overflow=TextOverflow.Ellipsis)
+                }
+                val secondary=listOfNotNull(
+                    gust?.let { stringResource(R.string.weather_gust_short,number(it)) },
+                    stringResource(R.string.weather_preview_partial).takeIf { config.enabled && hours.isNotEmpty() && !complete }
+                ).joinToString(" · ")
+                if(secondary.isNotBlank()) Text(secondary,fontSize=10.sp,lineHeight=14.sp,color=Muted,maxLines=1,overflow=TextOverflow.Ellipsis)
             }
-            FilledIconButton(onClick={ onStart(item.route.id) },shape=CircleShape,modifier=Modifier.size(48.dp),colors=IconButtonDefaults.filledIconButtonColors(containerColor=Accent,contentColor=Ink)) {
-                AppGlyph(Glyph.PLAY,Modifier.size(20.dp).semantics {
+            FilledIconButton(onClick={ onStart(item.route.id) },shape=CircleShape,modifier=Modifier.size(44.dp),colors=IconButtonDefaults.filledIconButtonColors(containerColor=Accent,contentColor=Ink)) {
+                AppGlyph(Glyph.PLAY,Modifier.size(18.dp).semantics {
                     contentDescription=context.getString(R.string.start_route,item.route.name,context.getString(if(item.route.direction=="HOME") R.string.home else R.string.work))
                 })
-            }
-        }
-        if(config.enabled) {
-            val snapshots=results.mapNotNull { it.snapshot }.filter { it.provider==config.provider }
-            val until=item.departure+(item.duration ?: 3_600_000)
-            val hours=forecastWindow(snapshots,item.departure,until)
-            val complete=snapshots.size==2 && snapshots.all { snapshot ->
-                val times=forecastWindow(listOf(snapshot),item.departure,until).sortedBy { it.time }
-                times.isNotEmpty() && times.first().time<=item.departure && times.last().time+3_600_000>=until &&
-                    times.zipWithNext().all { (a,b) -> b.time-a.time<=3_600_000 }
-            }
-            when {
-                !config.ready -> Text(stringResource(R.string.weather_configuration),style=MaterialTheme.typography.bodySmall,color=Muted)
-                hours.isNotEmpty() -> {
-                    Text(stringResource(R.string.weather_route_preview,number(hours.mapNotNull { it.feelsLike }.minOrNull(),"°"),
-                        number(hours.mapNotNull { it.feelsLike }.maxOrNull(),"°"),number(precipitationChance(snapshots,item.departure,until),"%"),number(maximumGust(snapshots,item.departure,until))),style=MaterialTheme.typography.bodyMedium)
-                    if(!complete) Text(stringResource(R.string.weather_preview_partial),style=MaterialTheme.typography.labelSmall,color=Muted)
-                }
-                dashboard.data.loading -> Text(stringResource(R.string.weather_loading),style=MaterialTheme.typography.bodySmall,color=Muted)
-                else -> Text(stringResource(R.string.weather_no_forecast),style=MaterialTheme.typography.bodySmall,color=Muted)
             }
         }
     }
