@@ -67,6 +67,7 @@
     <string name="moving">移动</string>
     <string name="waiting">静止等待</string>
     <string name="unknown">未知</string>
+    <string name="unknown_route">未知路线</string>
     <string name="average_speed">全程均速</string>
     <string name="moving_speed">移动均速</string>
     <string name="distance">有效里程</string>
@@ -99,6 +100,9 @@
     <string name="back">返回</string>
     <string name="finish_confirm">结束行程</string>
     <string name="empty_rides">暂无行程</string>
+    <string name="empty_month_rides">本月暂无行程</string>
+    <string name="calendar_day_empty">%1$s，无行程</string>
+    <string name="calendar_day_distance">%1$s，行程共 %2$s 公里</string>
     <string name="empty_routes">暂无路线，可从行程创建。</string>
     <string name="empty_stats">当前方向本月暂无有效行程</string>
     <string name="recording">记录中</string>
@@ -280,7 +284,7 @@
     <string name="weather_details_hide">收起天气详情</string>
     <string name="weather_today_short">今天 %1$s–%2$s</string>
     <string name="weather_rain_short">降水 %1$s</string>
-    <string name="weather_route_compact">%1$s – %2$s° · 降水 %3$s</string>
+    <string name="weather_route_compact">体感 %1$s – %2$s · 降水 %3$s</string>
     <string name="weather_gust_short">阵风 %1$s m/s</string>
     <string name="history_comparison">与历史相比</string>
     <string name="status_interrupted_short">中断</string>

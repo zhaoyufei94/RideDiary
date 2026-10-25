@@ -1,0 +1,181 @@
+{
+  "date": "2026-10-25",
+  "version": "0.3.1",
+  "versionCode": 17,
+  "databaseVersion": 4,
+  "result": "BUILD SUCCESSFUL",
+  "validationScope": "LOCAL_BUILDS_JVM_LINT_RESOURCES_SIGNING_TARGETED_DEVICE_TESTS_AND_REAL_TRACE_REPLAY",
+  "unitTests": {
+    "status": "PASS",
+    "count": 74,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "evidenceIteration": "preceding live-route fix; not rerun for this display-only edit"
+  },
+  "androidInstrumentedTests": {
+    "status": "TARGETED_PASS",
+    "passedDistinctCases": 4,
+    "cases": [
+      "liveRouteTitleBecomesUnknownAfterDetoursAndReturnsOnlyWhenConfirmed",
+      "journalCalendarSwipesFilterMonthsAndSurviveDetailAndRecreation",
+      "horizontalSwipeChangesTabsAtTopLevel",
+      "matchingIsThrottledButRawFixesPersistAndFinishForcesAReview"
+    ],
+    "initialRun": "2 of 4 passed; route fixture ambiguity and premature Back action caused two failures",
+    "finalRerun": "Both corrected UI cases passed in 6.997 seconds",
+    "fullSuiteRun": false,
+    "device": "PKJ110",
+    "build": "Debug",
+    "evidenceIteration": "preceding live-route/calendar fix; not rerun for this display-only edit"
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 35
+  },
+  "resourceCheck": {
+    "translatedStrings": 292,
+    "status": "PASS"
+  },
+  "gitDiffCheck": "PASS",
+  "deviceInstallation": {
+    "status": "PASS",
+    "version": "0.3.1",
+    "versionCode": 17,
+    "certificate": "existing shared certificate",
+    "finalBuild": "Release",
+    "dataCleared": false,
+    "coldLaunch": "PASS"
+  },
+  "visualAcceptance": "NOT_PERFORMED; automated semantic interaction checks only",
+  "dataRetention": {
+    "allRowsUnchanged": true,
+    "tables": {
+      "rides": {
+        "before": 4,
+        "after": 4,
+        "unchanged": true
+      },
+      "points": {
+        "before": 5476,
+        "after": 5476,
+        "unchanged": true
+      },
+      "segments": {
+        "before": 87,
+        "after": 87,
+        "unchanged": true
+      },
+      "routes": {
+        "before": 2,
+        "after": 2,
+        "unchanged": true
+      }
+    },
+    "quickCheckBefore": "ok",
+    "quickCheckAfter": "ok",
+    "databaseMigration": false,
+    "auditScope": "Before and after targeted tests while using the same-certificate Debug build; Release restored afterward by in-place installation",
+    "evidenceIteration": "preceding live-route fix; this edit changes display only and does not write historical fields"
+  },
+  "artifacts": [
+    {
+      "path": "app/build/outputs/apk/release/RideDiary-release-v0.3.1.apk",
+      "bytes": 19978828,
+      "sha256": "caf44c2ddd7764f3efa5b7363d9ae29caaaca65293f43e3680de9f01a4e6a1ee"
+    },
+    {
+      "path": "app/build/outputs/apk/debug/app-debug.apk",
+      "bytes": 26237020,
+      "sha256": "81c24e6fb5f99d9f75374368baf9beb341d7db352fdb3b0575f7eadf8944cdd2"
+    },
+    {
+      "path": "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk",
+      "bytes": 1213920,
+      "sha256": "7e50dd71a230709c42f734784258ff390f252aa73ec7c7bbd7dbc919a561644a"
+    }
+  ],
+  "signing": {
+    "v2": "PASS",
+    "v3": "PASS",
+    "certificate_sha256": "24107b0f1a354d165eb7bae7be2b235752428dae1d4622754e0ebdb84fe110d3"
+  },
+  "featureScope": {
+    "calendar": "Monday-first, six rows; swipe or arrow month navigation",
+    "distance": "All daily trip kilometers, one decimal place; darker relative to monthly maximum",
+    "tripScope": "Every state, including interrupted, excluded and recording trips",
+    "date": "Adjusted departure in each recorded time zone",
+    "stateRestoration": "Calendar month restored across details/Back and activity recreation; targeted device test passes",
+    "liveRouteTitle": "Current confirmed match with fresh location only; otherwise Unknown route. Historical association cannot supply the live title, progress or ETA.",
+    "unlinkedTripDirection": "Hide direction and its separator in trip/recent rows (including large fonts) and detail headers when no valid route is associated; keep stored fields unchanged."
+  },
+  "logs": [
+    ".tooling/live-route-final-validation-0.3.1.log",
+    ".tooling/live-route-test-final-0.3.1.log",
+    ".tooling/live-route-release-0.3.1.log",
+    ".tooling/live-route-device-0.3.1.log",
+    ".tooling/live-route-device-final-0.3.1.log"
+  ],
+  "evidence": "docs/validation/unlinked-direction-0.3.1.json",
+  "realTraceReplay": {
+    "tripLocalStart": "2026-10-25T12:56:41.919+08:00",
+    "points": 498,
+    "elapsedMs": 995269,
+    "sampling": "actual Kotlin matcher replay, prefixes sampled about every 5 seconds",
+    "stateTransitions": [
+      {
+        "seconds": "0.0",
+        "overlap": "1.00000",
+        "state": "LEARNING",
+        "eligible": "false",
+        "newTitle": "unknown"
+      },
+      {
+        "seconds": "67.0",
+        "overlap": "1.00000",
+        "state": "CONFIRMED",
+        "eligible": "true",
+        "newTitle": "WORK"
+      },
+      {
+        "seconds": "319.0",
+        "overlap": "0.98125",
+        "state": "DEVIATED",
+        "eligible": "true",
+        "newTitle": "unknown"
+      },
+      {
+        "seconds": "589.0",
+        "overlap": "0.54237",
+        "state": "LEARNING",
+        "eligible": "false",
+        "newTitle": "unknown"
+      },
+      {
+        "seconds": "667.0",
+        "overlap": "0.58683",
+        "state": "DEVIATED",
+        "eligible": "false",
+        "newTitle": "unknown"
+      }
+    ],
+    "finalOverlap": 0.39357,
+    "originalStaleTitleSnapshots": 114,
+    "sampleCount": 167,
+    "phoneHistoryModified": false
+  },
+  "calendarInitialEvidence": "docs/validation/calendar-0.3.1.json",
+  "additionalDisplayValidation": {
+    "debugBuild": "PASS",
+    "releaseBuild": "PASS",
+    "lint": "PASS (0 errors / 35 warnings)",
+    "resources": "PASS (292)",
+    "gitDiffCheck": "PASS",
+    "phoneInstallation": "PASS, same-certificate Release 0.3.1 in-place update",
+    "directionVisualCheck": "NOT_PERFORMED",
+    "logs": [
+      ".tooling/unlinked-direction-validation-0.3.1.log",
+      ".tooling/unlinked-direction-release-0.3.1.log"
+    ]
+  }
+}

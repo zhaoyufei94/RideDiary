@@ -140,6 +140,10 @@ import java.time.YearMonth
     val dismissError=remember { { vm.error.value=false } }
     val scope=rememberCoroutineScope()
     val pagerState=rememberPagerState(initialPage=0,pageCount={4})
+    val journalAnchorText=rememberSaveable { YearMonth.now().toString() }
+    val journalAnchor=remember(journalAnchorText) { YearMonth.parse(journalAnchorText) }
+    val journalPager=rememberPagerState(initialPage=JOURNAL_CENTER_PAGE,pageCount={Int.MAX_VALUE})
+    val selectedJournalMonth by remember { derivedStateOf { journalMonth(journalAnchor,journalPager.settledPage) } }
     fun openTab(page: Int) {
         scope.launch { pagerState.animateScrollToPage(page) }
     }
@@ -222,7 +226,7 @@ import java.time.YearMonth
                             refreshing=refreshToken>0 && (dashboard.data.token!=refreshToken || dashboard.data.loading)
                         }
                         if(active!=null) {
-                            LiveRide(active,routes,rides,quality,matching,mapVisible=pagerState.currentPage==0)
+                            LiveRide(active,rides,quality,matching,mapVisible=pagerState.currentPage==0)
                             if(stopPending) Note(stringResource(if(saving) R.string.saving_ride else R.string.save_ride_failed))
                             OutlinedButton(enabled=!saving,onClick={ if(stopPending) onStop() else finishDialog=true },modifier=Modifier.fillMaxWidth().heightIn(min=50.dp),shape=RoundedCornerShape(14.dp)) {
                                 Text(stringResource(if(saving) R.string.saving_ride else if(stopPending) R.string.retry_save_ride else R.string.finish))
@@ -258,17 +262,18 @@ import java.time.YearMonth
                 1 -> Box(Modifier.fillMaxSize()) {
                     Box(Modifier.fillMaxSize().then(if(selectedTrip!=null) Modifier.clearAndSetSemantics {} else Modifier)) {
                     PageColumn(tripsScroll,error,{ vm.error.value=false }) {
-                        val completed=rides.filter { it.ride.state=="COMPLETED" }
-                        val samples=remember(completed) { completed.map { it.sample() } }
-                        val month=YearMonth.now()
-                        val monthSamples=remember(samples,month) { samples.filter { YearMonth.from(Statistics.date(it))==month } }
+                        val samples=remember(rides) { rides.map { it.sample() } }
+                        val month=selectedJournalMonth
+                        val summary=remember(samples,month) { TripCalendar.month(samples,month) }
+                        val monthIds=remember(summary) { summary.samples.map { it.id }.toSet() }
+                        val monthRides=remember(rides,monthIds) { rides.filter { it.ride.id in monthIds } }
                         val allKm=remember(samples) { samples.sumOf { it.metrics.distance }/1000 }
-                        val monthKm=remember(monthSamples) { monthSamples.sumOf { it.metrics.distance }/1000 }
-                        PageHeader(modifier=Modifier.testTag("trip-journal-header"),overline=stringResource(R.string.month_label,month.year,month.monthValue),
-                            title=if(completed.isEmpty()) stringResource(R.string.empty_rides) else stringResource(R.string.monthly_summary,monthSamples.size,decimal(monthKm)),
-                            subtitle=if(completed.isEmpty()) null else stringResource(R.string.all_time_summary,completed.size,decimal(allKm)),
+                        PageHeader(modifier=Modifier.testTag("trip-journal-header"),
+                            title=if(rides.isEmpty()) stringResource(R.string.empty_rides) else stringResource(R.string.monthly_summary,summary.samples.size,decimal(summary.kilometers)),
+                            subtitle=if(rides.isEmpty()) null else stringResource(R.string.all_time_summary,rides.size,decimal(allKm)),
                             actions={ HeaderIconButton(Glyph.SETTINGS,stringResource(R.string.settings),tint=Muted) { settingsOpen=true } })
-                        History(rides,routes,onDelete={ deletingRide=it }) { data,sample -> selectedTrip=data.ride.id; selectedTripSample=sample }
+                        TripMonthCalendar(journalAnchor,journalPager,samples)
+                        History(monthRides,routes,onDelete={ deletingRide=it },emptyMessage=if(rides.isEmpty()) R.string.empty_rides else R.string.empty_month_rides) { data,sample -> selectedTrip=data.ride.id; selectedTripSample=sample }
                     }
                     }
                     val deleteDetail: ()->Unit=remember(shownTrip) { { shownTrip?.let { deletingRide=it }; Unit } }
@@ -381,7 +386,7 @@ import java.time.YearMonth
 
 private data class LiveAnalysis(val sample: Sample)
 
-@Composable private fun LiveRide(data: RideData,routes: List<RouteRecord>,all: List<RideData>,quality: String,matching: LiveRouteMatch?,mapVisible: Boolean) {
+@Composable private fun LiveRide(data: RideData,all: List<RideData>,quality: String,matching: LiveRouteMatch?,mapVisible: Boolean) {
     val analysis by produceState<LiveAnalysis?>(null,data) {
         value=withContext(Dispatchers.Default) { LiveAnalysis(data.sample()) }
     }
@@ -389,10 +394,8 @@ private data class LiveAnalysis(val sample: Sample)
     if(view==null) { LinearProgressIndicator(Modifier.fillMaxWidth()); return }
     val sample=view.sample; val metrics=sample.metrics
     val snapshot=matching?.takeIf { it.rideId==data.ride.id }
-    val report=snapshot?.report
-    val fixedCandidate=report?.candidates?.firstOrNull { it.route.id==snapshot.boundRouteId }
-    val match=if(snapshot?.boundRouteId!=null) fixedCandidate?.takeIf { it.eligible }?.match else report?.match
-    val route=match?.route ?: routes.firstOrNull { it.id==sample.routeId }?.route()
+    val match=snapshot?.confirmedMatch
+    val route=match?.route
     val history=remember(all,data.ride.id) { all.filter { it.ride.id!=data.ride.id } }
     val estimate by produceState<Statistics.Estimate?>(null,snapshot,history) {
         value=if(match!=null && !match.deviated) withContext(Dispatchers.Default) {
@@ -424,14 +427,16 @@ private data class LiveAnalysis(val sample: Sample)
     }
     Surface(modifier=Modifier.testTag("live-ride-overview"),color=RideCard,contentColor=Surface,shape=RoundedCornerShape(20.dp)) {
         Column(Modifier.fillMaxWidth().padding(16.dp),verticalArrangement=Arrangement.spacedBy(9.dp)) {
-            if(route!=null) Text(routeName(route.name)+" · "+directionName(route.direction),fontSize=12.sp,color=Accent,maxLines=1,overflow=TextOverflow.Ellipsis)
+            Text(if(!uncertain && route!=null) routeName(route.name)+" · "+directionName(route.direction)
+                else stringResource(R.string.unknown_route),modifier=Modifier.testTag("live-route-label"),
+                fontSize=12.sp,color=Accent,maxLines=1,overflow=TextOverflow.Ellipsis)
             Text(stringResource(R.string.elapsed),color=Surface.copy(alpha=.62f),fontSize=11.sp)
             Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.Bottom,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
                 Box(Modifier.weight(1f)) { LargeTime(metrics.elapsed,44f,Surface) }
                 if(match!=null && !uncertain) Text("${(match.progress*100).toInt()}%",fontSize=24.sp,fontFamily=FontFamily.Monospace,color=Accent)
             }
             if(match!=null && !uncertain) {
-                Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
+                Row(Modifier.fillMaxWidth().testTag("live-route-progress"),horizontalArrangement=Arrangement.SpaceBetween) {
                     Text(stringResource(R.string.progress),fontSize=11.sp,color=Surface.copy(alpha=.68f))
                     Text(stringResource(R.string.remaining,(route!!.length-match.along).coerceAtLeast(0.0)/1000),fontSize=11.sp,color=Surface.copy(alpha=.68f))
                 }
@@ -517,6 +522,7 @@ private data class LiveAnalysis(val sample: Sample)
 @Composable private fun RideRowContent(s: Sample,route: RouteRecord?) {
     val locale=LocalConfiguration.current.locales[0]
     val wideFont=LocalDensity.current.fontScale>1.3f
+    val departure=clock(s.startUtc,s.zone)+(if(route!=null) " · "+directionName(s.direction) else "")
     val flags=buildList {
         if(s.state=="INTERRUPTED") add(stringResource(R.string.status_interrupted_short))
         if(s.state=="RECORDING") add(stringResource(R.string.status_recording_short))
@@ -532,7 +538,7 @@ private data class LiveAnalysis(val sample: Sample)
             }
             Text(if(route==null) stringResource(R.string.ordinary) else routeName(route.name),fontSize=15.sp,fontWeight=FontWeight.Medium,maxLines=2,overflow=TextOverflow.Ellipsis)
             Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(4.dp)) {
-                Text(clock(s.startUtc,s.zone)+" · "+directionName(s.direction)+(if(flags.isEmpty()) "" else " · "+flags.joinToString(" · ")),fontSize=11.sp,color=if(s.state=="INTERRUPTED") Danger else Muted,maxLines=2,overflow=TextOverflow.Ellipsis)
+                Text(departure+(if(flags.isEmpty()) "" else " · "+flags.joinToString(" · ")),fontSize=11.sp,color=if(s.state=="INTERRUPTED") Danger else Muted,maxLines=2,overflow=TextOverflow.Ellipsis)
                 Spacer(Modifier.weight(1f))
                 Text(decimal(s.metrics.distance/1000)+" km",fontSize=11.sp,fontFamily=FontFamily.Monospace,color=Muted,maxLines=1)
             }
@@ -545,7 +551,7 @@ private data class LiveAnalysis(val sample: Sample)
         Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(2.dp)) {
             Text(if(route==null) stringResource(R.string.ordinary) else routeName(route.name),fontSize=15.sp,fontWeight=FontWeight.Medium,maxLines=1,overflow=TextOverflow.Ellipsis)
             Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(4.dp)) {
-                Text(clock(s.startUtc,s.zone)+" · "+directionName(s.direction),fontSize=11.sp,color=Muted,maxLines=1)
+                Text(departure,fontSize=11.sp,color=Muted,maxLines=1)
                 if(flags.isNotEmpty()) Text("· "+flags.joinToString(" · "),fontSize=10.sp,color=if(s.state=="INTERRUPTED") Danger else Wait,maxLines=1,overflow=TextOverflow.Ellipsis)
             }
         }
@@ -593,7 +599,7 @@ private data class LiveAnalysis(val sample: Sample)
                 Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(1.dp)) {
                     Text(friendlyDateTime(s.startUtc,s.endUtc,s.zone),fontSize=11.sp,color=Muted,maxLines=1,overflow=TextOverflow.Ellipsis)
                     Text(route?.let { routeName(it.name) } ?: stringResource(R.string.ordinary),fontSize=20.sp,fontWeight=FontWeight.SemiBold,lineHeight=26.sp,maxLines=1,overflow=TextOverflow.Ellipsis)
-                    Text(directionName(s.direction)+" · "+duration(m.elapsed),fontSize=12.sp,color=Muted,maxLines=1)
+                    Text((if(route!=null) directionName(s.direction)+" · " else "")+duration(m.elapsed),fontSize=12.sp,color=Muted,maxLines=1)
                 }
                 if(canManage) HeaderIconButton(Glyph.MORE,stringResource(R.string.more_actions)) { sheet=true }
             }

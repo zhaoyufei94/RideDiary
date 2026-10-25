@@ -273,8 +273,8 @@ private fun number(value: Double?,suffix: String=""): String = value?.let { "${i
     val weatherLine=if(config.enabled) when {
         !config.ready -> stringResource(R.string.weather_configuration)
         hours.isNotEmpty() -> stringResource(R.string.weather_route_compact,
-            number(hours.mapNotNull { it.feelsLike }.minOrNull(),"°"),
-            number(hours.mapNotNull { it.feelsLike }.maxOrNull(),"°"),
+            number(hours.mapNotNull { it.feelsLike }.minOrNull(),"°C"),
+            number(hours.mapNotNull { it.feelsLike }.maxOrNull(),"°C"),
             number(precipitationChance(snapshots,item.departure,until),"%"))
         dashboard.data.loading -> stringResource(R.string.weather_loading)
         else -> stringResource(R.string.weather_no_forecast)

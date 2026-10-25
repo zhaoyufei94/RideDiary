@@ -2,6 +2,21 @@
 
 [中文](CHANGELOG.zh-CN.md)
 
+## 0.3.1 · Trip calendar and live routes (2026-10-25)
+
+- Added a Monday-first month calendar above the trip list. Swipe or use the arrows to change months; the summary and list follow the displayed month. Empty months retain the calendar and show an empty state.
+- Days with trips show a circle containing the sum of their kilometers to one decimal place. Longer daily totals use darker green within the displayed month; days without trips have no circle.
+- Dates follow each trip's adjusted departure and recorded time zone, with overnight trips assigned to their departure date. Calendar totals and the list include ordinary, excluded, interrupted and recording trips. Statistics retains its existing valid-commute scope.
+- Swipes inside the calendar change months; the header and list retain top-level tab swipes. The selected month survives details, Back and activity recreation. Includes Chinese/English text, accessible daily descriptions and large-font sizing.
+
+- Validation: Debug/Release and instrumentation APK builds, all 74 JVM tests, Lint (0 errors / 35 warnings) and 291 bilingual resource checks pass. The 0.3.1 Release APK retains the existing certificate; four targeted device cases pass and the Release build is installed in place. All rows in the four rides, 5476 points, 87 segments and two routes match before/after tests. Full device regression and visual acceptance were not performed. See the [test record](docs/testing.en.md).
+
+- Fixed the recording card retaining an earlier route name after the live match failed. It now shows Unknown route when deviating, below the overlap threshold, ambiguous or without fresh location; route progress and ETA require a current confirmed match. Candidate overlap, final classification and historical data keep their existing behavior.
+
+- Fixed unlinked trips showing a commute direction. The journal, recent-trip row and detail header now omit direction when no valid route is associated, while retaining time, duration and status. Linked trips keep their direction; historical fields are unchanged.
+
+- Improved route recommendations with an explicit Feels like label and one °C unit per temperature, fixing duplicated degree symbols. The journal calendar uses smaller cells, dots and spacing, fits the actual four to six weeks and removes the explanatory footer while retaining daily kilometers and accessibility descriptions.
+
 ## 0.3.0 · Expanded tracks and Baidu maps (2026-10-24)
 
 - Trip and reference-route previews open full screen with pinch zoom, pan and fit-to-track controls. Recording shows live tracks and fresh positions; expanded maps can resume following.

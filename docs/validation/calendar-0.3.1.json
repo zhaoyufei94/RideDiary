@@ -1,0 +1,73 @@
+{
+  "date": "2026-10-25",
+  "version": "0.3.1",
+  "versionCode": 17,
+  "databaseVersion": 4,
+  "result": "BUILD SUCCESSFUL",
+  "validationScope": "LOCAL_BUILDS_JVM_LINT_RESOURCES_AND_SIGNING_ONLY",
+  "unitTests": {
+    "status": "PASS",
+    "count": 71,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "androidInstrumentedTests": {
+    "status": "NOT_RUN",
+    "apkCompilation": "PASS",
+    "addedCase": "journalCalendarSwipesFilterMonthsAndSurviveDetailAndRecreation"
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 35
+  },
+  "resourceCheck": {
+    "translatedStrings": 291,
+    "status": "PASS"
+  },
+  "gitDiffCheck": "PASS",
+  "deviceInstallation": {
+    "status": "NOT_PERFORMED"
+  },
+  "visualAcceptance": "NOT_PERFORMED",
+  "dataRetention": {
+    "databaseMigration": false,
+    "deviceDataAccessed": false,
+    "rowByRowAudit": "NOT_PERFORMED"
+  },
+  "artifacts": [
+    {
+      "path": "app/build/outputs/apk/release/RideDiary-release-v0.3.1.apk",
+      "bytes": 19978828,
+      "sha256": "5e52552e55dec8270de5020da32cab5d72e252231e231a0c851fb1bed9bb463d"
+    },
+    {
+      "path": "app/build/outputs/apk/debug/app-debug.apk",
+      "bytes": 25090485,
+      "sha256": "7254b1ff7c26f464f4a5e331e347d835106f4b484b579d3212aa731c9695036b"
+    },
+    {
+      "path": "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk",
+      "bytes": 1210474,
+      "sha256": "90f70cd0e7e9103b9f460d855c3a896c8b39ff0066b9d04383e4b232a16df457"
+    }
+  ],
+  "signing": {
+    "v2": "PASS",
+    "v3": "PASS",
+    "certificate_sha256": "24107b0f1a354d165eb7bae7be2b235752428dae1d4622754e0ebdb84fe110d3"
+  },
+  "featureScope": {
+    "calendar": "Monday-first, six rows; swipe or arrow month navigation",
+    "distance": "All daily trip kilometers, one decimal place; darker relative to monthly maximum",
+    "tripScope": "Every state, including interrupted, excluded and recording trips",
+    "date": "Adjusted departure in each recorded time zone",
+    "stateRestoration": "Saved pager anchor and page; UI runtime acceptance pending"
+  },
+  "logs": [
+    ".tooling/calendar-validation-0.3.1.log",
+    ".tooling/calendar-test-build-0.3.1.log",
+    ".tooling/calendar-release-0.3.1.log"
+  ],
+  "evidence": "docs/validation/calendar-0.3.1.json"
+}

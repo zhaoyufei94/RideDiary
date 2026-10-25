@@ -13,6 +13,7 @@ import com.ridediary.ui.RideDiaryScreen
 import com.ridediary.ui.RideDiaryTheme
 import java.io.File
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.ZoneId
 import java.util.Locale
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
@@ -53,7 +54,7 @@ class UiSmokeTest {
         originalRides=original.rides.first()
         db=Room.inMemoryDatabaseBuilder(app,RideDatabase::class.java).build()
         repository=RideRepository(db)
-        val start=LocalDate.now().minusDays(1).atTime(8,10).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val start=LocalDate.now().atTime(8,10).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
         id=repository.start(start)
         Replay.points().forEach { repository.update(id,it.t,start+it.t,it) }
         repository.update(id,220_000,start+220_000,finish=true)
@@ -175,9 +176,11 @@ class UiSmokeTest {
         compose.onNodeWithTag("stats-route-$routeGroupId").performClick()
         compose.onNodeWithTag("stats-direction-WORK").performScrollTo().performClick()
         awaitCount(8)
-        compose.onNodeWithContentDescription(text(R.string.previous_month)).performScrollTo().performClick()
+        compose.onNode(hasContentDescription(text(R.string.previous_month)) and
+            !hasAnyAncestor(hasTestTag("trip-calendar"))).performScrollTo().performClick()
         compose.onNodeWithText(text(R.string.stats_empty_title)).assertExists()
-        compose.onNodeWithContentDescription(text(R.string.next_month)).performScrollTo().performClick()
+        compose.onNode(hasContentDescription(text(R.string.next_month)) and
+            !hasAnyAncestor(hasTestTag("trip-calendar"))).performScrollTo().performClick()
         awaitCount(8)
         click(R.string.summary)
         compose.onNodeWithTag("ride-stats-1").performScrollTo().performClick()
@@ -238,14 +241,72 @@ class UiSmokeTest {
         compose.onNodeWithText(text(R.string.start)).performScrollTo().assertIsDisplayed()
     }
     @Test fun horizontalSwipeChangesTabsAtTopLevel() {
-        compose.onRoot().performTouchInput { swipeLeft() }
+        // The journal calendar owns horizontal swipes within its grid; the header changes tabs.
+        fun swipeTab(left: Boolean)=compose.onRoot().performTouchInput {
+            val y=24f
+            swipe(androidx.compose.ui.geometry.Offset(width*(if(left) .8f else .2f),y),
+                androidx.compose.ui.geometry.Offset(width*(if(left) .2f else .8f),y))
+        }
+        swipeTab(true)
         compose.waitUntil(5_000) { compose.onAllNodesWithTag("trip-journal-header").fetchSemanticsNodes().isNotEmpty() }
-        compose.onRoot().performTouchInput { swipeLeft() }
+        swipeTab(true)
         compose.waitUntil(5_000) { compose.onAllNodesWithText(text(R.string.monthly_review)).fetchSemanticsNodes().isNotEmpty() }
-        compose.onRoot().performTouchInput { swipeRight() }
+        swipeTab(false)
         compose.waitUntil(5_000) { compose.onAllNodesWithTag("trip-journal-header").fetchSemanticsNodes().isNotEmpty() }
-        compose.onRoot().performTouchInput { swipeRight() }
+        swipeTab(false)
         compose.waitUntil(5_000) { compose.onAllNodesWithText(text(R.string.start)).fetchSemanticsNodes().isNotEmpty() }
+    }
+    @Test fun journalCalendarSwipesFilterMonthsAndSurviveDetailAndRecreation() {
+        val current=YearMonth.now()
+        val previous=current.minusMonths(1)
+        val source=runBlocking { repository.dao.ride(id)!! }
+        runBlocking {
+            suspend fun copyTrip(copyId: String,date: LocalDate) {
+                val start=date.atTime(8,10).atZone(ZoneId.of(source.ride.zone)).toInstant().toEpochMilli()
+                repository.dao.saveRide(source.ride.copy(id=copyId,startUtc=start,endUtc=start+source.ride.elapsed,lastSavedUtc=start+source.ride.elapsed))
+                source.points.forEach { repository.dao.insertPoint(it.copy(rideId=copyId,utc=start+it.t)) }
+            }
+            copyTrip("calendar-previous-a",previous.atDay(12))
+            copyTrip("calendar-previous-b",previous.atDay(12))
+        }
+        fun awaitMonth(month: YearMonth)=compose.waitUntil(5_000) {
+            compose.onAllNodes(hasTestTag("trip-calendar-month") and
+                hasText(activity.getString(R.string.month_label,month.year,month.monthValue))).fetchSemanticsNodes().isNotEmpty()
+        }
+        click(R.string.summary)
+        awaitMonth(current)
+        compose.onNodeWithTag("ride-$id").assertExists()
+        compose.onNodeWithTag("ride-calendar-previous-a").assertDoesNotExist()
+        compose.onNodeWithTag("trip-calendar-pager").performScrollTo().performTouchInput { swipeRight() }
+        awaitMonth(previous)
+        compose.onNodeWithTag("ride-$id").assertDoesNotExist()
+        compose.onNodeWithTag("ride-calendar-previous-a").assertExists()
+        compose.onNodeWithTag("ride-calendar-previous-b").assertExists()
+        val total=com.ridediary.ui.decimal(source.sample().metrics.distance*2/1000)
+        compose.onNodeWithTag("trip-calendar-day-${previous.atDay(12)}").assertContentDescriptionEquals(
+            activity.getString(R.string.calendar_day_distance,previous.atDay(12).toString(),total))
+        compose.onNodeWithTag("ride-calendar-previous-a").performScrollTo().performClick()
+        compose.onNodeWithTag("ride-detail-header").assertExists()
+        scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+        awaitMonth(previous)
+        scenario.recreate()
+        scenario.onActivity { activity=it }
+        awaitMonth(previous)
+        compose.onNodeWithTag("trip-calendar-pager").performScrollTo().performTouchInput { swipeLeft() }
+        awaitMonth(current)
+        compose.onNodeWithTag("trip-calendar-pager").performTouchInput { swipeLeft() }
+        awaitMonth(current.plusMonths(1))
+        compose.onNodeWithText(text(R.string.empty_month_rides)).assertExists()
+        compose.onNodeWithTag("ride-$id").assertDoesNotExist()
+        compose.onNodeWithTag("trip-calendar-pager").performTouchInput { swipeRight() }
+        awaitMonth(current)
+        compose.onNodeWithTag("ride-$id").assertExists()
+        compose.onNode(hasContentDescription(text(R.string.previous_month)) and
+            hasAnyAncestor(hasTestTag("trip-calendar"))).performScrollTo().performClick()
+        awaitMonth(previous)
+        compose.onNode(hasContentDescription(text(R.string.next_month)) and
+            hasAnyAncestor(hasTestTag("trip-calendar"))).performScrollTo().performClick()
+        awaitMonth(current)
     }
     @Test fun settingsOnlyOnTopLevelPages() {
         fun shownSettings(): Int {
@@ -341,6 +402,45 @@ class UiSmokeTest {
         assertTrue(repository.matching.value!!.report.ambiguous)
         assertNull(runBlocking { repository.dao.ride(activeId)!!.ride.routeId })
         capture("live-route-candidates-ambiguous")
+    }
+    @Test fun liveRouteTitleBecomesUnknownAfterDetoursAndReturnsOnlyWhenConfirmed() {
+        val start=System.currentTimeMillis()
+        // Keep this synthetic route away from the fixture's existing route, avoiding an ambiguous prefix.
+        fun point(i: Int,y: Double=0.0)=com.ridediary.core.Fix(i*2000L,31+y/111_195,
+            110+i*8.0/(111_195*kotlin.math.cos(Math.toRadians(31.0))),4.0,4.0,start+i*2000L)
+        val reference=(0..400).map { point(it) }
+        val trace=(0..400).map { i -> point(i,if(i in 40..100 || i>=300) 80.0 else 0.0) }
+        val route=RouteRecord("live-recovery","互联网金融中心","WORK",id,RouteRecord.encode(reference),50.0,50.0)
+        val activeId=runBlocking {
+            repository.dao.saveRoute(route)
+            repository.start(start).also { repository.update(it,78_000,start+78_000,additionalFixes=trace.take(40)) }
+        }
+        val routeTitle=route.name+" · "+activity.getString(R.string.work)
+        fun awaitTitle(title: String)=compose.waitUntil(5_000) {
+            compose.onAllNodes(hasTestTag("live-route-label") and hasText(title)).fetchSemanticsNodes().isNotEmpty()
+        }
+        fun advance(count: Int)=runBlocking {
+            val elapsed=trace[count-1].t
+            repository.update(activeId,elapsed,start+elapsed,additionalFixes=trace.take(count))
+        }
+        awaitTitle(routeTitle)
+        advance(101)
+        awaitTitle(activity.getString(R.string.unknown_route))
+        // The old association is deliberately retained by the repository, but must not label a live match.
+        assertEquals(route.id,runBlocking { repository.dao.ride(activeId)!!.ride.routeId })
+        compose.onNodeWithTag("live-route-progress").assertDoesNotExist()
+        compose.onNodeWithTag("live-candidate-${route.id}").assertExists()
+        advance(140)
+        awaitTitle(activity.getString(R.string.unknown_route))
+        advance(300)
+        awaitTitle(routeTitle)
+        advance(401)
+        awaitTitle(activity.getString(R.string.unknown_route))
+        compose.onNodeWithTag("live-route-progress").assertDoesNotExist()
+        runBlocking {
+            repository.update(activeId,800_000,start+800_000,finish=true)
+            assertNull(repository.dao.ride(activeId)!!.ride.routeId)
+        }
     }
     @Test fun liveCandidatesReacquireReferenceStartLoopAndShowConfirmedRoute() {
         val now=System.currentTimeMillis()

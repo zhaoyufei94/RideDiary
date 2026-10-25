@@ -1,0 +1,208 @@
+{
+  "date": "2026-10-25",
+  "version": "0.3.1",
+  "versionCode": 17,
+  "databaseVersion": 4,
+  "result": "BUILD SUCCESSFUL",
+  "validationScope": "LOCAL_BUILDS_JVM_LINT_RESOURCES_SIGNING_TARGETED_DEVICE_TESTS_AND_REAL_TRACE_REPLAY",
+  "unitTests": {
+    "status": "PASS",
+    "count": 74,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "evidenceIteration": "preceding live-route fix; not rerun for this display-only edit"
+  },
+  "androidInstrumentedTests": {
+    "status": "TARGETED_PASS",
+    "passedDistinctCases": 4,
+    "cases": [
+      "liveRouteTitleBecomesUnknownAfterDetoursAndReturnsOnlyWhenConfirmed",
+      "journalCalendarSwipesFilterMonthsAndSurviveDetailAndRecreation",
+      "horizontalSwipeChangesTabsAtTopLevel",
+      "matchingIsThrottledButRawFixesPersistAndFinishForcesAReview"
+    ],
+    "initialRun": "2 of 4 passed; route fixture ambiguity and premature Back action caused two failures",
+    "finalRerun": "Both corrected UI cases passed in 6.997 seconds",
+    "fullSuiteRun": false,
+    "device": "PKJ110",
+    "build": "Debug",
+    "evidenceIteration": "preceding live-route/calendar fix; not rerun for this display-only edit"
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 35
+  },
+  "resourceCheck": {
+    "translatedStrings": 291,
+    "status": "PASS"
+  },
+  "gitDiffCheck": "PASS",
+  "deviceInstallation": {
+    "status": "PASS",
+    "version": "0.3.1",
+    "versionCode": 17,
+    "certificate": "existing shared certificate",
+    "finalBuild": "Release",
+    "dataCleared": false,
+    "coldLaunch": "PASS"
+  },
+  "visualAcceptance": "NOT_PERFORMED; automated semantic interaction checks only",
+  "dataRetention": {
+    "allRowsUnchanged": true,
+    "tables": {
+      "rides": {
+        "before": 4,
+        "after": 4,
+        "unchanged": true
+      },
+      "points": {
+        "before": 5476,
+        "after": 5476,
+        "unchanged": true
+      },
+      "segments": {
+        "before": 87,
+        "after": 87,
+        "unchanged": true
+      },
+      "routes": {
+        "before": 2,
+        "after": 2,
+        "unchanged": true
+      }
+    },
+    "quickCheckBefore": "ok",
+    "quickCheckAfter": "ok",
+    "databaseMigration": false,
+    "auditScope": "Before and after targeted tests while using the same-certificate Debug build; Release restored afterward by in-place installation",
+    "evidenceIteration": "preceding live-route fix; this edit changes display only and does not write historical fields"
+  },
+  "artifacts": [
+    {
+      "path": "app/build/outputs/apk/release/RideDiary-release-v0.3.1.apk",
+      "bytes": 19982924,
+      "sha256": "0674cf712f31a63d54d6a58f7666f0decd7346db7cfee68e6c376c53e58d587d"
+    },
+    {
+      "path": "app/build/outputs/apk/debug/app-debug.apk",
+      "bytes": 25092645,
+      "sha256": "6ee38cdf23edb835c10cf5d921fdcefc70a84b240a929fc5b23c4dfadc4288d8"
+    },
+    {
+      "path": "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk",
+      "bytes": 1213920,
+      "sha256": "7e50dd71a230709c42f734784258ff390f252aa73ec7c7bbd7dbc919a561644a"
+    }
+  ],
+  "signing": {
+    "v2": "PASS",
+    "v3": "PASS",
+    "certificate_sha256": "24107b0f1a354d165eb7bae7be2b235752428dae1d4622754e0ebdb84fe110d3"
+  },
+  "featureScope": {
+    "calendar": "Monday-first; compact actual four-to-six-week grid, 46dp default cells and 28dp distance dots; swipe/arrow navigation with height animation; explanatory footer removed.",
+    "distance": "All daily trip kilometers, one decimal place; darker relative to monthly maximum",
+    "tripScope": "Every state, including interrupted, excluded and recording trips",
+    "date": "Adjusted departure in each recorded time zone",
+    "stateRestoration": "Calendar month restored across details/Back and activity recreation; targeted device test passes",
+    "liveRouteTitle": "Current confirmed match with fresh location only; otherwise Unknown route. Historical association cannot supply the live title, progress or ETA.",
+    "unlinkedTripDirection": "Hide direction and its separator in trip/recent rows (including large fonts) and detail headers when no valid route is associated; keep stored fields unchanged.",
+    "routeWeather": "Explicit Feels like label; both temperatures have exactly one °C suffix, e.g. 体感 21°C – 26°C · 降水 20%."
+  },
+  "logs": [
+    ".tooling/live-route-final-validation-0.3.1.log",
+    ".tooling/live-route-test-final-0.3.1.log",
+    ".tooling/live-route-release-0.3.1.log",
+    ".tooling/live-route-device-0.3.1.log",
+    ".tooling/live-route-device-final-0.3.1.log"
+  ],
+  "evidence": "docs/validation/compact-calendar-weather-0.3.1.json",
+  "realTraceReplay": {
+    "tripLocalStart": "2026-10-25T12:56:41.919+08:00",
+    "points": 498,
+    "elapsedMs": 995269,
+    "sampling": "actual Kotlin matcher replay, prefixes sampled about every 5 seconds",
+    "stateTransitions": [
+      {
+        "seconds": "0.0",
+        "overlap": "1.00000",
+        "state": "LEARNING",
+        "eligible": "false",
+        "newTitle": "unknown"
+      },
+      {
+        "seconds": "67.0",
+        "overlap": "1.00000",
+        "state": "CONFIRMED",
+        "eligible": "true",
+        "newTitle": "WORK"
+      },
+      {
+        "seconds": "319.0",
+        "overlap": "0.98125",
+        "state": "DEVIATED",
+        "eligible": "true",
+        "newTitle": "unknown"
+      },
+      {
+        "seconds": "589.0",
+        "overlap": "0.54237",
+        "state": "LEARNING",
+        "eligible": "false",
+        "newTitle": "unknown"
+      },
+      {
+        "seconds": "667.0",
+        "overlap": "0.58683",
+        "state": "DEVIATED",
+        "eligible": "false",
+        "newTitle": "unknown"
+      }
+    ],
+    "finalOverlap": 0.39357,
+    "originalStaleTitleSnapshots": 114,
+    "sampleCount": 167,
+    "phoneHistoryModified": false
+  },
+  "calendarInitialEvidence": "docs/validation/calendar-0.3.1.json",
+  "additionalDisplayValidation": {
+    "debugBuild": "PASS",
+    "releaseBuild": "PASS",
+    "lint": "PASS (0 errors / 35 warnings)",
+    "resources": "PASS (292)",
+    "gitDiffCheck": "PASS",
+    "phoneInstallation": "PASS, same-certificate Release 0.3.1 in-place update",
+    "directionVisualCheck": "NOT_PERFORMED",
+    "logs": [
+      ".tooling/unlinked-direction-validation-0.3.1.log",
+      ".tooling/unlinked-direction-release-0.3.1.log"
+    ]
+  },
+  "compactCalendarWeatherValidation": {
+    "debugBuild": "PASS",
+    "releaseBuild": "PASS",
+    "androidTestBuild": "PASS",
+    "lint": {
+      "errors": 0,
+      "warnings": 35
+    },
+    "resources": "PASS (291)",
+    "gitDiffCheck": "PASS",
+    "calendarDeviceTest": {
+      "status": "PASS",
+      "case": "journalCalendarSwipesFilterMonthsAndSurviveDetailAndRecreation",
+      "device": "PKJ110",
+      "seconds": 5.106,
+      "disposableDatabase": true
+    },
+    "weatherFormat": "Chinese/English sample interpolation checked; one °C suffix per endpoint",
+    "visualAcceptance": "Not performed",
+    "algorithmTests": "Unchanged; existing 74-test result retained from earlier 0.3.1 iteration",
+    "logs": [
+      ".tooling/compact-calendar-weather-validation-0.3.1.log",
+      ".tooling/compact-calendar-weather-release-0.3.1.log",
+      ".tooling/compact-calendar-weather-device-0.3.1.log"
+    ]
+  }
+}

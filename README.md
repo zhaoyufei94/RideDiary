@@ -4,12 +4,13 @@
 
 **Your everyday rides, a little better understood.** · [中文说明](README.zh-CN.md) · [Changelog](CHANGELOG.md)
 
-Current version: **0.3.0**
+Current version: **0.3.1**
 
 RideDiary is an offline-first trip journal that helps you understand your commute and compare it with earlier trips on the same route. For Android 8.0 and later; no account, extra hardware or Google Play services needed.
 
 ## Features
 
+- **Trip calendar:** swipe between months and browse all trips from the displayed month. Days with trips show a circle containing their total kilometers; longer daily distances have darker circles within that month.
 - **Record trips:** see elapsed time, distance, average speed, stationary time and location status; view live candidate routes and overlap, with motorcycle progress after recognition.
 - **Check weather:** current conditions, next-hour precipitation chance, today’s overview and departure-window feels-like temperatures.
 - **Travel plans:** set workdays or custom weekdays and departure times separately for each direction; Today/Tomorrow show upcoming plans, with a play icon to start on the selected route and direction.
