@@ -51,10 +51,10 @@ No “Allow all the time” location access is required; trips never start autom
 
 ## Using RideDiary
 
-- **Travel plans:** open a route, choose To work or To home and edit its plan. Workdays is the default, using the bundled China calendar to exclude holidays and include make-up workdays. Custom weekdays are also available; clear all to exclude that direction. The 2026 calendar is included; other years arrive with app updates, without guessing missing years or fetching calendars at runtime. Set a time or use usual departure history, with 08:00 to work / 18:00 to home when no history exists.
+- **Travel plans:** open a route, choose To work or To home and edit its plan. Workdays is the default, using the bundled China calendar to exclude holidays and include make-up workdays. Custom weekdays are also available; clear all to exclude that direction. The 2026 calendar is included; other years arrive with app updates, and the calendar works offline. If a year is unavailable, use Custom weekdays instead of Workdays. Set a time or use usual departure history, with 08:00 to work / 18:00 to home when no history exists.
 - **Today/Tomorrow:** only show routes scheduled for that day with a future departure, ordered by time. Reached times disappear without starting recording or shifting into another window. Plans follow the phone’s current timezone.
 - **Departure weather:** previews combine endpoint feels-like temperature, rain probability and gusts from planned departure through median historical duration, with one hour when duration is unknown.
-- **Weather refresh:** automatic checks run while Record is visible; pull down to refresh current weather and both days’ route forecasts together. Normal cache lasts 20 minutes; failures retain recent usable data and show a Toast. Only current weather displays an update time. Sources appear once at the bottom of Record. Requests can take several seconds and do not affect offline recording. Background weather reminders are not available yet.
+- **Weather refresh:** automatic checks run while Record is visible; pull down to refresh current weather and both days’ route forecasts together. Weather data is normally retained for 20 minutes; refresh failures retain recent usable data and show a brief message. Only current weather displays an update time. Sources appear once at the bottom of Record. Requests can take several seconds and do not affect offline recording. Background weather reminders are not available yet.
 - **Routes and history:** creating a route needs four valid fixes and 150 m of track; endpoint radii are 20–500 m, and historical comparison/arrival estimates need three usable histories for the same direction.
 - **Arrival prompts:** near-complete progress and at least 30 seconds of sustained low speed may trigger review, but Save/Delete still requires your choice; similar routes, deviation or poor fixes can prevent recognition and estimates.
 - **Time breakdown:** elapsed time equals moving, stationary and unknown time; estimates do not include live traffic.
@@ -65,19 +65,10 @@ No “Allow all the time” location access is required; trips never start autom
 
 ## Data and limits
 
-Trips and full tracks stay on your phone; no track cloud is used. Weather queries send current or route-endpoint coordinates rounded to two decimal places to the selected provider. QWeather and Baidu credentials are encrypted using Android Keystore and excluded from backups, logs and saved UI state. The Baidu SDK is initialized only when maps are enabled, an AK is configured and a map is viewed. It processes location/viewed-area, IP and device information under its [privacy policy](https://lbsyun.baidu.com/index.php?title=openprivacy), so using the online basemap is not fully offline. Speed and stop analysis stays local. Original WGS84 fixes are converted using Baidu tools for display only; historical data is not rewritten. **Uninstalling or clearing app data loses records; export, import and cloud recovery are not available yet.**
+Trips and full tracks stay on your phone without uploading to a track cloud; speed and stop analysis also stays on your phone. Weather queries send current or route-endpoint coordinates rounded to two decimal places to the selected provider. QWeather and Baidu keys are encrypted on your phone and excluded from backups. When Baidu maps are enabled, a key is configured and you view a map, the service processes location, viewed map areas, IP and device information under its [privacy policy](https://lbsyun.baidu.com/index.php?title=openprivacy). Online maps therefore require network access. Viewing maps does not change historical tracks. **Uninstalling or clearing app data loses records; export, import and cloud recovery are not available yet.**
 
 [Open-Meteo’s free API](https://open-meteo.com/en/pricing) is for non-commercial use; QWeather access and quotas depend on your account. Weather is a grid forecast; endpoint previews do not cover every location along the route or describe road-surface conditions.
 
 Expanded tracks, speed colors and stop labels work offline. Baidu basemaps and live traffic require your own valid AK, network access and account entitlement. Stale locations hide the live marker; gaps and jumps never gain invented connecting lines, and unknown speed is not zero. Reference routes do not borrow trip-specific speed or stops. Navigation and signal-light detection are not available. Location accuracy and background continuity depend on surroundings and your phone’s system.
 
-Default APKs target **arm64-v8a** to avoid shipping unused CPU architectures. For an APK supporting 32-bit ARM as well, use `./scripts/gradle-local.sh :app:assembleDebug -PrideDiaryAbis=arm64-v8a,armeabi-v7a`; this increases package size. No device tests were run for this change.
-
-## Planned features
-
-- Configurable adverse-weather reminders.
-- Local track/statistics export, backup and import.
-- Stationary hotspots, segment analysis and estimates informed by usual departure times.
-- Easier route editing, large text, screen readers, larger screens and dark mode.
-
-These features are not all available yet; see the changelog for delivered updates.
+The default APK supports **64-bit ARM (arm64-v8a)** phones.

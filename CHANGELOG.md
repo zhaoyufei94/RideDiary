@@ -2,61 +2,56 @@
 
 [中文](CHANGELOG.zh-CN.md)
 
-## 0.3.1 · Trip calendar and live routes (2026-10-25)
+## 0.3.1
 
-- Added a Monday-first month calendar above the trip list. Swipe or use the arrows to change months; the summary and list follow the displayed month. Empty months retain the calendar and show an empty state.
-- Days with trips show a circle containing the sum of their kilometers to one decimal place. Longer daily totals use darker green within the displayed month; days without trips have no circle.
-- Dates follow each trip's adjusted departure and recorded time zone, with overnight trips assigned to their departure date. Calendar totals and the list include ordinary, excluded, interrupted and recording trips. Statistics retains its existing valid-commute scope.
-- Swipes inside the calendar change months; the header and list retain top-level tab swipes. The selected month survives details, Back and activity recreation. Includes Chinese/English text, accessible daily descriptions and large-font sizing.
+- Added: A Monday-first calendar above the trip list. Swipe or use the arrows to change months; the summary and list follow the selected month. Empty months also show the calendar.
+- Added: Daily distance circles showing total kilometers to one decimal place. Longer distances use darker green within the month; days without trips have no circle.
+- Added: Calendar dates follow each trip's adjusted departure and recorded time zone; overnight trips belong to their departure day. The calendar includes ordinary, excluded, interrupted and recording trips, while Statistics still summarizes valid commutes only.
+- Added: Chinese/English calendar text, accessible date and distance descriptions, and large-text support. Returning to the list preserves the selected month. Swipe within the calendar to change months, or on the header and list to change pages.
+- Fixed: The recording card showing an earlier route after deviation, insufficient overlap, an ambiguous match or stale location. It now shows Unknown route and hides route progress and arrival estimates in these cases.
+- Fixed: Trips without a valid linked route showing a work, home or other direction. The trip list, recent trips and details still show departure time, duration and status.
+- Improved: Route recommendations explicitly label feels-like temperatures and use °C at both ends of the range.
+- Fixed: Duplicate degree symbols in temperatures.
+- Improved: A more compact trip calendar that fits the actual four to six weeks while retaining daily distance and accessibility descriptions.
 
-- Validation: Debug/Release and instrumentation APK builds, all 74 JVM tests, Lint (0 errors / 35 warnings) and 291 bilingual resource checks pass. The 0.3.1 Release APK retains the existing certificate; four targeted device cases pass and the Release build is installed in place. All rows in the four rides, 5476 points, 87 segments and two routes match before/after tests. Full device regression and visual acceptance were not performed. See the [test record](docs/testing.en.md).
+## 0.3.0
 
-- Fixed the recording card retaining an earlier route name after the live match failed. It now shows Unknown route when deviating, below the overlap threshold, ambiguous or without fresh location; route progress and ETA require a current confirmed match. Candidate overlap, final classification and historical data keep their existing behavior.
+- Added: Full-screen trip and route tracks with pinch zoom, pan and fit-to-track controls. Record shows live tracks and the current position; expanded maps can resume following your location.
+- Added: A fixed red-to-green 0–60+ km/h trip speed scale, with gray for unknown speed. Reference routes remain monochrome.
+- Added: Labels for stops of at least 30 seconds on expanded maps. Bubbles avoid tracks, other markers and screen edges; when space is unavailable, only the stop dot remains. Previews hide stops.
+- Added: Optional Baidu basemaps using your own Android SDK AK, with copyable package and SHA1 details. Keys are encrypted on your phone. See the [setup guide](docs/baidu-map-setup.en.md).
+- Added: Saved Display choices for basemap styles, speed colors, stops, endpoints, place names and live traffic. Custom styles use an ID you publish; live traffic does not change historical speeds or arrival estimates.
+- Improved: Track colors and widths in previews and expanded maps for easier viewing when zoomed out.
+- Fixed: Missing track lines on Baidu basemaps.
+- Added: Baidu maps are off by default. Without a key, offline or when maps fail to load, local expanded tracks, speed colors, stop labels, recording, weather and statistics remain available.
+- Improved: Invalid positions, location jumps and long gaps have no connecting lines, avoiding misleading tracks.
 
-- Fixed unlinked trips showing a commute direction. The journal, recent-trip row and detail header now omit direction when no valid route is associated, while retaining time, duration and status. Linked trips keep their direction; historical fields are unchanged.
+## 0.2.3
 
-- Improved route recommendations with an explicit Feels like label and one °C unit per temperature, fixing duplicated degree symbols. The journal calendar uses smaller cells, dots and spacing, fits the actual four to six weeks and removes the explanatory footer while retaining daily kilometers and accessibility descriptions.
-
-## 0.3.0 · Expanded tracks and Baidu maps (2026-10-24)
-
-- Trip and reference-route previews open full screen with pinch zoom, pan and fit-to-track controls. Recording shows live tracks and fresh positions; expanded maps can resume following.
-- Trip speeds use a fixed red-to-green 0–60+ km/h scale, with gray for unknown speed. Reference routes remain monochrome and do not borrow trip speed or stop data.
-- Expanded maps label stops of at least 30 seconds with small rounded bubbles and leaders to their true locations. Bubbles avoid tracks, other markers and viewport edges; unavailable bubbles retain their dots. Previews hide stop markers.
-- Optional Baidu basemaps accept each user's Android SDK AK in the APK, with copyable package/SHA1 details and Android Keystore encryption. See the [setup guide](docs/baidu-map-setup.en.md).
-- The expanded Display panel persists minimal, standard, satellite and custom styles, plus speed colors, expanded-map stops, endpoints, place names and live traffic. Tea Field and other custom styles use an ID published in your account. Live traffic shows current road conditions and does not change historical speeds or arrival estimates.
-- Improved track palette and widths in previews/expanded maps. Local casings draw in a separate pass; native maps use per-segment colored polylines, improving overview readability and fixing missing native track lines.
-- Baidu maps default off. Missing keys, offline access or map failures retain local expanded tracks, speed colors and stop labels. Recording, weather and statistics do not depend on the map SDK.
-- Original fixes and historical analysis remain unchanged; coordinate conversion is display-only. Invalid fixes, jumps and long gaps never gain connecting lines. Only map/coordinate tools and required dependencies are included, with compressed native libraries and arm64-v8a by default; `rideDiaryAbis` selects other architectures.
-- Validation: Debug/Release builds, all 67 local JVM tests, Lint and 287 bilingual resources pass. In-place installation retains the existing certificate. No device/emulator tests or visual acceptance were performed, as requested; see the [test record](docs/testing.en.md).
-
-## 0.2.3 · Interface and interaction refinement (2026-10-24)
-
-- Removed the fixed brand bar on every page and the large page titles that repeated the bottom tabs (“Record / Trips / Statistics / Routes”). The header now carries useful context such as the date, this month’s trip count and distance, or linked route trips.
-- Reduced card radii, inner padding and section spacing. Trips are now two-line, higher-density rows; routes show name, direction samples and linked-trip count in two lines.
-- Record now leads with the start action. Weather collapses into a one-line summary with expandable wind, rain and update details; Today/Tomorrow routes use compact rows with departure time and forecast.
-- Statistics combines month navigation, route selection and direction filtering into a compact header and one filter row. The overview keeps distance, commute days and trip count while leaving more first-screen room for charts.
-- Trip and route details gain a persistent “More actions” entry while retaining long-press management. Back navigation moves into the header instead of a standalone text button.
-- Bottom navigation uses custom line icons consistent with the brand; route progress animates smoothly.
-- Large text switches statistics filters, live metrics and trip rows to vertical layouts to avoid clipping.
-- Fixed: returning from a trip or route detail preserves the list scroll position instead of jumping to the top; each top-level page keeps its own scroll state, while a newly opened detail still starts at the top.
-- Improved: the four top-level pages now use a horizontal pager and follow left/right swipes; pages are precomposed, while the bottom navigation and Back handler read the page index in isolated scopes to avoid whole-screen recomposition during a swipe.
-- Improved: ride details use a LazyColumn, statistics and route sample counts move to background work, and historical comparison is computed only near its card, reducing main-thread work when a detail opens.
-- Improved: the Settings entry appears only on the idle Record, Trips list and Routes list; it is hidden while recording, on Statistics and on every detail page. The gear icon now uses solid gear teeth instead of radial single lines.
-- Fixed: the list now stays composed while a detail slides out as an independent overlay, so the list no longer takes part in the return transition. The current trip sample and callbacks also stay stable, removing the content shimmer during the detail exit.
-- Build: local performance Release packages are named `RideDiary-release-v<version>.apk` and produced by `scripts/package-release.sh`.
-- Verification: Debug APK, AndroidTest APK, JVM unit tests and Lint pass. Four pages, details and the action sheet were visually checked on a PKJ110. Six targeted device tests passed before the final detail-overlay change: `horizontalSwipeChangesTabsAtTopLevel`, `tripListScrollPositionSurvivesDetailReturn`, `statisticsFiltersAndSelectableChartKeepTheSameDataScope`, `fourTabsAndSystemBackReturnToJournalAfterRecreation`, `longPressShowsMenuWithoutOpeningDetailsAndBackDismissesIt` and `settingsOnlyOnTopLevelPages`. The final overlay was accepted by the user on-device; the device then locked, so the automated cases were not rerun on the final package. A release APK signed with the existing debug certificate measured 404 frames across six tab swipes: 90th 8 ms, 95th 9 ms, 99th 14 ms, 0.99% janky; detail entry/back measured 90th 12 ms and 99th 46 ms. Debug builds are noticeably slower, so the performance figures refer to release. The detail-exit shimmer fix is installed; per the user’s request no further animation review was performed and device acceptance is left to the user. The full `UiSmokeTest` was not treated as passing: its capture-heavy `englishLargeTextStatisticsAndActionSheetRemainUsable` case did not finish within five minutes.
+- Improved: Headers show dates, monthly trip counts and distance, or linked-trip counts instead of repeated branding and large page titles.
+- Improved: Smaller card padding and section spacing, with compact two-line trip and route rows showing more content at once.
+- Improved: A more prominent start action on Record, expandable weather details for wind, rain and update time, and compact Today/Tomorrow routes showing departure times and forecasts.
+- Improved: Month, route and direction filters are grouped in Statistics to leave more room for charts; the overview retains distance, commute days and trip count.
+- Added: A persistent More actions entry in trip and route details alongside long-press management.
+- Improved: Header Back icons, consistent bottom navigation icons and smoother route progress animations.
+- Improved: Vertical statistics filters, live metrics and trip rows with large text to avoid crowding and clipping.
+- Fixed: Lost list scroll position after returning from trip or route details.
+- Added: Left/right swipes between the four main pages, with animations following the gesture.
+- Improved: Smoother opening of details and viewing of statistics and route information.
+- Improved: Settings appears only on idle Record, the Trips list and the Routes list, with a clearer gear icon.
+- Fixed: Flickering content while leaving details.
 
 ## 0.2.2
 
-- Recover from reference-start loops and short deviations using bounded, consecutive-fix reacquisition, while keeping parallel-route ambiguity and gap protections.
-- Show up to two live candidate routes and collected-fix overlap in a compact section below the main recording card.
-- Remove repeated route-matching labels and place location status beside the recording title, with green/red indicators and concise text.
-- Match about every 5 seconds, adapting up to 15 seconds for expensive calculations. Raw-fix persistence stays independent; finishing always forces a final review.
-- Fix delayed stop/save and inflated duration caused by queued full-trace updates on long rides.
-- Coalesce update wakeups while retaining every received raw fix in batches. Stop acquisition immediately and keep the requested finish time through retries.
-- Decouple live location status from database/rendering lag so a recovered fix clears the searching indicator.
-- Cache route projection indexes and search nearby segments; run live analysis off the UI thread without repeating it on clock ticks.
-- Add saving/retry states. Existing rides, routes, durations and raw points are not retrospectively modified.
+- Improved: Route recognition recovers more easily after loops near the start or brief deviations, avoiding stuck progress. Similar routes or poor location may still prevent recognition.
+- Added: Up to two candidate routes and their overlap with the current track below the recording card.
+- Improved: Fewer repeated route-matching messages, with concise location status and green/red dots beside Recording.
+- Improved: Route matching normally updates about every 5 seconds, with up to 15 seconds between updates when slower; routes are checked again before saving.
+- Fixed: Delayed saving and inflated duration when finishing long trips.
+- Improved: The finish time stays fixed after recording ends, including when retrying a failed save.
+- Fixed: The location indicator still showing Searching after location recovers.
+- Improved: Smoother operation during recording.
+- Added: Saving status and retry prompts.
 
 ## 0.2.1
 
@@ -67,10 +62,10 @@
 - Added: Workdays, custom weekdays and departure times for each route direction.
 - Improved: Today/Tomorrow replace recent routes and show only upcoming scheduled departures.
 - Improved: Pull to refresh on Record replaces the separate weather refresh button.
-- Improved: Weather attribution appears once in the footer, with deduplicated queries and progressive results.
+- Improved: Weather sources appear once in the footer, with results shown as they become available.
 - Added: Bundled 2026 holidays and make-up workdays for offline schedule checks.
 - Improved: Current weather shows next-hour precipitation chance and route forecasts use feels-like temperatures.
-- Improved: Only current weather shows an update time, with refresh failures reported through a Toast.
+- Improved: Only current weather shows an update time, with brief messages when refresh fails.
 - Improved: Longer forecasts cover tomorrow’s late departures.
 
 ## 0.1.8
@@ -87,7 +82,7 @@
 - Improved: Linked trips appear inside route details instead of a recent-trip list on the Routes page.
 - Added: Open linked trips directly from route details.
 - Added: Unlink a trip from its route while retaining the trip and raw track.
-- Added: Settings with version, logo, approved slogan and language options.
+- Added: Settings with version, logo, brand slogan and language options.
 
 ## 0.1.6
 
