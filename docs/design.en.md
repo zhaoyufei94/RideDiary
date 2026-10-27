@@ -2,6 +2,12 @@
 
 This document describes implementation. See [product design](../PRODUCT_DESIGN.md) for product scope, visual style and Android interaction requirements.
 
+## 0.3.4 Merge and undo
+
+Room v5 adds only rides.mergedInto/mergedCount and points.breakBefore through 4→5. Retain old columns and rows, register the full migration chain and export v5 separately. TripMerge validates effective boundaries, time and endpoints. UI previews run on Default; the repository rechecks under its mutex and Room transaction, atomically creating the result, copying effective points, rebuilding segments and hiding direct sources. Original points are unchanged. Copies rebase only t, sequence, rideId and new breaks, preserving UTC, coordinate system, quality, accuracy and speed fields. Interrupted rides without explicit end bounds end at the last saved point, making recovery-only time part of the unknown gap.
+
+Mark the first raw and first good point at each join with breakBefore, preventing reconnection after filtering. Analysis, drawing, route indexing/matching and arrival dwell honor breaks. Shape encoding adds a backward-compatible sixth field. Reassess whole-route matching and AUTO_ROUTE_CHECK exclusions, keep manual exclusions and never infer arrival confirmation from merging. Visible subscriptions filter mergedInto to avoid double-counting history, calendars and statistics; stale detail mutations reject hidden sources. Undo restores direct sources and removes the result, restoring the prior nesting level. Permanent deletion recursively removes retained trees while independent route geometry remains; ten originals bound the tree.
+
 ## 0.3.0 expanded tracks and optional maps
 
 `core/TrackGeometry.kt` produces presentation geometry without changing recorded analysis. It validates original adjacent fixes, refusing to bridge invalid points, jumps or gaps exceeding 15 seconds. Speeds follow existing moving/waiting/unknown segments, using displacement only when it exceeds positioning uncertainty. Unknown speed remains gray; a fixed red-to-green scale covers 0/20/40/60+ km/h. Reference routes stay monochrome. Labels use confirmed WAITING intervals of at least 30 seconds and median valid coordinates; revisits remain separate. Isolated jumps do not enlarge fitted bounds.

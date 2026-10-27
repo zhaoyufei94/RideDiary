@@ -116,13 +116,15 @@ class RideRepository(val db: RideDatabase) {
     }
     suspend fun classify(id: String, route: RouteRecord?, direction: String, excluded: Boolean, reason: String) = mutex.withLock {
         db.withTransaction {
-            dao.ride(id)?.ride?.let { dao.saveRide(it.copy(routeId=route?.id,direction=route?.direction ?: direction,
-                excluded=excluded,exclusionReason=reason)) }
+            dao.ride(id)?.ride?.let {
+                require(it.mergedInto==null)
+                dao.saveRide(it.copy(routeId=route?.id,direction=route?.direction ?: direction,excluded=excluded,exclusionReason=reason))
+            }
         }
     }
     suspend fun boundaries(id: String, start: Long, end: Long) = mutex.withLock {
         val data=dao.ride(id) ?: return@withLock
-        require(data.ride.state != "RECORDING" && start >= 0 && end > start && end <= data.ride.elapsed)
+        require(data.ride.state != "RECORDING" && data.ride.mergedInto==null && start >= 0 && end > start && end <= data.ride.elapsed)
         dao.saveRide(data.ride.copy(boundaryStart=start,boundaryEnd=end))
     }
     suspend fun createRoute(id: String, name: String, direction: String, startRadius: Double, endRadius: Double,
@@ -130,7 +132,7 @@ class RideRepository(val db: RideDatabase) {
         db.withTransaction {
             validateRoute(name,direction,startRadius,endRadius)
             val data=dao.ride(id) ?: return@withTransaction
-            require(data.ride.state != "RECORDING")
+            require(data.ride.state != "RECORDING" && data.ride.mergedInto==null)
             val fixes=data.sample().points.filter(::good)
             require(fixes.size >= 4 && Analyzer.analyze(fixes,data.sample().metrics.elapsed).distance >= Policy.MIN_ROUTE_DISTANCE_M)
             val groups=routeGroups(dao.routes())
@@ -147,8 +149,63 @@ class RideRepository(val db: RideDatabase) {
     suspend fun deleteRide(id: String) = mutex.withLock {
         db.withTransaction {
             val ride=dao.ride(id)?.ride ?: return@withTransaction
-            require(ride.state != "RECORDING")
+            require(ride.state != "RECORDING" && ride.mergedInto==null)
             // Points and segments cascade; saved routes keep their independent geometry.
+            deleteWithSources(id)
+        }
+    }
+    private suspend fun deleteWithSources(id: String) {
+        val sources=dao.mergedSources(id)
+        sources.forEach { deleteWithSources(it.ride.id) }
+        dao.deleteRide(id)
+    }
+    suspend fun mergeRides(ids: List<String>): String = mutex.withLock {
+        db.withTransaction {
+            val routes=dao.routes()
+            val visible=dao.visibleRides()
+            val hidden=ids.distinct().filter { id -> visible.none { it.ride.id==id } }.mapNotNull { dao.ride(it) }
+            val all=visible+hidden
+            val plan=TripMerge.plan(all.map { it.mergeInput(routes) },ids)
+            if(!plan.valid) throw MergeRejectedException(plan.problems)
+            val sources=plan.parts.map { part -> all.first { it.ride.id==part.id } }
+            val original=sources.first().ride
+            val id=UUID.randomUUID().toString()
+            val report=RouteIdentity.report(plan.points,routes.map { it.route() },routes.associate { it.id to it.groupKey })
+            val match=report.match?.takeIf { !it.deviated && it.progress>=Policy.ARRIVAL_PROGRESS }
+            val known=sources.mapNotNull { data -> routes.firstOrNull { it.id==data.ride.routeId } }.firstOrNull()
+            val chosen=known ?: match?.route?.id?.let { key -> routes.firstOrNull { it.id==key } }
+            val manualExclusion=sources.firstOrNull { it.ride.excluded && it.ride.exclusionReason!="AUTO_ROUTE_CHECK" }?.ride
+            val needsReview=chosen!=null && (match==null || routes.firstOrNull { it.id==match.route.id }?.groupKey!=chosen.groupKey || match.route.direction!=chosen.direction)
+            val ride=RideRecord(id,plan.startUtc,original.zone,state="COMPLETED",endUtc=plan.startUtc+plan.elapsed,
+                elapsed=plan.elapsed,lastSavedUtc=System.currentTimeMillis(),routeId=chosen?.id,
+                direction=chosen?.direction ?: plan.parts.mapNotNull { it.direction?.takeUnless { direction -> direction=="OTHER" } }.firstOrNull() ?: "OTHER",
+                excluded=manualExclusion!=null || needsReview,exclusionReason=manualExclusion?.exclusionReason ?: if(needsReview) "AUTO_ROUTE_CHECK" else "",
+                arrivalConfirmed=match!=null && !needsReview && sources.last().ride.arrivalConfirmed,mergedCount=plan.parts.sumOf { it.sourceCount })
+            dao.saveRide(ride)
+            val copied=sources.flatMapIndexed { partIndex,data ->
+                val input=plan.parts[partIndex]
+                val start=data.ride.boundaryStart
+                val selected=data.points.sortedBy { it.sequence }.filter { it.t in start..(start+input.elapsed) }
+                val firstGood=selected.indexOfFirst { good(it.fix()) }
+                selected.mapIndexed { pointIndex,point ->
+                    point.copy(rideId=id,t=input.startUtc-plan.startUtc+point.t-start,
+                        breakBefore=point.breakBefore || (partIndex>0 && (pointIndex==0 || pointIndex==firstGood)))
+                }
+            }.mapIndexed { index,point -> point.copy(sequence=index) }
+            dao.insertPoints(copied)
+            persist(ride,plan.points)
+            sources.forEach { dao.saveRide(it.ride.copy(mergedInto=id)) }
+            id
+        }
+    }
+    suspend fun undoMerge(id: String) = mutex.withLock {
+        db.withTransaction {
+            val ride=dao.ride(id)?.ride ?: throw MergeRejectedException(setOf(MergeProblem.MISSING))
+            if(dao.active().isNotEmpty()) throw MergeRejectedException(setOf(MergeProblem.ACTIVE))
+            require(ride.mergedInto==null && ride.state!="RECORDING" && ride.mergedCount>0)
+            val sources=dao.mergedSources(id)
+            require(sources.isNotEmpty())
+            sources.forEach { dao.saveRide(it.ride.copy(mergedInto=null)) }
             dao.deleteRide(id)
         }
     }
@@ -197,7 +254,7 @@ class RideRepository(val db: RideDatabase) {
     suspend fun unlinkRide(id: String,groupId: String) = mutex.withLock {
         db.withTransaction {
             val ride=dao.ride(id)?.ride ?: return@withTransaction
-            require(ride.state!="RECORDING")
+            require(ride.state!="RECORDING" && ride.mergedInto==null)
             val routeIds=dao.routes().filter { it.groupKey==groupId }.map { it.id }
             // Ignore a stale menu if the ride has since been assigned to another route.
             if(ride.routeId in routeIds) dao.saveRide(ride.copy(routeId=null))

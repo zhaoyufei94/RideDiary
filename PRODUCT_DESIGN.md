@@ -1,8 +1,15 @@
 # RideDiary / 途记 Product Design
 
-Version: v0.3.3 product baseline · Updated: 2026-10-26 · [中文](PRODUCT_DESIGN.zh-CN.md)
+Version: v0.3.4 product baseline · Updated: 2026-10-27 · [中文](PRODUCT_DESIGN.zh-CN.md)
 
 This document guides product decisions, UI design and future development. **“Current” describes existing behavior; “requirements” constrain future changes and do not imply completed implementation or acceptance; “planned” means not delivered.** The product targets Android phones across brands, cities, motorcycle models and commute routes.
+
+## 0.3.4 Split trip merging
+
+- Provide entry points in the Trips header, long-press menus and detail actions. Select 2–10 ended recordings across months, sort chronologically and show each gap and endpoint distance.
+- Adjacent gaps are limited to 30 minutes and endpoints to 300 m, with reliable fixes within two minutes of each boundary. Reject overlaps, implausible displacement, conflicting routes/directions, omitted intervening trips, invalid clocks and total spans over 12 hours. Finish any recording first.
+- Respect effective boundaries and remove recovery-only trailing time from interrupted recordings. Gaps remain unknown without invented distance, speed, stops or map edges. Keep manual exclusions, reassess automatic route checks and retain unknown-share limits for statistics.
+- Show the merged result while retaining originals for undo. Further merges can include up to ten originals. Undo restores the prior state; later classification and boundary edits do not propagate back. Clearly confirm that deleting a merged trip permanently deletes retained originals.
 
 ## 0.3.3 recommended route traffic
 

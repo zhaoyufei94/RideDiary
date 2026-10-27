@@ -47,7 +47,7 @@ class SchemaUpgradeTest {
     }
     private fun open(): RideRepository {
         database=Room.databaseBuilder(context,RideDatabase::class.java,name).addMigrations(
-            RideDatabase.MIGRATION_1_2,RideDatabase.MIGRATION_2_3,RideDatabase.MIGRATION_3_4).build()
+            RideDatabase.MIGRATION_1_2,RideDatabase.MIGRATION_2_3,RideDatabase.MIGRATION_3_4,RideDatabase.MIGRATION_4_5).build()
         return RideRepository(database!!)
     }
     private suspend fun verify(version: Int,mode: Boolean) {
@@ -55,7 +55,7 @@ class SchemaUpgradeTest {
         var repo=open()
         val ride=repo.dao.ride("trip")!!
         val routes=repo.dao.routes()
-        assertEquals(4,database!!.openHelper.readableDatabase.version)
+        assertEquals(5,database!!.openHelper.readableDatabase.version)
         assertEquals(1,ride.points.size); assertEquals(1,ride.segments.size)
         assertEquals(30.0,ride.points.single().lat,0.0)
         assertEquals("work",ride.ride.routeId)
@@ -63,6 +63,8 @@ class SchemaUpgradeTest {
         assertTrue(ride.ride.excluded); assertEquals("kept",ride.ride.exclusionReason)
         assertEquals(1000L,ride.ride.boundaryStart); assertEquals(219000L,ride.ride.boundaryEnd)
         assertTrue(ride.ride.arrivalConfirmed); assertTrue(ride.ride.arrivalSuggested)
+        assertNull(ride.ride.mergedInto); assertEquals(0,ride.ride.mergedCount)
+        assertFalse(ride.points.single().breakBefore)
         assertEquals(2,routes.size)
         val work=routes.single { it.id=="work" }; val home=routes.single { it.id=="home" }
         assertEquals(if(version==3 && !mode) "CUSTOM" else "WORKDAYS",work.planMode)
@@ -78,4 +80,5 @@ class SchemaUpgradeTest {
     @Test fun earlyVersionThreeWithoutModeUpgradesAndRetainsWeeklyPlans()=runBlocking { verify(3,false) }
     @Test fun finalVersionThreeRetainsBothPlanModes()=runBlocking { verify(3,true) }
     @Test fun versionTwoStillUpgradesWithWorkdayDefaults()=runBlocking { verify(2,false) }
+    @Test fun versionFourAddsMergeDefaultsAndPreservesEveryRecord()=runBlocking { verify(4,true) }
 }

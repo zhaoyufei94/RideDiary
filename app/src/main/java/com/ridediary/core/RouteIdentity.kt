@@ -16,7 +16,8 @@ object RouteIdentity {
     fun reversed(route: RouteShape): RouteShape {
         val end=route.points.lastOrNull()?.t ?: 0
         return route.copy(id="reverse:${route.id}",direction=opposite(route.direction),
-            points=route.points.asReversed().map { it.copy(t=end-it.t) },startRadius=route.endRadius,endRadius=route.startRadius)
+            points=route.points.indices.reversed().map { index -> route.points[index].copy(t=end-route.points[index].t,
+                breakBefore=route.points.getOrNull(index+1)?.breakBefore==true) },startRadius=route.endRadius,endRadius=route.startRadius)
     }
     data class Report(val candidates: List<Routing.Candidate>,val match: Match?,val ambiguous: Boolean)
     fun report(points: List<Fix>,routes: List<RouteShape>,groups: Map<String,String>): Report {

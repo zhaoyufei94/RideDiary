@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ridediary.R
 
-enum class Glyph { EDIT, DELETE, ADJUST, LEFT, RIGHT, MORE, DOWN, CHART, CLOCK, ROUTE, CALENDAR, SETTINGS, UNLINK, PLAY, REFRESH, NAV_RECORD, NAV_TRIPS }
+enum class Glyph { EDIT, DELETE, ADJUST, LEFT, RIGHT, MORE, DOWN, CHART, CLOCK, ROUTE, CALENDAR, SETTINGS, UNLINK, MERGE, PLAY, REFRESH, NAV_RECORD, NAV_TRIPS }
 
 /** Small local line icons keep the app independent of downloaded artwork. */
 @Composable fun AppGlyph(kind: Glyph,modifier: Modifier=Modifier.size(22.dp),color: Color=Ink) {
@@ -35,6 +35,7 @@ enum class Glyph { EDIT, DELETE, ADJUST, LEFT, RIGHT, MORE, DOWN, CHART, CLOCK, 
             fun line(ax: Float,ay: Float,bx: Float,by: Float)=drawLine(color,Offset(ax,ay),Offset(bx,by),1.6f,androidx.compose.ui.graphics.StrokeCap.Round)
             val path=Path()
             when(kind) {
+                Glyph.MERGE -> { path.moveTo(4f,5f); path.lineTo(8f,5f); path.lineTo(13f,12f); path.lineTo(20f,12f); drawPath(path,color,style=stroke); path.reset(); path.moveTo(4f,19f); path.lineTo(8f,19f); path.lineTo(13f,12f); drawPath(path,color,style=stroke); line(17f,9f,20f,12f); line(17f,15f,20f,12f) }
                 Glyph.PLAY -> { path.moveTo(8f,5f); path.lineTo(19f,12f); path.lineTo(8f,19f); path.close(); drawPath(path,color) }
                 Glyph.REFRESH -> { drawArc(color,40f,285f,false,Offset(4f,4f),androidx.compose.ui.geometry.Size(16f,16f),style=stroke); line(20f,4f,20f,10f); line(14f,10f,20f,10f) }
                 Glyph.SETTINGS -> {

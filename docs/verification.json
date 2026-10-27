@@ -1,10 +1,10 @@
 {
-  "date": "2026-10-26",
-  "version": "0.3.3",
-  "versionCode": 19,
-  "databaseVersion": 4,
+  "date": "2026-10-27",
+  "version": "0.3.4",
+  "versionCode": 20,
+  "databaseVersion": 5,
   "result": "BUILD SUCCESSFUL",
-  "validationScope": "LOCAL_BUILDS_JVM_LINT_RESOURCES_SIGNING_AND_TARGETED_DEVICE_TRAFFIC_DIAGNOSTICS",
+  "validationScope": "LOCAL_BUILDS_JVM_LINT_RESOURCES_SIGNING_AND_SYNTHETIC_DESKTOP_SQLITE_MIGRATION",
   "builds": {
     "debug": "PASS",
     "release": "PASS",
@@ -12,31 +12,74 @@
   },
   "unitTests": {
     "status": "PASS",
-    "tests": 88,
+    "tests": 104,
     "failures": 0,
     "errors": 0,
     "skipped": 0,
-    "newTrafficCases": 9
+    "newMergeCases": 12,
+    "newBoundaryCases": 4
   },
   "androidInstrumentedTests": {
     "status": "COMPILED_NOT_RUN",
     "newCases": 6,
-    "scope": [
-      "SDK traffic array parsing and missing values",
-      "different or reversed routes",
-      "SDK authentication failure and missing durations",
-      "unknown traffic UI",
-      "single key field and preserved AK after enabling traffic in isolated preferences",
-      "detours remain usable references; empty SDK routes are data failure"
-    ]
+    "classes": [
+      "TripMergePersistenceTest (5 cases)",
+      "SchemaUpgradeTest (new v4 case plus existing legacy cases)"
+    ],
+    "note": "No connected ADB device; no Android Room runtime, UI or device acceptance claim."
+  },
+  "migration": {
+    "status": "PASS",
+    "scope": "Desktop SQLite synthetic v4 to v5, exact exported columns and foreign keys; not Android Room runtime",
+    "statements": 3,
+    "tables": 4,
+    "preservedRows": {
+      "rides": 1,
+      "points": 1,
+      "segments": 1,
+      "routes": 1
+    },
+    "oldColumnValuesUnchanged": true,
+    "newDefaultsValid": true,
+    "schema5ColumnsAndForeignKeysMatch": true
+  },
+  "policy": {
+    "selectedTrips": [
+      2,
+      10
+    ],
+    "maxOriginals": 10,
+    "gapMinutes": 30,
+    "endpointDistanceMeters": 300,
+    "endpointFreshnessMinutes": 2,
+    "maxSpanHours": 12,
+    "rejectOverlaps": true,
+    "rejectSkippedInterveningTrips": true,
+    "rejectConflictingGroupsOrDirections": true,
+    "activeRecordingBlocked": true,
+    "recheckInTransaction": true,
+    "respectEffectiveBounds": true,
+    "interruptedEnd": "last saved point unless explicitly trimmed"
+  },
+  "dataHandling": {
+    "originalsRetainedUntilPermanentDelete": true,
+    "originalPointsUnchangedByMerge": true,
+    "visibleMergedResultOnly": true,
+    "nestedUndo": "restore direct sources to state before latest merge",
+    "gaps": "UNKNOWN, no invented distance/speed/waiting/map edge",
+    "manualExclusionsRetained": true,
+    "wholeRouteReassessed": true,
+    "permanentDeleteIncludesRetainedOriginals": true,
+    "savedRouteGeometryRetained": true
   },
   "lint": {
     "errors": 0,
-    "warnings": 35
+    "warnings": 37,
+    "newWarnings": "Two English quantity-format suggestions; original-count wording only applies to counts >= 2."
   },
   "resourceCheck": {
     "status": "PASS",
-    "translatedStrings": 321
+    "translatedStrings": 345
   },
   "gitDiffCheck": "PASS",
   "signing": {
@@ -46,114 +89,39 @@
     "certificateSha256": "24107b0f1a354d165eb7bae7be2b235752428dae1d4622754e0ebdb84fe110d3"
   },
   "apk": {
-    "path": "app/build/outputs/apk/release/RideDiary-release-v0.3.3.apk",
-    "bytes": 20142668,
-    "sha256": "897c8390ae4391165e5fe19f425ec52880d1b365d8beb43fddd96da10a08f697"
+    "path": "app/build/outputs/apk/release/RideDiary-release-v0.3.4.apk",
+    "bytes": 20191820,
+    "sha256": "1278621411d8c5252030f0d2022aacc41811dda6076dc2646be15b289e97eb38"
   },
   "deviceInstallation": {
     "status": "PASS",
-    "sameCertificateRelease": true,
+    "date": "2026-10-27",
+    "device": "PKJ110",
+    "versionName": "0.3.4",
+    "versionCode": 20,
+    "sameCertificateReplacement": true,
     "dataCleared": false,
-    "note": "USB disconnects required a retry; final installation returned Success. No recording service was present before updates."
-  },
-  "liveTraffic": {
-    "status": "TARGETED_PASS",
-    "sdkStatus": "NO_ERROR",
-    "candidates": 1,
-    "referenceSelected": true,
-    "strictMatchWouldPass": false,
-    "observedSimilarityRoundedPercent": 85,
-    "observedDistanceDifferenceRoundedPercent": 1,
-    "trafficDataCoverage": 0.997,
-    "uiStatus": "SLOW",
-    "earlierAttempts": "RESULT_NOT_FOUND with zero candidates, including an endpoints-only retry; kept distinct from a geometry mismatch.",
-    "rawCoordinatesOrKeysInEvidence": false
-  },
-  "configuration": {
-    "singleAndroidAk": true,
-    "retainsExistingMapsPreferencesAndKeystoreAlias": true,
-    "independentBasemapAndRecommendationTrafficSwitches": true,
-    "additionalServerAk": false,
-    "futurePredictions": false,
-    "sharedEntryPoints": [
-      "app settings",
-      "track maps",
-      "recommendation setup"
-    ]
-  },
-  "privacy": {
-    "schemaUnchanged": true,
-    "trafficDefaultEnabled": false,
-    "fullRawTripUpload": false,
-    "maximumWaypoints": 3,
-    "coordinateConversion": "SDK on-device",
-    "trafficDiskCache": false
+    "recordingServiceBeforeInstall": "NOT_RUNNING",
+    "launchOrFunctionalTests": "NOT_PERFORMED",
+    "note": "adb install -r returned Success; installed package version confirmed. No real-trip reads or edits, no data-retention audit or Android migration runtime claim."
   },
   "pending": [
-    "Run six synthetic Android cases",
-    "Visual acceptance across English and large fonts",
-    "Longer-term accuracy of driving traffic as a motorcycle reference",
-    "Device lifecycle cancellation and different-route regression"
+    "Android synthetic merge/undo/reopen/deletion and migration cases",
+    "Visual acceptance, large fonts and landscape"
   ],
   "logs": [
-    ".tooling/traffic-before-relax-0.3.3.log",
-    ".tooling/traffic-reference-build-0.3.3.log",
-    ".tooling/traffic-reference-fallback-build-0.3.3.log",
-    ".tooling/traffic-reference-fallback-release-0.3.3.log",
-    ".tooling/traffic-reference-live-0.3.3.log",
-    ".tooling/traffic-reference-signature-0.3.3.txt",
-    ".tooling/collapsible-traffic-0.3.3.log",
-    ".tooling/collapsible-traffic-release-0.3.3.log",
-    ".tooling/collapsible-traffic-signature-0.3.3.txt"
+    ".tooling/trip-merge-build-0.3.4.log",
+    ".tooling/trip-merge-release-0.3.4.log",
+    ".tooling/trip-merge-migration-0.3.4.json",
+    ".tooling/trip-merge-signature-0.3.4.txt"
   ],
   "sources": [
-    "https://lbsyun.baidu.com/cms/androidsdk/doc/v4_0_0/com/baidu/mapapi/search/route/DrivingRoutePlanOption.DrivingTrafficPolicy.html",
-    "https://mapopen-pub-androidsdk.cdn.bcebos.com/map/7_6_0/doc/com/baidu/mapapi/search/route/DrivingRouteLine.DrivingStep.html"
+    "https://developer.android.com/training/data-storage/room/migrating-db-versions",
+    "https://developer.android.com/reference/androidx/room/Transaction"
   ],
-  "referencePolicy": {
-    "endpointToleranceMeters": 1000,
-    "lengthRatio": [
-      0.3,
-      3.5
-    ],
-    "rejectReverseDirection": true,
-    "similarityRadiusMeters": 100,
-    "hardOverlapThreshold": false,
-    "showDifferenceDetails": true,
-    "retryWithoutWaypointsOnNoResult": true,
-    "diagnosticsExclude": [
-      "AK",
-      "coordinates",
-      "route names",
-      "raw SDK payload"
-    ]
-  },
-  "trafficDetailsUpdate": {
-    "defaultCollapsed": true,
-    "summary": [
-      "current conditions",
-      "driving reference time"
-    ],
-    "expanded": [
-      "update time",
-      "trend",
-      "route similarity",
-      "distance difference",
-      "endpoint offsets"
-    ],
-    "statePerCard": true,
-    "debugReleaseAndroidTestBuilds": "PASS",
-    "lintErrors": 0,
-    "lintWarnings": 35,
-    "installedRelease": "PASS",
-    "jvmTests": "Not rerun for this presentation-only change; preceding 88-case result retained.",
-    "deviceCollapsedState": {
-      "status": "PASS",
-      "summaryVisible": true,
-      "routeNotesVisible": false,
-      "trafficUpdateVisible": false,
-      "expandActionVisible": true
-    },
-    "deviceExpandedState": "NOT_CONFIRMED; input attempt did not change the observed state before USB disconnected."
+  "userAcceptance": {
+    "status": "CONFIRMED",
+    "date": "2026-10-27",
+    "note": "User confirmed the feature works after installing 0.3.4. This does not replace the pending automated Android cases or large-font/landscape acceptance."
   }
 }

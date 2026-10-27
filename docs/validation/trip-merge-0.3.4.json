@@ -1,0 +1,127 @@
+{
+  "date": "2026-10-27",
+  "version": "0.3.4",
+  "versionCode": 20,
+  "databaseVersion": 5,
+  "result": "BUILD SUCCESSFUL",
+  "validationScope": "LOCAL_BUILDS_JVM_LINT_RESOURCES_SIGNING_AND_SYNTHETIC_DESKTOP_SQLITE_MIGRATION",
+  "builds": {
+    "debug": "PASS",
+    "release": "PASS",
+    "androidTest": "PASS"
+  },
+  "unitTests": {
+    "status": "PASS",
+    "tests": 104,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "newMergeCases": 12,
+    "newBoundaryCases": 4
+  },
+  "androidInstrumentedTests": {
+    "status": "COMPILED_NOT_RUN",
+    "newCases": 6,
+    "classes": [
+      "TripMergePersistenceTest (5 cases)",
+      "SchemaUpgradeTest (new v4 case plus existing legacy cases)"
+    ],
+    "note": "No connected ADB device; no Android Room runtime, UI or device acceptance claim."
+  },
+  "migration": {
+    "status": "PASS",
+    "scope": "Desktop SQLite synthetic v4 to v5, exact exported columns and foreign keys; not Android Room runtime",
+    "statements": 3,
+    "tables": 4,
+    "preservedRows": {
+      "rides": 1,
+      "points": 1,
+      "segments": 1,
+      "routes": 1
+    },
+    "oldColumnValuesUnchanged": true,
+    "newDefaultsValid": true,
+    "schema5ColumnsAndForeignKeysMatch": true
+  },
+  "policy": {
+    "selectedTrips": [
+      2,
+      10
+    ],
+    "maxOriginals": 10,
+    "gapMinutes": 30,
+    "endpointDistanceMeters": 300,
+    "endpointFreshnessMinutes": 2,
+    "maxSpanHours": 12,
+    "rejectOverlaps": true,
+    "rejectSkippedInterveningTrips": true,
+    "rejectConflictingGroupsOrDirections": true,
+    "activeRecordingBlocked": true,
+    "recheckInTransaction": true,
+    "respectEffectiveBounds": true,
+    "interruptedEnd": "last saved point unless explicitly trimmed"
+  },
+  "dataHandling": {
+    "originalsRetainedUntilPermanentDelete": true,
+    "originalPointsUnchangedByMerge": true,
+    "visibleMergedResultOnly": true,
+    "nestedUndo": "restore direct sources to state before latest merge",
+    "gaps": "UNKNOWN, no invented distance/speed/waiting/map edge",
+    "manualExclusionsRetained": true,
+    "wholeRouteReassessed": true,
+    "permanentDeleteIncludesRetainedOriginals": true,
+    "savedRouteGeometryRetained": true
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 37,
+    "newWarnings": "Two English quantity-format suggestions; original-count wording only applies to counts >= 2."
+  },
+  "resourceCheck": {
+    "status": "PASS",
+    "translatedStrings": 345
+  },
+  "gitDiffCheck": "PASS",
+  "signing": {
+    "status": "PASS",
+    "v2": true,
+    "v3": true,
+    "certificateSha256": "24107b0f1a354d165eb7bae7be2b235752428dae1d4622754e0ebdb84fe110d3"
+  },
+  "apk": {
+    "path": "app/build/outputs/apk/release/RideDiary-release-v0.3.4.apk",
+    "bytes": 20191820,
+    "sha256": "1278621411d8c5252030f0d2022aacc41811dda6076dc2646be15b289e97eb38"
+  },
+  "deviceInstallation": {
+    "status": "PASS",
+    "date": "2026-10-27",
+    "device": "PKJ110",
+    "versionName": "0.3.4",
+    "versionCode": 20,
+    "sameCertificateReplacement": true,
+    "dataCleared": false,
+    "recordingServiceBeforeInstall": "NOT_RUNNING",
+    "launchOrFunctionalTests": "NOT_PERFORMED",
+    "note": "adb install -r returned Success; installed package version confirmed. No real-trip reads or edits, no data-retention audit or Android migration runtime claim."
+  },
+  "pending": [
+    "Android synthetic merge/undo/reopen/deletion and migration cases",
+    "Visual acceptance, large fonts and landscape"
+  ],
+  "logs": [
+    ".tooling/trip-merge-build-0.3.4.log",
+    ".tooling/trip-merge-release-0.3.4.log",
+    ".tooling/trip-merge-migration-0.3.4.json",
+    ".tooling/trip-merge-signature-0.3.4.txt"
+  ],
+  "sources": [
+    "https://developer.android.com/training/data-storage/room/migrating-db-versions",
+    "https://developer.android.com/reference/androidx/room/Transaction"
+  ],
+  "userAcceptance": {
+    "status": "CONFIRMED",
+    "date": "2026-10-27",
+    "note": "User confirmed the feature works after installing 0.3.4. This does not replace the pending automated Android cases or large-font/landscape acceptance."
+  }
+}

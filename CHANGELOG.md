@@ -2,6 +2,12 @@
 
 [中文](CHANGELOG.zh-CN.md)
 
+## 0.3.4
+
+- Added: Merge multiple recordings from the same trip, with gaps, endpoint distances and checks for overlapping times, distant or missing locations and conflicting directions.
+- Added: Keep original recordings and restore them with Undo merge in trip actions.
+- Improved: Unrecorded gaps remain unknown time; track and distance use recorded parts without inventing missing sections.
+
 ## 0.3.3
 
 - Added: route recommendations show current traffic, driving reference times and update times from two hours before until one hour after departure, refreshed with weather using the existing Baidu Maps AK.

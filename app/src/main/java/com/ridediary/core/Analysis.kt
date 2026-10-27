@@ -14,7 +14,7 @@ object Analyzer {
             val p = previous
             val dt = f.t-lastTime
             val distance = if (p != null) meters(p,f) else 0.0
-            val valid = p != null && good(p) && good(f) && dt in 1..Policy.MAX_GAP_MS && distance / (dt/1000.0) <= Policy.MAX_SPEED
+            val valid = p != null && !f.breakBefore && good(p) && good(f) && dt in 1..Policy.MAX_GAP_MS && distance / (dt/1000.0) <= Policy.MAX_SPEED
             val speed = if (!valid) null else f.speed?.takeIf { it.isFinite() && it >= 0 && it <= Policy.MAX_SPEED && (f.speedAccuracy == null || f.speedAccuracy <= 2.0) }
                 ?: if (distance > (p!!.accuracy + f.accuracy) / 2) distance / (dt/1000.0) else null
             val motion: Motion

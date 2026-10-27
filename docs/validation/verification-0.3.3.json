@@ -1,0 +1,159 @@
+{
+  "date": "2026-10-26",
+  "version": "0.3.3",
+  "versionCode": 19,
+  "databaseVersion": 4,
+  "result": "BUILD SUCCESSFUL",
+  "validationScope": "LOCAL_BUILDS_JVM_LINT_RESOURCES_SIGNING_AND_TARGETED_DEVICE_TRAFFIC_DIAGNOSTICS",
+  "builds": {
+    "debug": "PASS",
+    "release": "PASS",
+    "androidTest": "PASS"
+  },
+  "unitTests": {
+    "status": "PASS",
+    "tests": 88,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "newTrafficCases": 9
+  },
+  "androidInstrumentedTests": {
+    "status": "COMPILED_NOT_RUN",
+    "newCases": 6,
+    "scope": [
+      "SDK traffic array parsing and missing values",
+      "different or reversed routes",
+      "SDK authentication failure and missing durations",
+      "unknown traffic UI",
+      "single key field and preserved AK after enabling traffic in isolated preferences",
+      "detours remain usable references; empty SDK routes are data failure"
+    ]
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 35
+  },
+  "resourceCheck": {
+    "status": "PASS",
+    "translatedStrings": 321
+  },
+  "gitDiffCheck": "PASS",
+  "signing": {
+    "status": "PASS",
+    "v2": true,
+    "v3": true,
+    "certificateSha256": "24107b0f1a354d165eb7bae7be2b235752428dae1d4622754e0ebdb84fe110d3"
+  },
+  "apk": {
+    "path": "app/build/outputs/apk/release/RideDiary-release-v0.3.3.apk",
+    "bytes": 20142668,
+    "sha256": "897c8390ae4391165e5fe19f425ec52880d1b365d8beb43fddd96da10a08f697"
+  },
+  "deviceInstallation": {
+    "status": "PASS",
+    "sameCertificateRelease": true,
+    "dataCleared": false,
+    "note": "USB disconnects required a retry; final installation returned Success. No recording service was present before updates."
+  },
+  "liveTraffic": {
+    "status": "TARGETED_PASS",
+    "sdkStatus": "NO_ERROR",
+    "candidates": 1,
+    "referenceSelected": true,
+    "strictMatchWouldPass": false,
+    "observedSimilarityRoundedPercent": 85,
+    "observedDistanceDifferenceRoundedPercent": 1,
+    "trafficDataCoverage": 0.997,
+    "uiStatus": "SLOW",
+    "earlierAttempts": "RESULT_NOT_FOUND with zero candidates, including an endpoints-only retry; kept distinct from a geometry mismatch.",
+    "rawCoordinatesOrKeysInEvidence": false
+  },
+  "configuration": {
+    "singleAndroidAk": true,
+    "retainsExistingMapsPreferencesAndKeystoreAlias": true,
+    "independentBasemapAndRecommendationTrafficSwitches": true,
+    "additionalServerAk": false,
+    "futurePredictions": false,
+    "sharedEntryPoints": [
+      "app settings",
+      "track maps",
+      "recommendation setup"
+    ]
+  },
+  "privacy": {
+    "schemaUnchanged": true,
+    "trafficDefaultEnabled": false,
+    "fullRawTripUpload": false,
+    "maximumWaypoints": 3,
+    "coordinateConversion": "SDK on-device",
+    "trafficDiskCache": false
+  },
+  "pending": [
+    "Run six synthetic Android cases",
+    "Visual acceptance across English and large fonts",
+    "Longer-term accuracy of driving traffic as a motorcycle reference",
+    "Device lifecycle cancellation and different-route regression"
+  ],
+  "logs": [
+    ".tooling/traffic-before-relax-0.3.3.log",
+    ".tooling/traffic-reference-build-0.3.3.log",
+    ".tooling/traffic-reference-fallback-build-0.3.3.log",
+    ".tooling/traffic-reference-fallback-release-0.3.3.log",
+    ".tooling/traffic-reference-live-0.3.3.log",
+    ".tooling/traffic-reference-signature-0.3.3.txt",
+    ".tooling/collapsible-traffic-0.3.3.log",
+    ".tooling/collapsible-traffic-release-0.3.3.log",
+    ".tooling/collapsible-traffic-signature-0.3.3.txt"
+  ],
+  "sources": [
+    "https://lbsyun.baidu.com/cms/androidsdk/doc/v4_0_0/com/baidu/mapapi/search/route/DrivingRoutePlanOption.DrivingTrafficPolicy.html",
+    "https://mapopen-pub-androidsdk.cdn.bcebos.com/map/7_6_0/doc/com/baidu/mapapi/search/route/DrivingRouteLine.DrivingStep.html"
+  ],
+  "referencePolicy": {
+    "endpointToleranceMeters": 1000,
+    "lengthRatio": [
+      0.3,
+      3.5
+    ],
+    "rejectReverseDirection": true,
+    "similarityRadiusMeters": 100,
+    "hardOverlapThreshold": false,
+    "showDifferenceDetails": true,
+    "retryWithoutWaypointsOnNoResult": true,
+    "diagnosticsExclude": [
+      "AK",
+      "coordinates",
+      "route names",
+      "raw SDK payload"
+    ]
+  },
+  "trafficDetailsUpdate": {
+    "defaultCollapsed": true,
+    "summary": [
+      "current conditions",
+      "driving reference time"
+    ],
+    "expanded": [
+      "update time",
+      "trend",
+      "route similarity",
+      "distance difference",
+      "endpoint offsets"
+    ],
+    "statePerCard": true,
+    "debugReleaseAndroidTestBuilds": "PASS",
+    "lintErrors": 0,
+    "lintWarnings": 35,
+    "installedRelease": "PASS",
+    "jvmTests": "Not rerun for this presentation-only change; preceding 88-case result retained.",
+    "deviceCollapsedState": {
+      "status": "PASS",
+      "summaryVisible": true,
+      "routeNotesVisible": false,
+      "trafficUpdateVisible": false,
+      "expandActionVisible": true
+    },
+    "deviceExpandedState": "NOT_CONFIRMED; input attempt did not change the observed state before USB disconnected."
+  }
+}

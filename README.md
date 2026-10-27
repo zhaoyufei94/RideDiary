@@ -4,7 +4,7 @@
 
 **Your everyday rides, a little better understood.** · [中文说明](README.zh-CN.md) · [Changelog](CHANGELOG.md)
 
-Current version: **0.3.3**
+Current version: **0.3.4**
 
 RideDiary is an offline-first trip journal that helps you understand your commute and compare it with earlier trips on the same route. For Android 8.0 and later; no account, extra hardware or Google Play services needed.
 
@@ -17,6 +17,7 @@ RideDiary is an offline-first trip journal that helps you understand your commut
 - **Travel plans:** set workdays or custom weekdays and departure times separately for each direction; Today/Tomorrow show plans until one hour after departure, with a play icon to start on the selected route and direction.
 - **Manage routes:** keep work/home tracks under one route name, with automatic matching and manual correction.
 - **Explore statistics:** view monthly distance, commute days and trip count across both directions, then select a direction for durations and charts.
+- **Merge split recordings:** select recordings from the same trip, check their time and location joins, then merge them. Originals are kept for undo.
 - **Review history:** inspect time breakdowns, stops, tracks and historical comparisons; correct classification, adjust boundaries, exclude or delete trips.
 - **Expand tracks:** tap a trip or route preview to pinch, pan and fit the full track. Trip speed runs from red (slow) to green (fast), with gray for unknown speed and labels for stops of at least 30 seconds.
 - **Optional Baidu basemap:** enter your own Android SDK AK in the APK. Recording can show your current position and live track; recording, statistics and local tracks work without a key, with maps disabled or offline.
@@ -62,6 +63,7 @@ No “Allow all the time” location access is required; trips never start autom
 - **Time breakdown:** elapsed time equals moving, stationary and unknown time; estimates do not include live traffic.
 - **Maps and stops:** Display at the top right of expanded maps changes styles and contents, with choices saved locally. The stop toggle applies to expanded maps; previews hide stop dots and bubbles. Bubbles hide when no free space fits; zoom in to reveal them. Live traffic shows current road conditions, not historical trip speeds.
 - **Screen and battery:** the visible app stays awake during recording and restores normal timeout when you leave or finish; the power button can lock the screen while background recording continues, and location/screen use increases battery consumption.
+- **Merge trips:** use the merge icon at the top of Trips, long-press a trip, or open its actions. Select 2–10 recordings across months; they are sorted by time with gaps and endpoint distances shown. Adjacent recordings must not overlap and must be within 30 minutes and 300 m. Missing locations, conflicting routes/directions and omitted intervening trips show a reason. Finish active recording first; total duration is limited to 12 hours. Adjusted boundaries are respected; interrupted recordings end at the last saved point. Unrecorded gaps stay unknown without invented track or distance. Manual exclusions remain, and excessive unknown time still prevents valid-commute inclusion. Only the merged result is listed; undo restores the state before that merge. Further merges can include up to 10 originals. Deleting a merged trip also deletes its retained originals; saved routes remain.
 - **Edits and deletion:** hold a trip or route card for management. Linked trips inside a route follow the To work / To home selection; open details or hold to unlink. Deleting a route keeps trips, while deleting a trip removes its raw track.
 - **Data location:** Settings shows the actual trip database path. Touch and hold to copy it, or choose Open in file manager to browse the database and its companion files with read-only access. A file manager supporting system document access is needed; a system file picker is tried as a fallback. This entry does not edit, delete or restore data.
 - **Interruptions:** time to the first fix depends on surroundings; if recording is interrupted, check location and app background restrictions, then reopen to inspect saved data without automatic resumption.

@@ -2,6 +2,19 @@
 
 本清单适用于不同品牌的 Android 设备。下文的具体型号仅标识历史测试环境，不是产品限制。产品设计与交互规范见[产品设计](../PRODUCT_DESIGN.zh-CN.md)。
 
+## 0.3.4 分段行程合并（2026-10-27）
+
+- 用户安装后确认功能正常，并要求提交当前版本；此为用户功能验收，不替代尚未执行的 Android 自动化用例及大字体／横屏检查。
+
+- 追加安装：手机恢复连接后，确认 PKJ110 无运行中的录制服务，以同签名 Release 覆盖安装成功，并核对安装版本为 0.3.4 / code 20。未卸载或清除数据，未启动应用、读取真实行程或执行实机测试；不据此认定迁移及数据保留已验收。
+
+- 版本 0.3.4 / versionCode 20，Room v5，明确注册 1→2→3→4→5；新 schema 独立导出。升级仅添加合并来源、原片段数量与轨迹断点列。
+- 104 项 JVM 用例全部通过，0 失败／错误／跳过。新增 12 项合并规则及断点用例、4 项有效边界归一化用例，覆盖自动排序、短间隔无虚构距离／静止／地图边、时间重叠、间隔上限、远端点／异常速度、缺失／失效定位、路线及方向冲突、漏选中间行程、录制中／隐藏／重复／已合并选择、时间异常、嵌套断点、过滤坏点后的断点保留、反转路线以及到达停留隔断。
+- Debug 与 AndroidTest 编译、Lint、双语资源及 Git 空白检查通过。Lint 0 错误／37 警告，其中新增两项为英文数量格式建议；合并原片段数最少为 2，原片段复数文案不用于单数。
+- 桌面 SQLite 隔离合成 v4 库执行实际 4→5 迁移语句，对照导出的 v5 比较全部字段与外键，并验证四表旧行旧列和新增默认值保留，结果通过。该检查不等同 Android Room 运行验收。
+- 新增五项独立文件数据库 Android 用例（合并／重开／撤销、嵌套与删除、无效／陈旧请求、起止修正与中断／主动排除、完整路线重新识别）以及一项 v4→v5 迁移用例，均仅编译。检查时 ADB 未检测到设备，未执行手机测试、未安装或读取真实行程；大字体、横屏和界面视觉待实机验收。
+- 构建与范围见[当前验证记录](verification.json)。本地日志 `.tooling/trip-merge-build-0.3.4.log`、`.tooling/trip-merge-release-0.3.4.log`、`.tooling/trip-merge-migration-0.3.4.json`。复现：`./scripts/gradle-local.sh :app:assembleDebug :app:assembleDebugAndroidTest :app:testDebugUnitTest :app:lintDebug --offline -Pkotlin.compiler.execution.strategy=in-process`；`python3 scripts/check-resources.py`；`./scripts/package-release.sh`；`git diff --check`。Android 定向用例：`com.ridediary.TripMergePersistenceTest` 与 `com.ridediary.SchemaUpgradeTest`，仅可在独立合成测试库中执行。
+
 ## 0.3.3 推荐路线交通（2026-10-26）
 
 - 追加路况折叠：与天气相同的箭头控制，默认只显示状况和驾车参考耗时；更新时间、趋势及路线偏差说明按卡片独立展开。Debug／Release／AndroidTest 编译、Lint（0 错误／35 警告）、321 条资源及 Git 检查通过，同签名 Release 已覆盖安装。纯展示变更未重复运行算法测试，沿用前次 88 项结果；未新增重复用例。

@@ -2,6 +2,19 @@
 
 This checklist applies across Android brands. Specific models below identify historical test environments, not product restrictions. See [product design](../PRODUCT_DESIGN.md) for product and interaction requirements.
 
+## 0.3.4 Split trip merging (2026-10-27)
+
+- After installation, the user confirmed the feature works and requested a commit. This is user functional acceptance, not execution of the pending Android automation or large-font/landscape checks.
+
+- Installation follow-up: after the phone reconnected, confirmed no recording service on PKJ110, installed the same-certificate Release in place and verified installed version 0.3.4 / code 20. No uninstall, data clearing, app launch, real-trip read or device test occurred; installation success does not establish migration or retention acceptance.
+
+- Version 0.3.4 / versionCode 20, Room v5 with the explicit 1→2→3→4→5 chain and a separate exported schema. The upgrade only adds source visibility, original-count and point-break columns.
+- All 104 JVM cases pass, with no failures, errors or skips. New coverage comprises 12 merge/break cases and four effective-boundary cases: ordering, no invented distance/stops/map edges across short gaps, overlaps, gap limits, distant endpoints/impossible speed, invalid locations, route/direction conflicts, omitted trips, active/hidden/duplicate/nested selections, invalid time, retained breaks after filtering/reversal and arrival dwell separation.
+- Debug/instrumentation compilation, Lint, translations and whitespace checks pass. Lint reports 0 errors / 37 warnings, including two new English quantity-format suggestions. Original counts are always at least two, so their plural copy is not used for a singular original.
+- Desktop SQLite runs the actual 4→5 statements on a disposable v4 fixture, preserving all old values in four tables and validating new defaults and every column/foreign key against exported v5. This does not establish Android Room runtime acceptance.
+- Five new disposable-file Android cases cover merge/reopen/undo, nested undo/deletion, stale/invalid requests, trims/interruption/manual exclusion and whole-route reassessment; one additional case covers v4→v5 migration. They compile but were not run. ADB reported no connected device; no install or real-trip read/mutation occurred. Large fonts, landscape and visual acceptance remain pending.
+- See the [current report](verification.json). Ignored local logs: `.tooling/trip-merge-build-0.3.4.log`, `.tooling/trip-merge-release-0.3.4.log`, `.tooling/trip-merge-migration-0.3.4.json`. Reproduce with `./scripts/gradle-local.sh :app:assembleDebug :app:assembleDebugAndroidTest :app:testDebugUnitTest :app:lintDebug --offline -Pkotlin.compiler.execution.strategy=in-process`, `python3 scripts/check-resources.py`, `./scripts/package-release.sh` and `git diff --check`. Targeted Android classes are `com.ridediary.TripMergePersistenceTest` and `com.ridediary.SchemaUpgradeTest`, operating exclusively on disposable fixtures.
+
 ## 0.3.3 Recommended route traffic (2026-10-26)
 
 - Collapsible traffic details: the weather-style arrow keeps conditions and driving reference time visible by default, with update time, trends and route notes independently expandable per card. Debug/Release/instrumentation builds, Lint (0 errors / 35 warnings), 321 resources and Git checks pass; the same-certificate Release was installed in place. This presentation-only edit retains the preceding 88 algorithm cases without rerunning or adding duplicate cases.

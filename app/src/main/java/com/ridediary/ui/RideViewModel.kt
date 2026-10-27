@@ -7,6 +7,8 @@ import com.ridediary.RideDiaryApp
 import com.ridediary.data.RouteRecord
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.*
 
 class RideViewModel(application: Application): AndroidViewModel(application) {
@@ -32,6 +34,10 @@ class RideViewModel(application: Application): AndroidViewModel(application) {
     }
     fun boundaries(id: String,start: Long,end: Long) = task { repository.boundaries(id,start,end) }
     fun deleteRide(id: String,onDeleted: ()->Unit) = task { repository.deleteRide(id); onDeleted() }
+    suspend fun mergeRides(ids: List<String>): String = withContext(Dispatchers.Default) {
+        app.ready.await(); repository.mergeRides(ids)
+    }
+    fun undoMerge(id: String,onUndone: ()->Unit) = task { repository.undoMerge(id); onUndone() }
     fun editRoute(id: String,name: String,direction: String,start: Double,end: Double) = task {
         repository.editRoute(id,name,direction,start,end)
     }

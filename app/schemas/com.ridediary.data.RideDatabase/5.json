@@ -1,0 +1,377 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 5,
+    "identityHash": "19a308d877a972f09f3ad7193542212e",
+    "entities": [
+      {
+        "tableName": "rides",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `startUtc` INTEGER NOT NULL, `zone` TEXT NOT NULL, `state` TEXT NOT NULL, `endUtc` INTEGER, `elapsed` INTEGER NOT NULL, `lastSavedUtc` INTEGER NOT NULL, `routeId` TEXT, `direction` TEXT NOT NULL, `excluded` INTEGER NOT NULL, `exclusionReason` TEXT NOT NULL, `algorithmVersion` TEXT NOT NULL, `boundaryStart` INTEGER NOT NULL, `boundaryEnd` INTEGER, `arrivalConfirmed` INTEGER NOT NULL, `arrivalSuggested` INTEGER NOT NULL DEFAULT 0, `mergedInto` TEXT DEFAULT NULL, `mergedCount` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "startUtc",
+            "columnName": "startUtc",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "zone",
+            "columnName": "zone",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "state",
+            "columnName": "state",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "endUtc",
+            "columnName": "endUtc",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "elapsed",
+            "columnName": "elapsed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSavedUtc",
+            "columnName": "lastSavedUtc",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "routeId",
+            "columnName": "routeId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "direction",
+            "columnName": "direction",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "excluded",
+            "columnName": "excluded",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "exclusionReason",
+            "columnName": "exclusionReason",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "algorithmVersion",
+            "columnName": "algorithmVersion",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "boundaryStart",
+            "columnName": "boundaryStart",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "boundaryEnd",
+            "columnName": "boundaryEnd",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "arrivalConfirmed",
+            "columnName": "arrivalConfirmed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "arrivalSuggested",
+            "columnName": "arrivalSuggested",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "mergedInto",
+            "columnName": "mergedInto",
+            "affinity": "TEXT",
+            "defaultValue": "NULL"
+          },
+          {
+            "fieldPath": "mergedCount",
+            "columnName": "mergedCount",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "points",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`rideId` TEXT NOT NULL, `sequence` INTEGER NOT NULL, `t` INTEGER NOT NULL, `utc` INTEGER NOT NULL, `lat` REAL NOT NULL, `lon` REAL NOT NULL, `accuracy` REAL NOT NULL, `speed` REAL, `speedAccuracy` REAL, `quality` TEXT NOT NULL, `coordinateSystem` TEXT NOT NULL, `breakBefore` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`rideId`, `sequence`), FOREIGN KEY(`rideId`) REFERENCES `rides`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "rideId",
+            "columnName": "rideId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sequence",
+            "columnName": "sequence",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "t",
+            "columnName": "t",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "utc",
+            "columnName": "utc",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lat",
+            "columnName": "lat",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lon",
+            "columnName": "lon",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "accuracy",
+            "columnName": "accuracy",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "speed",
+            "columnName": "speed",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "speedAccuracy",
+            "columnName": "speedAccuracy",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "quality",
+            "columnName": "quality",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "coordinateSystem",
+            "columnName": "coordinateSystem",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "breakBefore",
+            "columnName": "breakBefore",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "rideId",
+            "sequence"
+          ]
+        },
+        "foreignKeys": [
+          {
+            "table": "rides",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "rideId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "segments",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`rideId` TEXT NOT NULL, `sequence` INTEGER NOT NULL, `from` INTEGER NOT NULL, `to` INTEGER NOT NULL, `motion` TEXT NOT NULL, `distance` REAL NOT NULL, PRIMARY KEY(`rideId`, `sequence`), FOREIGN KEY(`rideId`) REFERENCES `rides`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "rideId",
+            "columnName": "rideId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sequence",
+            "columnName": "sequence",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "from",
+            "columnName": "from",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "to",
+            "columnName": "to",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "motion",
+            "columnName": "motion",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "distance",
+            "columnName": "distance",
+            "affinity": "REAL",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "rideId",
+            "sequence"
+          ]
+        },
+        "foreignKeys": [
+          {
+            "table": "rides",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "rideId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "routes",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `direction` TEXT NOT NULL, `sourceRideId` TEXT NOT NULL, `shape` TEXT NOT NULL, `startRadius` REAL NOT NULL, `endRadius` REAL NOT NULL, `version` INTEGER NOT NULL, `groupId` TEXT NOT NULL DEFAULT '', `planDays` INTEGER NOT NULL DEFAULT 31, `planMinute` INTEGER, `planMode` TEXT NOT NULL DEFAULT 'WORKDAYS', PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "direction",
+            "columnName": "direction",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceRideId",
+            "columnName": "sourceRideId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "shape",
+            "columnName": "shape",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "startRadius",
+            "columnName": "startRadius",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "endRadius",
+            "columnName": "endRadius",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "version",
+            "columnName": "version",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "groupId",
+            "columnName": "groupId",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
+          },
+          {
+            "fieldPath": "planDays",
+            "columnName": "planDays",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "31"
+          },
+          {
+            "fieldPath": "planMinute",
+            "columnName": "planMinute",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "planMode",
+            "columnName": "planMode",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'WORKDAYS'"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '19a308d877a972f09f3ad7193542212e')"
+    ]
+  }
+}

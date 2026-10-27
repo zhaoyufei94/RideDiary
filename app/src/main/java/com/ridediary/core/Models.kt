@@ -24,7 +24,7 @@ object Policy {
 
 data class Fix(val t: Long, val lat: Double, val lon: Double, val accuracy: Double = 5.0,
                val speed: Double? = null, val utc: Long = 0, val quality: String = "OK",
-               val speedAccuracy: Double? = null)
+               val speedAccuracy: Double? = null,val breakBefore: Boolean = false)
 enum class Motion { MOVING, WAITING, UNKNOWN }
 data class Segment(val from: Long, val to: Long, val motion: Motion, val distance: Double = 0.0) {
     val duration get() = to - from

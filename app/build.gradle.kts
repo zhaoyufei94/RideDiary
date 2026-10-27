@@ -47,8 +47,8 @@ android {
         minSdk = 26
         targetSdk = 35
         // Keep the internal code increasing for in-place updates of development builds.
-        versionCode = 19
-        versionName = "0.3.3"
+        versionCode = 20
+        versionName = "0.3.4"
         // Sideload APKs target modern phones; other ABIs can be selected explicitly.
         ndk { abiFilters += providers.gradleProperty("rideDiaryAbis").orElse("arm64-v8a").get().split(",") }
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

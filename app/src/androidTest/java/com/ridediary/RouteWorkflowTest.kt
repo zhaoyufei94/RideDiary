@@ -20,7 +20,7 @@ class RouteWorkflowTest {
     @Before fun before() { context.deleteDatabase(name) }
     @After fun after() { db?.close(); context.deleteDatabase(name) }
     private fun open(): RideRepository {
-        db=Room.databaseBuilder(context,RideDatabase::class.java,name).addMigrations(RideDatabase.MIGRATION_1_2,RideDatabase.MIGRATION_2_3,RideDatabase.MIGRATION_3_4).build()
+        db=Room.databaseBuilder(context,RideDatabase::class.java,name).addMigrations(RideDatabase.MIGRATION_1_2,RideDatabase.MIGRATION_2_3,RideDatabase.MIGRATION_3_4,RideDatabase.MIGRATION_4_5).build()
         return RideRepository(db!!)
     }
     private suspend fun record(repo: RideRepository,points: List<Fix>,start: Long): String {
@@ -123,7 +123,7 @@ class RouteWorkflowTest {
         assertEquals(routes.first { it.id=="work" }.groupKey,routes.first { it.id=="home" }.groupKey)
         assertEquals(2,routeGroups(routes).size)
         assertTrue(routes.all { it.planMode=="WORKDAYS" && it.planDays==31 && it.planMinute==null })
-        assertEquals(4,db!!.openHelper.readableDatabase.version)
+        assertEquals(5,db!!.openHelper.readableDatabase.version)
         assertEquals("work",repo.dao.ride("old")!!.ride.routeId)
         assertEquals(1,repo.dao.ride("old")!!.points.size)
         assertEquals(1,repo.dao.ride("old")!!.segments.size)

@@ -31,6 +31,7 @@ object TrackPresentation {
         for(index in 1 until points.size) {
             val a=points[index-1]; val b=points[index]; val dt=b.t-a.t
             if(!good(a) || !good(b) || dt<=0) continue
+            if(b.breakBefore) { disconnected+=a; disconnected+=b; continue }
             val distance=meters(a,b)
             if(distance/(dt/1000.0)>Policy.MAX_SPEED) continue
             if(dt>Policy.MAX_GAP_MS) { disconnected+=a; disconnected+=b; continue }

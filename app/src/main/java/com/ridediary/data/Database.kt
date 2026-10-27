@@ -24,14 +24,17 @@ data class RideRecord(
     val boundaryStart: Long = 0,
     val boundaryEnd: Long? = null,
     val arrivalConfirmed: Boolean = false,
-    @ColumnInfo(defaultValue="0") val arrivalSuggested: Boolean = false
+    @ColumnInfo(defaultValue="0") val arrivalSuggested: Boolean = false,
+    @ColumnInfo(defaultValue="NULL") val mergedInto: String? = null,
+    @ColumnInfo(defaultValue="0") val mergedCount: Int = 0
 )
 @Entity(tableName="points", primaryKeys=["rideId","sequence"],
     foreignKeys=[ForeignKey(entity=RideRecord::class,parentColumns=["id"],childColumns=["rideId"],onDelete=ForeignKey.CASCADE)])
 data class PointRecord(val rideId: String, val sequence: Int, val t: Long, val utc: Long,
     val lat: Double, val lon: Double, val accuracy: Double, val speed: Double?,
-    val speedAccuracy: Double?, val quality: String, val coordinateSystem: String = "WGS84") {
-    fun fix() = Fix(t,lat,lon,accuracy,speed,utc,quality,speedAccuracy)
+    val speedAccuracy: Double?, val quality: String, val coordinateSystem: String = "WGS84",
+    @ColumnInfo(defaultValue="0") val breakBefore: Boolean = false) {
+    fun fix() = Fix(t,lat,lon,accuracy,speed,utc,quality,speedAccuracy,breakBefore)
 }
 @Entity(tableName="segments", primaryKeys=["rideId","sequence"],
     foreignKeys=[ForeignKey(entity=RideRecord::class,parentColumns=["id"],childColumns=["rideId"],onDelete=ForeignKey.CASCADE)])
@@ -45,9 +48,9 @@ data class RouteRecord(@PrimaryKey val id: String, val name: String, val directi
     val groupKey get()=groupId.ifBlank { RouteIdentity.legacyGroup(name) }
     fun route() = RouteShape(id,name,direction,decode(shape),startRadius,endRadius)
     companion object {
-        fun encode(points: List<Fix>) = JSONArray().apply { points.forEach { put(JSONArray(listOf(it.t,it.lat,it.lon,it.accuracy,it.speed))) } }.toString()
+        fun encode(points: List<Fix>) = JSONArray().apply { points.forEach { put(JSONArray(listOf(it.t,it.lat,it.lon,it.accuracy,it.speed,it.breakBefore))) } }.toString()
         fun decode(json: String): List<Fix> = JSONArray(json).let { a -> (0 until a.length()).map { i ->
-            val p=a.getJSONArray(i); Fix(p.getLong(0),p.getDouble(1),p.getDouble(2),p.getDouble(3),if (p.isNull(4)) null else p.getDouble(4))
+            val p=a.getJSONArray(i); Fix(p.getLong(0),p.getDouble(1),p.getDouble(2),p.getDouble(3),if (p.isNull(4)) null else p.getDouble(4),breakBefore=p.optBoolean(5,false))
         } }
     }
 }
@@ -66,7 +69,9 @@ data class RideData(@Embedded val ride: RideRecord,
 }
 @Dao
 interface RideDao {
-    @Transaction @Query("SELECT * FROM rides ORDER BY startUtc DESC") fun observeRides(): Flow<List<RideData>>
+    @Transaction @Query("SELECT * FROM rides WHERE mergedInto IS NULL ORDER BY startUtc DESC") fun observeRides(): Flow<List<RideData>>
+    @Transaction @Query("SELECT * FROM rides WHERE mergedInto IS NULL ORDER BY startUtc") suspend fun visibleRides(): List<RideData>
+    @Transaction @Query("SELECT * FROM rides WHERE mergedInto = :id ORDER BY startUtc") suspend fun mergedSources(id: String): List<RideData>
     @Query("SELECT * FROM routes ORDER BY name") fun observeRoutes(): Flow<List<RouteRecord>>
     @Transaction @Query("SELECT * FROM rides WHERE id = :id") suspend fun ride(id: String): RideData?
     @Transaction @Query("SELECT * FROM rides WHERE state = 'RECORDING'") suspend fun active(): List<RideData>
@@ -91,11 +96,18 @@ fun routeGroups(routes: List<RouteRecord>)=routes.groupBy { it.groupKey }.map { 
     RouteGroup(id,RouteIdentity.name(variants.first().name),variants)
 }.sortedBy { it.name }
 
-@Database(entities=[RideRecord::class,PointRecord::class,SegmentRecord::class,RouteRecord::class],version=4,exportSchema=true)
+@Database(entities=[RideRecord::class,PointRecord::class,SegmentRecord::class,RouteRecord::class],version=5,exportSchema=true)
 abstract class RideDatabase : RoomDatabase() {
     abstract fun dao(): RideDao
     companion object {
         const val NAME="ridediary.db"
+        val MIGRATION_4_5=object: Migration(4,5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE rides ADD COLUMN mergedInto TEXT DEFAULT NULL")
+                db.execSQL("ALTER TABLE rides ADD COLUMN mergedCount INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE points ADD COLUMN breakBefore INTEGER NOT NULL DEFAULT 0")
+            }
+        }
         // Both 0.2.0 schema variants shipped as v3. Let Room validate and update
         // identity normally after repairing only the missing column.
         val MIGRATION_3_4=object: Migration(3,4) {

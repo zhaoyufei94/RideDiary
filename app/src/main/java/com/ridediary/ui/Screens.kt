@@ -135,6 +135,10 @@ import java.time.YearMonth
     fun refreshRecord() { if(!refreshing) { refreshing=true; refreshToken=System.currentTimeMillis() } }
     var deletingRoute by remember { mutableStateOf<RouteRecord?>(null) }
     var deletingRide by remember { mutableStateOf<RideData?>(null) }
+    var mergeOpen by rememberSaveable { mutableStateOf(false) }
+    var mergeAnchorId by rememberSaveable { mutableStateOf<String?>(null) }
+    var unmergingRide by remember { mutableStateOf<RideData?>(null) }
+    fun mergeFrom(data: RideData) { mergeAnchorId=data.ride.id; mergeOpen=true }
     val closeTrip=remember { { selectedTrip=null } }
     val closeRouteRide=remember { { selectedRouteRide=null } }
     val closeRoute=remember { { selectedRoute=null } }
@@ -272,16 +276,19 @@ import java.time.YearMonth
                         PageHeader(modifier=Modifier.testTag("trip-journal-header"),
                             title=if(rides.isEmpty()) stringResource(R.string.empty_rides) else stringResource(R.string.monthly_summary,summary.samples.size,decimal(summary.kilometers)),
                             subtitle=if(rides.isEmpty()) null else stringResource(R.string.all_time_summary,rides.size,decimal(allKm)),
-                            actions={ HeaderIconButton(Glyph.SETTINGS,stringResource(R.string.settings),tint=Muted) { settingsOpen=true } })
+                            actions={
+                                if(rides.count { it.ride.state!="RECORDING" }>=2) HeaderIconButton(Glyph.MERGE,stringResource(R.string.merge_rides),tint=Muted) { mergeAnchorId=null; mergeOpen=true }
+                                HeaderIconButton(Glyph.SETTINGS,stringResource(R.string.settings),tint=Muted) { settingsOpen=true }
+                            })
                         TripMonthCalendar(journalAnchor,journalPager,samples)
-                        History(monthRides,routes,onDelete={ deletingRide=it },emptyMessage=if(rides.isEmpty()) R.string.empty_rides else R.string.empty_month_rides) { data,sample -> selectedTrip=data.ride.id; selectedTripSample=sample }
+                        History(monthRides,routes,onDelete={ deletingRide=it },onMerge={ mergeFrom(it) },onUndoMerge={ unmergingRide=it },emptyMessage=if(rides.isEmpty()) R.string.empty_rides else R.string.empty_month_rides) { data,sample -> selectedTrip=data.ride.id; selectedTripSample=sample }
                     }
                     }
                     val deleteDetail: ()->Unit=remember(shownTrip) { { shownTrip?.let { deletingRide=it }; Unit } }
                     DetailOverlay(visible=selectedTrip!=null && currentTrip!=null) {
                         shownTrip?.let { detail ->
                             RideDetail(detail,routes,rides,vm,listState=tripDetailList,initialSample=selectedTripSample,error=error,onDismissError=dismissError,
-                                onBack=closeTrip,onDelete=deleteDetail)
+                                onBack=closeTrip,onDelete=deleteDetail,onMerge={ mergeFrom(detail) },onUndoMerge={ unmergingRide=detail })
                         }
                     }
                 }
@@ -310,7 +317,7 @@ import java.time.YearMonth
                                 RouteOverview(group,rides,active?.ride?.routeId,direction,onDirection={ direction=it },onBack={ selectedRoute=null },onEdit={ editingRoute=it },onDelete={ deletingRoute=it },onPlan={ editingPlanId=it.id })
                                 SectionHeading(directionName(direction)+" · "+stringResource(R.string.route_trips))
                                 History(rides.filter { it.ride.routeId in directionIds },routes,
-                                    onUnlink={ unlinkingRide=it to group.id },emptyMessage=R.string.empty_route_trips) { data,sample ->
+                                    onUnlink={ unlinkingRide=it to group.id },onMerge={ mergeFrom(it) },onUndoMerge={ unmergingRide=it },emptyMessage=R.string.empty_route_trips) { data,sample ->
                                     selectedRouteRide=data.ride.id; selectedRouteRideSample=sample
                                 }
                             }
@@ -321,7 +328,7 @@ import java.time.YearMonth
                     DetailOverlay(visible=selectedRouteRide!=null && currentRouteRide!=null) {
                         shownRouteRide?.let { detail ->
                             RideDetail(detail,routes,rides,vm,listState=routeRideDetailList,initialSample=selectedRouteRideSample,error=error,onDismissError=dismissError,
-                                onBack=closeRouteRide,onDelete=deleteDetail)
+                                onBack=closeRouteRide,onDelete=deleteDetail,onMerge={ mergeFrom(detail) },onUndoMerge={ unmergingRide=detail })
                         }
                     }
                 }
@@ -348,10 +355,23 @@ import java.time.YearMonth
     }
     deletingRide?.let { data ->
         val sample=data.sample()
-        DeleteDialog(title=stringResource(R.string.delete_ride),message=stringResource(R.string.delete_ride_message,date(sample.startUtc,sample.zone)+" "+clock(sample.startUtc,sample.zone)),onDismiss={ deletingRide=null }) {
+        DeleteDialog(title=stringResource(R.string.delete_ride),message=stringResource(if(data.ride.mergedCount>0) R.string.delete_merged_ride_message else R.string.delete_ride_message,date(sample.startUtc,sample.zone)+" "+clock(sample.startUtc,sample.zone)),onDismiss={ deletingRide=null }) {
             vm.deleteRide(data.ride.id) { if(selectedTrip==data.ride.id) selectedTrip=null; if(selectedRouteRide==data.ride.id) selectedRouteRide=null }
             deletingRide=null
         }
+    }
+    if(mergeOpen) MergeRidesDialog(rides,routes,mergeAnchorId,vm,onDismiss={ mergeOpen=false }) { id ->
+        mergeOpen=false; selectedRouteRide=null; selectedTripSample=null; selectedTrip=id; openTab(1)
+    }
+    unmergingRide?.let { data ->
+        AlertDialog(onDismissRequest={ unmergingRide=null },containerColor=Surface,tonalElevation=0.dp,
+            title={ Text(stringResource(R.string.undo_merge)) },text={ Text(stringResource(R.string.undo_merge_message)) },
+            confirmButton={ TextButton(enabled=active==null,onClick={ vm.undoMerge(data.ride.id) {
+                if(selectedTrip==data.ride.id) selectedTrip=null
+                if(selectedRouteRide==data.ride.id) selectedRouteRide=null
+                unmergingRide=null
+            } }) { Text(stringResource(R.string.undo_merge)) } },
+            dismissButton={ TextButton(onClick={ unmergingRide=null }) { Text(stringResource(R.string.cancel)) } })
     }
     if(settingsOpen) SettingsDialog(onDismiss={ settingsOpen=false },onLanguage=onLanguage,weather=weather)
     if(baiduSettingsOpen) MapSettingsDialog { baiduSettingsOpen=false }
@@ -502,7 +522,7 @@ private data class LiveAnalysis(val sample: Sample)
 }
 
 @Composable private fun History(rides: List<RideData>,routes: List<RouteRecord>,onDelete: ((RideData)->Unit)?=null,
-    onUnlink: ((RideData)->Unit)?=null,emptyMessage: Int=R.string.empty_rides,onSelect: (RideData,Sample)->Unit) {
+    onUnlink: ((RideData)->Unit)?=null,onMerge: ((RideData)->Unit)?=null,onUndoMerge: ((RideData)->Unit)?=null,emptyMessage: Int=R.string.empty_rides,onSelect: (RideData,Sample)->Unit) {
     if(rides.isEmpty()) Panel { Text(stringResource(emptyMessage)) }
     val samples=remember(rides) { rides.associate { it.ride.id to it.sample() } }
     rides.forEach { data -> key(data.ride.id) {
@@ -513,6 +533,8 @@ private data class LiveAnalysis(val sample: Sample)
             title=date(s.startUtc,s.zone)+" · "+clock(s.startUtc,s.zone),subtitle=duration(s.metrics.elapsed)+" · "+decimal(s.metrics.distance/1000)+" km",
             contentPadding=12.dp,cornerRadius=14.dp,
             menu={ dismiss ->
+                if(onMerge!=null) SheetAction(title=stringResource(R.string.merge_rides),glyph=Glyph.MERGE,onClick={ dismiss(); onMerge(data) })
+                if(onUndoMerge!=null && data.ride.mergedCount>0) SheetAction(title=stringResource(R.string.undo_merge),glyph=Glyph.UNLINK,onClick={ dismiss(); onUndoMerge(data) })
                 if(onUnlink!=null) SheetAction(title=stringResource(R.string.unlink_ride),glyph=Glyph.UNLINK,onClick={ dismiss(); onUnlink(data) })
                 if(onDelete!=null) SheetAction(title=stringResource(R.string.delete_ride),glyph=Glyph.DELETE,destructive=true,onClick={ dismiss(); onDelete(data) })
             }
@@ -575,7 +597,8 @@ private data class LiveAnalysis(val sample: Sample)
 }
 
 @Composable private fun RideDetail(data: RideData,routes: List<RouteRecord>,all: List<RideData>,vm: RideViewModel,
-    listState: LazyListState,initialSample: Sample?,error: Boolean,onDismissError: ()->Unit,onBack: ()->Unit,onDelete: ()->Unit) {
+    listState: LazyListState,initialSample: Sample?,error: Boolean,onDismissError: ()->Unit,onBack: ()->Unit,onDelete: ()->Unit,
+    onMerge: ()->Unit,onUndoMerge: ()->Unit) {
     val s=remember(data,initialSample) {
         initialSample?.takeIf { sample ->
             sample.id==data.ride.id && sample.routeId==data.ride.routeId && sample.direction==data.ride.direction &&
@@ -669,6 +692,7 @@ private data class LiveAnalysis(val sample: Sample)
                 }
             }
         }
+        if(data.ride.mergedCount>0) item { Note(stringResource(R.string.merge_source_count,data.ride.mergedCount)) }
         item { SectionHeading(stringResource(R.string.ride_trace_title)) }
         item { DataCard(Modifier.testTag("ride-trace"),padding=14) { Trace(s.points,height=160.dp,metrics=m) } }
         item { RideComparisonSection(s,all) }
@@ -690,6 +714,8 @@ private data class LiveAnalysis(val sample: Sample)
         eyebrow=stringResource(R.string.ride_actions),onDismiss={ sheet=false }) {
         SheetAction(title=stringResource(R.string.route_edit),glyph=Glyph.EDIT,onClick={ sheet=false; edit=true })
         SheetAction(title=stringResource(R.string.boundaries),glyph=Glyph.ADJUST,onClick={ sheet=false; trim=true })
+        SheetAction(title=stringResource(R.string.merge_rides),glyph=Glyph.MERGE,onClick={ sheet=false; onMerge() })
+        if(data.ride.mergedCount>0) SheetAction(title=stringResource(R.string.undo_merge),glyph=Glyph.UNLINK,onClick={ sheet=false; onUndoMerge() })
         SheetAction(title=stringResource(R.string.delete_ride),glyph=Glyph.DELETE,destructive=true,onClick={ sheet=false; onDelete() })
     }
     if(edit) ClassificationDialog(data,routes,onDismiss={ edit=false },onSave={ selectedRoute,direction,excluded,reason -> vm.classify(s.id,selectedRoute,direction,excluded,reason); edit=false },

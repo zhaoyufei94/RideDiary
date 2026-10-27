@@ -17,6 +17,7 @@ object Routing {
             val result=ArrayList<Edge>(); var along=0.0; var total=0.0
             for(i in 1 until points.size) {
                 val a=points[i-1]; val b=points[i]; val len=meters(a,b)
+                if(b.breakBefore) continue
                 total+=len
                 if(len<0.01) continue
                 result+=Edge(a,len,along).apply {
@@ -67,7 +68,7 @@ object Routing {
         for((index,f) in usable.withIndex()) {
             val dt=f.t-prev.t
             val distance=meters(prev,f)
-            val continuous=index==0 || (dt in 1..Policy.MAX_GAP_MS && distance*1000/dt<=Policy.MAX_SPEED)
+            val continuous=index==0 || (!f.breakBefore && dt in 1..Policy.MAX_GAP_MS && distance*1000/dt<=Policy.MAX_SPEED)
             if(index>0 && continuous) travelSinceLock+=distance
             fun speed(p: Fix)=p.speed?.takeIf { it.isFinite() && it>=0 } ?: 0.0
             val displacement=(distance*1.7+50).coerceIn(80.0,250.0)
@@ -126,6 +127,7 @@ object Routing {
         var newer=last
         var count=0
         for(f in points.asReversed()) {
+            if(newer!=f && newer.breakBefore) break
             if(!good(f) || meters(f,end)>match.route.endRadius || f.speed==null || !f.speed.isFinite() ||
                 f.speed<0 || f.speed>=Policy.STOP_ENTER || (f.speedAccuracy!=null && f.speedAccuracy>2.0) || newer.t-f.t>Policy.MAX_GAP_MS) break
             newer=f; count++
