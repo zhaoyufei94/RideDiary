@@ -11,5 +11,9 @@
             <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
         </activity>
         <service android:name=".recording.RecordingService" android:exported="false" android:foregroundServiceType="location" />
+        <provider android:name=".data.RideDocumentsProvider" android:authorities="com.ridediary.documents"
+            android:exported="true" android:grantUriPermissions="true" android:permission="android.permission.MANAGE_DOCUMENTS">
+            <intent-filter><action android:name="android.content.action.DOCUMENTS_PROVIDER" /></intent-filter>
+        </provider>
     </application>
 </manifest>

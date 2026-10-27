@@ -12,18 +12,32 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlin.coroutines.resume
+import com.ridediary.traffic.*
+import com.ridediary.data.RouteRecord
 
 class WeatherViewModel(application: Application): AndroidViewModel(application) {
     private val settings=WeatherSettings(application)
     private val client=WeatherClient(application)
+    private val mapSettings=(application as com.ridediary.RideDiaryApp).mapSettings
+    private val trafficClient=TrafficClient(application)
+    val trafficConfig=mapSettings.config.map { value -> TrafficConfig(value?.trafficEnabled==true,value?.apiKey.orEmpty()) }
+        .stateIn(viewModelScope,SharingStarted.Eagerly,TrafficConfig())
     val workCalendar=com.ridediary.calendar.WorkCalendarClient(application)
     val config=MutableStateFlow(WeatherConfig(enabled=false))
     val loaded=MutableStateFlow(false)
     val location=MutableStateFlow<WeatherPoint?>(null)
     val locating=MutableStateFlow(false)
     val locationFailed=MutableStateFlow(false)
-    init { viewModelScope.launch { config.value=withContext(Dispatchers.IO) { settings.load() }; loaded.value=true } }
+    init { viewModelScope.launch {
+        config.value=withContext(Dispatchers.IO) { settings.load() }
+        loaded.value=true
+    } }
+    suspend fun fetchTraffic(route: RouteRecord,departure: Long,now: Long,freshAfter: Long)=
+        trafficClient.fetch(trafficConfig.value,route,departure,now,freshAfter)
     suspend fun save(value: WeatherConfig): Boolean = viewModelScope.async { try {
         withContext(Dispatchers.IO) { settings.save(value); client.clear() }
         config.value=value.copy(host=WeatherConfig.normalizeHost(value.host),apiKey=value.apiKey.trim()); true

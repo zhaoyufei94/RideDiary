@@ -1,8 +1,24 @@
 # RideDiary / 途记 Product Design
 
-Version: v0.2.1 product baseline · Updated: 2026-10-23 · [中文](PRODUCT_DESIGN.zh-CN.md)
+Version: v0.3.3 product baseline · Updated: 2026-10-26 · [中文](PRODUCT_DESIGN.zh-CN.md)
 
 This document guides product decisions, UI design and future development. **“Current” describes existing behavior; “requirements” constrain future changes and do not imply completed implementation or acceptance; “planned” means not delivered.** The product targets Android phones across brands, cities, motorcycle models and commute routes.
+
+## 0.3.3 recommended route traffic
+
+- Traffic starts collapsed, using the same arrow interaction as current weather. Keep conditions and driving reference time visible; reveal update time, trends and route differences only when expanded. Each card remembers its own state across data refreshes; omit empty toggles when no details exist.
+- Remove route-card wind and show traffic below weather from two hours before until one hour after each planned directional departure. Query only while Record is visible, the app is foreground and recording is idle. Share weather entry, 15-minute checks and pull refresh, with a 20-minute cache and fresh data on manual refresh; no background traffic timer.
+- Settings, track maps and recommendation cards open one Baidu Maps and traffic panel with a single Android SDK AK field retaining the existing key. Basemaps and recommendation traffic have independent switches, with recommendation traffic off by default. No additional server key, future forecasts or optimal departure windows.
+- Request traffic-inclusive routes with the Android SDK, converting and verifying saved geometry locally. Send endpoints and at most three key waypoints, rather than the full raw trip. Create, submit and destroy search instances on Main, including cleanup after 15-second timeout or page cancellation. Label times as driving references, not motorcycle predictions.
+- Under 80% known traffic coverage remains insufficient. Missing or misaligned traffic arrays are unknown; current conclusions expire after 20 minutes. Compare congestion share between sufficiently covered updates 5–45 minutes apart, labeled as change since the previous update.
+- Traffic is a nearby-origin/destination planning reference: allow up to 1 km per endpoint and a length ratio of 0.3–3.5, rejecting reversed direction without requiring 90% overlap. Estimate directional proximity within 100 m both ways, choose the most similar usable candidate and display similarity, length difference and endpoint offsets. Missing routes and substantial differences have distinct messages; missing geometry is not 0% overlap.
+- If waypoint-constrained search returns no route, retry once with endpoints only. Both attempts support a 15-second timeout and cancellation cleanup. Logs contain SDK status, candidate counts, lengths, offsets and coverage only, excluding keys, coordinates, route names and raw responses. Substantial changes in the planning route suppress congestion trends.
+
+## 0.3.2 route direction, data location and recommendation grace period
+
+- The selected direction in route details controls reference geometry, plans and linked trips together. Label the list with its direction and retain selection after returning from a trip or recreating the page.
+- Settings displays the actual trip database path with touch-and-hold copying. A system-document-permission-protected, read-only entry exposes only the main database, WAL and SHM, excluding weather/map credentials and other private files. Do not migrate data or add storage permissions. Prefer a file manager and fall back to the system file picker.
+- Replace the earlier removal-at-departure rule: fixed, learned and default departures remain for one hour afterward, including the deadline. Carry late-night plans into Today after midnight with a Yesterday label, then remove them after expiry. Evaluate schedules against the original departure date; keep the planned forecast window and manual recording start.
 
 ## 0.2.1 upgrade compatibility
 

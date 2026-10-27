@@ -4,7 +4,7 @@ Each user can enter an Android SDK AK from their own account in the APK. Recordi
 
 1. Sign in to the [Baidu Maps console](https://lbsyun.baidu.com/apiconsole/key) and complete the developer registration/verification requested by the console.
 2. Open Application Management → My Applications → Create Application. Name it RideDiary and choose **Android SDK**.
-3. In the APK, open Settings → Baidu Maps → Copy package and SHA-1, then enter those values in the console. The current shared signing certificate uses:
+3. In the APK, open Settings → Baidu Maps and traffic → Copy package and SHA-1, then enter those values in the console. The current shared signing certificate uses:
 
    - Package: `com.ridediary`
    - SHA1: `FD:FB:9B:E9:10:90:FD:1D:16:19:2B:24:64:B6:99:3B:5A:7F:E3:9F`

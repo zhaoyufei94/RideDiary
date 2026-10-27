@@ -5,13 +5,13 @@ import com.baidu.mapapi.CoordType
 import com.baidu.mapapi.SDKInitializer
 import kotlinx.coroutines.flow.MutableStateFlow
 
-/** The recording service never touches this object. Initialization requires an enabled, configured map. */
+/** The recording service never touches this object. Map and route traffic share SDK consent and AK. */
 object BaiduRuntime {
     val authError=MutableStateFlow(false)
     private var initialized=false
     private var configuredKey=""
     fun ensure(context: Context,config: MapConfig): Boolean {
-        if(!config.ready) return false
+        if(!config.ready && !config.trafficReady) return false
         return runCatching {
             authError.value=false
             SDKInitializer.setAgreePrivacy(context.applicationContext,true)

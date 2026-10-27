@@ -37,6 +37,7 @@ import com.ridediary.core.good
 import com.ridediary.calendar.WorkCalendarState
 import com.ridediary.data.*
 import com.ridediary.weather.*
+import com.ridediary.traffic.*
 import kotlinx.coroutines.*
 import java.time.*
 import kotlin.math.roundToInt
@@ -60,14 +61,17 @@ import kotlin.math.roundToInt
     return now
 }
 data class WeatherPageLoad(val token: Long=-1,val loading: Boolean=true,val config: WeatherConfig?=null,
-    val position: WeatherPoint?=null,val point: WeatherPoint?=null,val results: Map<WeatherPoint,WeatherResult> = emptyMap())
+    val position: WeatherPoint?=null,val point: WeatherPoint?=null,val results: Map<WeatherPoint,WeatherResult> = emptyMap(),
+    val trafficConfig: TrafficConfig?=null,val traffic: Map<Triple<String,String,Long>,TrafficResult> = emptyMap())
+internal val RouteSuggestion.trafficKey get()=Triple(route.id,route.shape,departure)
 data class RecordDashboard(val plans: PlannedRoutes,val fallback: RouteRecord?,val data: WeatherPageLoad,val now: Long,val calendar: WorkCalendarState,val workdayPlans: Boolean)
 private fun RouteRecord.weatherEnds()=route().points.let { points -> listOfNotNull(points.firstOrNull(),points.lastOrNull()).map { WeatherPoint.of(it.lat,it.lon) } }
 
 /** One page request coordinates location, distinct endpoints, refresh completion and attribution. */
-@Composable fun rememberRecordDashboard(vm: WeatherViewModel,rides: List<RideData>,routes: List<RouteRecord>,active: RideData?,refresh: Long): RecordDashboard {
+@Composable fun rememberRecordDashboard(vm: WeatherViewModel,rides: List<RideData>,routes: List<RouteRecord>,active: RideData?,refresh: Long,visible: Boolean=true): RecordDashboard {
     val config by vm.config.collectAsStateWithLifecycle()
-    val context=LocalContext.current; val foreground=weatherForeground(); val now=weatherClock()
+    val trafficConfig by vm.trafficConfig.collectAsStateWithLifecycle()
+    val context=LocalContext.current; val foreground=weatherForeground() && visible; val now=weatherClock()
     val completed=rides.filter { it.ride.state=="COMPLETED" }
     val zone=ZoneId.systemDefault()
     val date=Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
@@ -80,39 +84,53 @@ private fun RouteRecord.weatherEnds()=route().points.let { points -> listOfNotNu
         if(active!=null) emptyList() else (plans.today+plans.tomorrow).flatMap { it.route.weatherEnds() }.distinct()
     }
     val fallbackPoint=remember(fallback?.shape) { fallback?.weatherEnds()?.firstOrNull() }
+    val trafficRequests=if(active==null) (plans.today+plans.tomorrow).filter { TrafficPolicy.eligible(it.departure,now) } else emptyList()
     val latest by rememberUpdatedState(active)
     val language=if(LocalConfiguration.current.locales[0].language=="zh") "zh" else "en"
-    val result by produceState(WeatherPageLoad(),config,foreground,now/900_000,endpoints,fallbackPoint,active?.ride?.id,refresh,language) {
-        val old=if(value.config==config) value else WeatherPageLoad()
-        value=old.copy(token=refresh,loading=foreground && config.enabled && config.ready,config=config)
-        if(!foreground || !config.enabled || !config.ready) {
+    val result by produceState(WeatherPageLoad(),config,trafficConfig,foreground,now/900_000,endpoints,trafficRequests,fallbackPoint,active?.ride?.id,refresh,language) {
+        val old=if(value.config==config && value.trafficConfig==trafficConfig) value else WeatherPageLoad()
+        value=old.copy(token=refresh,loading=foreground,config=config,trafficConfig=trafficConfig,
+            traffic=old.traffic.filterKeys { key -> trafficRequests.any { it.trafficKey==key } })
+        if(!foreground) {
             value=value.copy(loading=false); return@produceState
         }
-        val fix=latest?.fixes()?.lastOrNull { good(it) && System.currentTimeMillis()-it.utc in 0..900_000 }
-        val hasLocation=ContextCompat.checkSelfPermission(context,Manifest.permission.ACCESS_COARSE_LOCATION)==PackageManager.PERMISSION_GRANTED ||
-            ContextCompat.checkSelfPermission(context,Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED
-        val position=if(fix!=null) WeatherPoint.of(fix.lat,fix.lon) else if(hasLocation) {
-            vm.locate(); vm.location.value
-        } else null
-        val point=position ?: fallbackPoint
-        val points=(listOfNotNull(point)+endpoints).distinct()
-        value=value.copy(position=position,point=point,results=value.results.filterKeys { it in points })
-        val fetched=coroutineScope { points.map { p -> async {
-            val response=vm.fetch(p,language,freshAfter=refresh)
-            // Children resume on Main: each point can render without waiting for the slowest endpoint.
-            value=value.copy(results=value.results+(p to response))
-            p to response
-        } }.awaitAll().toMap() }
-        value=WeatherPageLoad(refresh,false,config,position,point,fetched)
-        fetched.values.firstOrNull { it.failure!=null }?.failure?.let { failure ->
-            val message=when(failure) {
-                WeatherFailure.AUTH -> R.string.weather_auth
-                WeatherFailure.RATE_LIMIT -> R.string.weather_limit
-                WeatherFailure.CONFIGURATION -> R.string.weather_configuration
-                else -> R.string.weather_network_failed
+        coroutineScope {
+            val trafficJob=launch {
+                if(trafficConfig.enabled && trafficConfig.ready) trafficRequests.map { item -> async {
+                    val response=vm.fetchTraffic(item.route,item.departure,now,freshAfter=refresh)
+                    value=value.copy(traffic=value.traffic+(item.trafficKey to response))
+                } }.awaitAll()
             }
-            Toast.makeText(context,context.getString(message),Toast.LENGTH_SHORT).show()
+            if(config.enabled && config.ready) {
+                val fix=latest?.fixes()?.lastOrNull { good(it) && System.currentTimeMillis()-it.utc in 0..900_000 }
+                val hasLocation=ContextCompat.checkSelfPermission(context,Manifest.permission.ACCESS_COARSE_LOCATION)==PackageManager.PERMISSION_GRANTED ||
+                    ContextCompat.checkSelfPermission(context,Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED
+                val position=if(fix!=null) WeatherPoint.of(fix.lat,fix.lon) else if(hasLocation) {
+                    vm.locate(); vm.location.value
+                } else null
+                val point=position ?: fallbackPoint
+                val points=(listOfNotNull(point)+endpoints).distinct()
+                value=value.copy(position=position,point=point,results=value.results.filterKeys { it in points })
+                val fetched=coroutineScope { points.map { p -> async {
+                    val response=vm.fetch(p,language,freshAfter=refresh)
+                    // Children resume on Main: each point can render without waiting for the slowest endpoint.
+                    value=value.copy(results=value.results+(p to response))
+                    p to response
+                } }.awaitAll().toMap() }
+                value=value.copy(position=position,point=point,results=fetched)
+                fetched.values.firstOrNull { it.failure!=null }?.failure?.let { failure ->
+                    val message=when(failure) {
+                        WeatherFailure.AUTH -> R.string.weather_auth
+                        WeatherFailure.RATE_LIMIT -> R.string.weather_limit
+                        WeatherFailure.CONFIGURATION -> R.string.weather_configuration
+                        else -> R.string.weather_network_failed
+                    }
+                    Toast.makeText(context,context.getString(message),Toast.LENGTH_SHORT).show()
+                }
+            }
+            trafficJob.join()
         }
+        value=value.copy(loading=false)
     }
     return RecordDashboard(plans,fallback,result,now,calendar,routes.any { it.planMode=="WORKDAYS" })
 }
@@ -229,7 +247,7 @@ private fun number(value: Double?,suffix: String=""): String = value?.let { "${i
     }
 }
 
-@Composable fun RouteRecommendations(dashboard: RecordDashboard,vm: WeatherViewModel,onStart: (String)->Unit) {
+@Composable fun RouteRecommendations(dashboard: RecordDashboard,vm: WeatherViewModel,onSettings: ()->Unit={},onStart: (String)->Unit) {
     if(dashboard.plans.today.isEmpty() && dashboard.plans.tomorrow.isEmpty()) {
         val today=Instant.ofEpochMilli(dashboard.now).atZone(ZoneId.systemDefault()).toLocalDate()
         val tomorrow=today.plusDays(1)
@@ -253,12 +271,15 @@ private fun number(value: Double?,suffix: String=""): String = value?.let { "${i
         if(unknown) Text(if(dashboard.calendar.loading) stringResource(R.string.calendar_loading)
             else stringResource(R.string.calendar_not_bundled,dashboard.calendar.missingYear(date)),fontSize=12.sp,lineHeight=18.sp,color=Muted)
         if(items.isEmpty() && !unknown) Text(stringResource(if(heading==R.string.today_routes) R.string.no_today_routes else R.string.no_tomorrow_routes),fontSize=12.sp,color=Muted)
-        items.forEach { item -> key("${item.date}:${item.route.id}") { RouteStartCard(item,dashboard,vm,onStart) } }
+        items.forEach { item -> key("${item.date}:${item.route.id}") { RouteStartCard(item,dashboard,vm,onSettings,onStart) } }
     }
 }
-@Composable private fun RouteStartCard(item: RouteSuggestion,dashboard: RecordDashboard,vm: WeatherViewModel,onStart: (String)->Unit) {
+@Composable private fun RouteStartCard(item: RouteSuggestion,dashboard: RecordDashboard,vm: WeatherViewModel,onSettings: ()->Unit,onStart: (String)->Unit) {
     val context=LocalContext.current
     val config by vm.config.collectAsStateWithLifecycle()
+    val departureClock=clock(item.departure,ZoneId.systemDefault().id)
+    val today=Instant.ofEpochMilli(dashboard.now).atZone(ZoneId.systemDefault()).toLocalDate()
+    val departureLabel=if(item.date<today) stringResource(R.string.departure_yesterday,departureClock) else departureClock
     val points=remember(item.route.shape) { item.route.weatherEnds() }
     val results=points.mapNotNull { dashboard.data.results[it] }
     val snapshots=if(config.enabled) results.mapNotNull { it.snapshot }.filter { it.provider==config.provider } else emptyList()
@@ -269,7 +290,6 @@ private fun number(value: Double?,suffix: String=""): String = value?.let { "${i
         times.isNotEmpty() && times.first().time<=item.departure && times.last().time+3_600_000>=until &&
             times.zipWithNext().all { (a,b) -> b.time-a.time<=3_600_000 }
     } else false
-    val gust=if(config.enabled && hours.isNotEmpty()) maximumGust(snapshots,item.departure,until) else null
     val weatherLine=if(config.enabled) when {
         !config.ready -> stringResource(R.string.weather_configuration)
         hours.isNotEmpty() -> stringResource(R.string.weather_route_compact,
@@ -287,14 +307,11 @@ private fun number(value: Double?,suffix: String=""): String = value?.let { "${i
                     Text(directionName(item.route.direction),fontSize=11.sp,color=Moving,maxLines=1)
                 }
                 Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(6.dp)) {
-                    Text(clock(item.departure,ZoneId.systemDefault().id),fontSize=12.sp,lineHeight=16.sp,fontFamily=androidx.compose.ui.text.font.FontFamily.Monospace,fontWeight=FontWeight.Medium,color=Ink,maxLines=1)
+                    Text(departureLabel,fontSize=12.sp,lineHeight=16.sp,fontFamily=androidx.compose.ui.text.font.FontFamily.Monospace,fontWeight=FontWeight.Medium,color=Ink,maxLines=1)
                     if(weatherLine!=null) Text("· "+weatherLine,fontSize=11.sp,lineHeight=16.sp,color=Muted,maxLines=1,overflow=TextOverflow.Ellipsis)
                 }
-                val secondary=listOfNotNull(
-                    gust?.let { stringResource(R.string.weather_gust_short,number(it)) },
-                    stringResource(R.string.weather_preview_partial).takeIf { config.enabled && hours.isNotEmpty() && !complete }
-                ).joinToString(" · ")
-                if(secondary.isNotBlank()) Text(secondary,fontSize=10.sp,lineHeight=14.sp,color=Muted,maxLines=1,overflow=TextOverflow.Ellipsis)
+                if(config.enabled && hours.isNotEmpty() && !complete) Text(stringResource(R.string.weather_preview_partial),fontSize=10.sp,lineHeight=14.sp,color=Muted)
+                RouteTrafficInfo(item,dashboard,onSettings)
             }
             FilledIconButton(onClick={ onStart(item.route.id) },shape=CircleShape,modifier=Modifier.size(44.dp),colors=IconButtonDefaults.filledIconButtonColors(containerColor=Accent,contentColor=Ink)) {
                 AppGlyph(Glyph.PLAY,Modifier.size(18.dp).semantics {

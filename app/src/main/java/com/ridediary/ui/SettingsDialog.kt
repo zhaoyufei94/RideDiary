@@ -2,6 +2,9 @@ package com.ridediary.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
@@ -28,11 +31,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ridediary.weather.*
 import kotlinx.coroutines.launch
 import com.ridediary.R
+import com.ridediary.data.RideDatabase
+import com.ridediary.data.RideDocumentsProvider
 
 @Composable fun SettingsDialog(onDismiss: ()->Unit,onLanguage: ()->Unit,weather: WeatherViewModel) {
     val context=LocalContext.current
     val version=remember(context) { context.packageManager.getPackageInfo(context.packageName,0).versionName.orEmpty() }
     val chinese=LocalConfiguration.current.locales[0].language=="zh"
+    var baiduSettingsOpen by remember { mutableStateOf(false) }
     AlertDialog(modifier=Modifier.testTag("settings-dialog"),onDismissRequest=onDismiss,containerColor=Surface,tonalElevation=0.dp,
         title={ Text(stringResource(R.string.settings)) },
         text={
@@ -44,9 +50,13 @@ import com.ridediary.R
                         Text(stringResource(R.string.app_version,version),fontSize=11.sp,color=Muted)
                     }
                 }
+                HorizontalDivider(color=Line)
+                DataLocationSection()
                 WeatherSettingsSection(weather)
                 HorizontalDivider(color=Line)
-                MapSettingsSection()
+                OutlinedButton(onClick={ baiduSettingsOpen=true },modifier=Modifier.fillMaxWidth().testTag("baidu-settings-entry")) {
+                    Text(stringResource(R.string.map_settings))
+                }
                 HorizontalDivider(color=Line)
                 Text(stringResource(R.string.language_setting),style=MaterialTheme.typography.titleMedium,color=Ink)
                 Column(Modifier.fillMaxWidth().selectableGroup()) {
@@ -60,6 +70,32 @@ import com.ridediary.R
                 }
             }
         },confirmButton={ TextButton(onClick=onDismiss) { Text(stringResource(R.string.close)) } })
+    if(baiduSettingsOpen) MapSettingsDialog { baiduSettingsOpen=false }
+}
+
+@Composable internal fun DataLocationSection() {
+    val context=LocalContext.current
+    val path=remember(context) { context.getDatabasePath(RideDatabase.NAME).absolutePath }
+    val browser=rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { }
+    var unavailable by remember { mutableStateOf(false) }
+    Text(stringResource(R.string.data_location),style=MaterialTheme.typography.titleMedium,color=Ink)
+    SelectionContainer {
+        Text(path,modifier=Modifier.testTag("data-location-path"),style=MaterialTheme.typography.bodySmall,color=Muted)
+    }
+    Text(stringResource(R.string.data_location_description),style=MaterialTheme.typography.bodySmall,color=Muted)
+    OutlinedButton(modifier=Modifier.testTag("open-data-location"),onClick={
+        unavailable=false
+        try {
+            context.startActivity(RideDocumentsProvider.browseIntent())
+        } catch (_: android.content.ActivityNotFoundException) {
+            try { browser.launch(RideDocumentsProvider.pickerIntent()) }
+            catch (_: android.content.ActivityNotFoundException) { unavailable=true }
+            catch (_: SecurityException) { unavailable=true }
+        } catch (_: SecurityException) {
+            unavailable=true
+        }
+    }) { Text(stringResource(R.string.open_data_location)) }
+    if(unavailable) Text(stringResource(R.string.data_browser_unavailable),style=MaterialTheme.typography.bodySmall,color=Danger)
 }
 
 @Composable private fun WeatherSettingsSection(vm: WeatherViewModel) {

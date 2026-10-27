@@ -30,6 +30,7 @@ object TravelPlans {
 data class RouteSuggestion(val route: RouteRecord,val departure: Long,val duration: Long?,val count: Int,val date: LocalDate)
 data class PlannedRoutes(val today: List<RouteSuggestion>,val tomorrow: List<RouteSuggestion>)
 object RouteSuggestions {
+    private const val DEPARTURE_GRACE_MS=3_600_000L
     /** Explicit dates avoid rolling an expired departure into the wrong daily section. */
     fun planned(rides: List<RideData>,routes: List<RouteRecord>,now: Long,zone: ZoneId=ZoneId.systemDefault(),calendar: WorkCalendarState=WorkCalendarState()): PlannedRoutes {
         val history=TravelPlans.history(rides,routes,now)
@@ -45,9 +46,10 @@ object RouteSuggestions {
             if(!scheduled) return@mapNotNull null
             val minute=reference.planMinute ?: TravelPlans.learnedMinute(samples,date,zone,calendar) ?: TravelPlans.defaultMinute(direction)
             val departure=date.atTime(minute/60,minute%60).atZone(zone).toInstant().toEpochMilli()
-            if(departure<=now) return@mapNotNull null
+            if(now>departure+DEPARTURE_GRACE_MS) return@mapNotNull null
             RouteSuggestion(reference,departure,median(samples.map { it.metrics.elapsed }),samples.size,date)
         } }.sortedWith(compareBy<RouteSuggestion> { it.departure }.thenByDescending { it.count }.thenBy { it.route.name })
-        return PlannedRoutes(day(today),day(today.plusDays(1)))
+        // A late-night plan remains available after midnight until its grace period ends.
+        return PlannedRoutes(day(today.minusDays(1))+day(today),day(today.plusDays(1)))
     }
 }

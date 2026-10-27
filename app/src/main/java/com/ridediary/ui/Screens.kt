@@ -126,6 +126,7 @@ import java.time.YearMonth
     var selectedTripSample by remember { mutableStateOf<Sample?>(null) }
     var selectedRouteRideSample by remember { mutableStateOf<Sample?>(null) }
     var settingsOpen by rememberSaveable { mutableStateOf(false) }
+    var baiduSettingsOpen by rememberSaveable { mutableStateOf(false) }
     var unlinkingRide by remember { mutableStateOf<Pair<RideData,String>?>(null) }
     var editingRoute by remember { mutableStateOf<RouteRecord?>(null) }
     var editingPlanId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -221,7 +222,7 @@ import java.time.YearMonth
             when(page) {
                 0 -> RecordRefreshContainer(enabled=true,refreshing=refreshing,onRefresh={ refreshRecord() },modifier=Modifier.fillMaxSize()) {
                     PageColumn(recordScroll,error,{ vm.error.value=false }) {
-                        val dashboard=rememberRecordDashboard(weather,rides,routes,active,refreshToken)
+                        val dashboard=rememberRecordDashboard(weather,rides,routes,active,refreshToken,visible=pagerState.currentPage==0 && !overlayOpen)
                         LaunchedEffect(dashboard.data.token,dashboard.data.loading,refreshToken) {
                             refreshing=refreshToken>0 && (dashboard.data.token!=refreshToken || dashboard.data.loading)
                         }
@@ -249,7 +250,7 @@ import java.time.YearMonth
                             if(quality in listOf("STORAGE_ERROR","START_FAILED","PERMISSION_LOST")) Note(stringResource(if(quality=="STORAGE_ERROR") R.string.error else if(quality=="START_FAILED") R.string.quality_start else R.string.quality_permission))
                             if(quality=="ROUTE_UNAVAILABLE") Note(stringResource(R.string.route_unavailable))
                             RecordWeather(weather,dashboard,onRefresh={ refreshRecord() }) { settingsOpen=true }
-                            RouteRecommendations(dashboard,weather) { begin(it) }
+                            RouteRecommendations(dashboard,weather,onSettings={ baiduSettingsOpen=true }) { begin(it) }
                             val latest=rides.firstOrNull { it.ride.state=="COMPLETED" }
                             if(dashboard.plans.today.isEmpty() && dashboard.plans.tomorrow.isEmpty() && latest!=null) {
                                 SectionHeading(stringResource(R.string.recent_ride))
@@ -302,11 +303,13 @@ import java.time.YearMonth
                     }
                     DetailOverlay(visible=selectedRoute!=null && currentGroup!=null) {
                         shownGroup?.let { group ->
+                            var direction by rememberSaveable(group.id) { mutableStateOf(if(group.direction("WORK").isNotEmpty()) "WORK" else "HOME") }
+                            val directionIds=group.direction(direction).map { it.id }.toSet()
                             Box(Modifier.fillMaxSize().then(if(selectedRouteRide!=null) Modifier.clearAndSetSemantics {} else Modifier)) {
                             PageColumn(routeDetailScroll,error,{ vm.error.value=false }) {
-                                RouteOverview(group,rides,active?.ride?.routeId,onBack={ selectedRoute=null },onEdit={ editingRoute=it },onDelete={ deletingRoute=it },onPlan={ editingPlanId=it.id })
-                                SectionHeading(stringResource(R.string.route_trips))
-                                History(rides.filter { it.ride.routeId in group.routeIds },routes,
+                                RouteOverview(group,rides,active?.ride?.routeId,direction,onDirection={ direction=it },onBack={ selectedRoute=null },onEdit={ editingRoute=it },onDelete={ deletingRoute=it },onPlan={ editingPlanId=it.id })
+                                SectionHeading(directionName(direction)+" · "+stringResource(R.string.route_trips))
+                                History(rides.filter { it.ride.routeId in directionIds },routes,
                                     onUnlink={ unlinkingRide=it to group.id },emptyMessage=R.string.empty_route_trips) { data,sample ->
                                     selectedRouteRide=data.ride.id; selectedRouteRideSample=sample
                                 }
@@ -351,6 +354,7 @@ import java.time.YearMonth
         }
     }
     if(settingsOpen) SettingsDialog(onDismiss={ settingsOpen=false },onLanguage=onLanguage,weather=weather)
+    if(baiduSettingsOpen) MapSettingsDialog { baiduSettingsOpen=false }
     unlinkingRide?.let { (data,groupId) ->
         val name=routeGroups(routes).firstOrNull { it.id==groupId }?.name ?: ""
         AlertDialog(onDismissRequest={ unlinkingRide=null },containerColor=Surface,tonalElevation=0.dp,

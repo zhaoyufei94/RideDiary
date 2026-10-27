@@ -1,0 +1,70 @@
+{
+  "date": "2026-10-26",
+  "version": "0.3.2",
+  "versionCode": 18,
+  "databaseVersion": 4,
+  "result": "BUILD SUCCESSFUL",
+  "validationScope": "LOCAL_BUILDS_JVM_LINT_RESOURCES_SIGNING; NO_CONNECTED_DEVICE",
+  "unitTests": {
+    "status": "PASS",
+    "tests": 79,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "newRecommendationCases": 5,
+    "note": "Final Yesterday label only rebuilt and linted; recommendation logic unchanged after passing JVM tests."
+  },
+  "builds": {
+    "debug": "PASS",
+    "release": "PASS",
+    "androidTest": "PASS"
+  },
+  "androidInstrumentedTests": {
+    "status": "NOT_RUN",
+    "reason": "adb devices returned no attached devices",
+    "newCompiledCases": [
+      "routeLinkedTripsFollowDirectionAndRetainItAfterDetailReturn",
+      "settingsDisplaysActualDataPathAndFileBrowserAction",
+      "browserSeesOnlyTripDatabaseAndCompanionFilesWithRequestedColumns",
+      "readsAreAllowedButWritesTraversalAndSettingsAreRejected",
+      "emptyStorageStillProvidesBrowsableRoot"
+    ]
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 35
+  },
+  "resourceCheck": {
+    "status": "PASS",
+    "translatedStrings": 296
+  },
+  "gitDiffCheck": "PASS",
+  "signing": {
+    "status": "PASS",
+    "v2": true,
+    "v3": true,
+    "certificateSha256": "24107b0f1a354d165eb7bae7be2b235752428dae1d4622754e0ebdb84fe110d3"
+  },
+  "apk": {
+    "path": "app/build/outputs/apk/release/RideDiary-release-v0.3.2.apk",
+    "bytes": 19991116,
+    "sha256": "592554a51fdc6ddce23409e91d83bd3c3e0c37e8c6a2a7608b25b57dc279a202"
+  },
+  "deviceInstallation": {
+    "status": "NOT_PERFORMED"
+  },
+  "visualAcceptance": "NOT_PERFORMED",
+  "dataRetention": "No schema migration, database relocation, or user data operations; device retention audit not performed.",
+  "pending": [
+    "Device route-direction switching, detail return, recreation and unlink regression",
+    "Device Settings path/copy and system file manager/picker compatibility",
+    "Run synthetic DocumentsProvider permission/read-only/allowlist cases on Android",
+    "Large text and English visual acceptance"
+  ],
+  "localLogs": [
+    ".tooling/validation-0.3.2.log",
+    ".tooling/final-validation-0.3.2.log",
+    ".tooling/release-0.3.2.log",
+    ".tooling/signature-0.3.2.txt"
+  ]
+}

@@ -47,8 +47,8 @@ android {
         minSdk = 26
         targetSdk = 35
         // Keep the internal code increasing for in-place updates of development builds.
-        versionCode = 17
-        versionName = "0.3.1"
+        versionCode = 19
+        versionName = "0.3.3"
         // Sideload APKs target modern phones; other ABIs can be selected explicitly.
         ndk { abiFilters += providers.gradleProperty("rideDiaryAbis").orElse("arm64-v8a").get().split(",") }
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -80,6 +80,7 @@ ksp { arg("room.schemaLocation", "$projectDir/schemas") }
 dependencies {
     implementation("com.baidu.lbsyun:BaiduMapSDK_Map:8.2.0")
     implementation("com.baidu.lbsyun:BaiduMapSDK_Util:8.2.0")
+    implementation("com.baidu.lbsyun:BaiduMapSDK_Search:8.2.0")
     val bom = platform("androidx.compose:compose-bom:2025.04.01")
     implementation(bom)
     androidTestImplementation(bom)

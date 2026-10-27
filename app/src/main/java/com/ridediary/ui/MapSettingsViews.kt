@@ -31,12 +31,13 @@ import com.ridediary.maps.MapStyle
 import kotlinx.coroutines.launch
 import java.security.MessageDigest
 
-@Composable fun MapSettingsSection() {
+@Composable fun MapSettingsSection(settingsOverride: com.ridediary.maps.MapSettings?=null) {
     val context=LocalContext.current
-    val settings=(context.applicationContext as RideDiaryApp).mapSettings
+    val settings=settingsOverride ?: (context.applicationContext as RideDiaryApp).mapSettings
     val config by settings.config.collectAsStateWithLifecycle()
     val savedConfig=config ?: return
     var enabled by remember(savedConfig) { mutableStateOf(savedConfig.enabled) }
+    var trafficEnabled by remember(savedConfig) { mutableStateOf(savedConfig.trafficEnabled) }
     // Do not save credentials in Compose SavedState.
     var key by remember(savedConfig) { mutableStateOf(savedConfig.apiKey) }
     var style by remember(savedConfig) { mutableStateOf(savedConfig.styleId) }
@@ -45,7 +46,7 @@ import java.security.MessageDigest
     var saved by remember { mutableStateOf(false) }
     val scope=rememberCoroutineScope()
     val clipboard=remember(context) { context.getSystemService(android.content.ClipboardManager::class.java) }
-    val mapTitle=stringResource(R.string.map_settings)
+    val mapTitle=stringResource(R.string.map_basemap_enabled)
     val registration=remember(context) {
         runCatching {
             @Suppress("DEPRECATION")
@@ -59,10 +60,17 @@ import java.security.MessageDigest
         }.getOrDefault("Package: ${context.packageName}")
     }
     Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
-        Text(stringResource(R.string.map_settings),Modifier.weight(1f),style=MaterialTheme.typography.titleMedium)
+        Text(mapTitle,Modifier.weight(1f),style=MaterialTheme.typography.titleMedium)
         Switch(checked=enabled,onCheckedChange={ enabled=it; saved=false },enabled=!saving,modifier=Modifier.testTag("map-enabled").semantics { contentDescription=mapTitle })
     }
     Text(stringResource(R.string.map_optional_hint),style=MaterialTheme.typography.bodySmall,color=Muted)
+    Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
+        val trafficTitle=stringResource(R.string.traffic_setting)
+        Text(trafficTitle,Modifier.weight(1f),style=MaterialTheme.typography.titleMedium)
+        Switch(checked=trafficEnabled,onCheckedChange={ trafficEnabled=it; saved=false },enabled=!saving,
+            modifier=Modifier.testTag("traffic-enabled").semantics { contentDescription=trafficTitle })
+    }
+    Text(stringResource(R.string.traffic_settings_hint),style=MaterialTheme.typography.bodySmall,color=Muted)
     OutlinedTextField(value=key,onValueChange={ key=it.take(256); saved=false },label={ Text(stringResource(R.string.map_ak)) },singleLine=true,
         visualTransformation=PasswordVisualTransformation(),keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Password),
         enabled=!saving,modifier=Modifier.fillMaxWidth().testTag("map-api-key"))
@@ -71,16 +79,17 @@ import java.security.MessageDigest
     Text(stringResource(R.string.map_key_hint),style=MaterialTheme.typography.bodySmall,color=Muted)
     TextButton(onClick={ clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Baidu Maps registration",registration)) }) { Text(stringResource(R.string.map_copy_registration)) }
     Text(stringResource(R.string.map_privacy),style=MaterialTheme.typography.bodySmall,color=Muted)
+    Text(stringResource(R.string.traffic_privacy),style=MaterialTheme.typography.bodySmall,color=Muted)
     TextButton(onClick={ context.startActivity(Intent(Intent.ACTION_VIEW,"https://lbsyun.baidu.com/index.php?title=openprivacy".toUri())) }) {
         Text(stringResource(R.string.map_privacy_link))
     }
-    val draft=savedConfig.copy(enabled=enabled,apiKey=key.trim(),styleId=style.trim())
-    Button(enabled=!saving && (!enabled || draft.ready) && draft!=savedConfig,onClick={
+    val draft=savedConfig.copy(enabled=enabled,trafficEnabled=trafficEnabled,apiKey=key.trim(),styleId=style.trim())
+    Button(enabled=!saving && ((!enabled && !trafficEnabled) || key.isNotBlank()) && draft!=savedConfig,onClick={
         saving=true; failed=false; saved=false
         scope.launch {
             try {
                 settings.save(draft)
-                if(!draft.enabled) BaiduRuntime.revoke(context)
+                if(!draft.enabled && !draft.trafficEnabled) BaiduRuntime.revoke(context)
                 saved=true
             } catch(cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
             catch(_: Exception) { failed=true }
@@ -149,7 +158,7 @@ import java.security.MessageDigest
 }
 
 @Composable fun MapSettingsDialog(onDismiss: ()->Unit) {
-    AlertDialog(onDismissRequest=onDismiss,containerColor=Surface,title={ Text(stringResource(R.string.map_settings)) },
+    AlertDialog(modifier=Modifier.testTag("baidu-settings-dialog"),onDismissRequest=onDismiss,containerColor=Surface,title={ Text(stringResource(R.string.map_settings)) },
         text={ Column(Modifier.fillMaxWidth().heightIn(max=520.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(12.dp)) {
             MapSettingsSection()
         } },confirmButton={ TextButton(onClick=onDismiss) { Text(stringResource(R.string.close)) } })

@@ -2,6 +2,21 @@
 
 [中文](CHANGELOG.zh-CN.md)
 
+## 0.3.3
+
+- Added: route recommendations show current traffic, driving reference times and update times from two hours before until one hour after departure, refreshed with weather using the existing Baidu Maps AK.
+- Improved: Settings, track maps and recommendation cards share one Baidu Maps and traffic entry. Existing AKs are retained, with separate switches for basemaps and recommendation traffic and no additional server key.
+- Improved: removed wind from recommended routes to make room for traffic below the weather preview.
+- Improved: traffic details start collapsed, showing current conditions and driving reference time; expand to see update time, congestion changes and route notes.
+- Improved: traffic is shown as a planned-route reference, allowing detours and moderate endpoint offsets while displaying route similarity, distance difference and endpoint offsets.
+- Fixed: missing usable route data was incorrectly reported as a route mismatch.
+
+## 0.3.2
+
+- Fixed: linked trips in route details now follow the To work / To home selection and show only that direction.
+- Added: view and copy the data path in Settings, and browse the trip database and its companion files with read-only access in the system file manager.
+- Improved: route recommendations remain available until one hour after planned departure, including late starts across midnight.
+
 ## 0.3.1
 
 - Added: A Monday-first calendar above the trip list. Swipe or use the arrows to change months; the summary and list follow the selected month. Empty months also show the calendar.

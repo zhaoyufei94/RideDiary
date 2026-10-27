@@ -4,7 +4,7 @@
 
 **Your everyday rides, a little better understood.** · [中文说明](README.zh-CN.md) · [Changelog](CHANGELOG.md)
 
-Current version: **0.3.1**
+Current version: **0.3.3**
 
 RideDiary is an offline-first trip journal that helps you understand your commute and compare it with earlier trips on the same route. For Android 8.0 and later; no account, extra hardware or Google Play services needed.
 
@@ -13,7 +13,8 @@ RideDiary is an offline-first trip journal that helps you understand your commut
 - **Trip calendar:** swipe between months and browse all trips from the displayed month. Days with trips show a circle containing their total kilometers; longer daily distances have darker circles within that month.
 - **Record trips:** see elapsed time, distance, average speed, stationary time and location status; view live candidate routes and overlap, with motorcycle progress after recognition.
 - **Check weather:** current conditions, next-hour precipitation chance, today’s overview and departure-window feels-like temperatures.
-- **Travel plans:** set workdays or custom weekdays and departure times separately for each direction; Today/Tomorrow show upcoming plans, with a play icon to start on the selected route and direction.
+- **Traffic before departure:** view current route traffic from two hours before until one hour after departure, refreshed with weather using the existing Baidu Maps AK. No additional key is needed. Times are driving references; future forecasts are not provided.
+- **Travel plans:** set workdays or custom weekdays and departure times separately for each direction; Today/Tomorrow show plans until one hour after departure, with a play icon to start on the selected route and direction.
 - **Manage routes:** keep work/home tracks under one route name, with automatic matching and manual correction.
 - **Explore statistics:** view monthly distance, commute days and trip count across both directions, then select a direction for durations and charts.
 - **Review history:** inspect time breakdowns, stops, tracks and historical comparisons; correct classification, adjust boundaries, exclude or delete trips.
@@ -52,20 +53,24 @@ No “Allow all the time” location access is required; trips never start autom
 ## Using RideDiary
 
 - **Travel plans:** open a route, choose To work or To home and edit its plan. Workdays is the default, using the bundled China calendar to exclude holidays and include make-up workdays. Custom weekdays are also available; clear all to exclude that direction. The 2026 calendar is included; other years arrive with app updates, and the calendar works offline. If a year is unavailable, use Custom weekdays instead of Workdays. Set a time or use usual departure history, with 08:00 to work / 18:00 to home when no history exists.
-- **Today/Tomorrow:** only show routes scheduled for that day with a future departure, ordered by time. Reached times disappear without starting recording or shifting into another window. Plans follow the phone’s current timezone.
-- **Departure weather:** previews combine endpoint feels-like temperature, rain probability and gusts from planned departure through median historical duration, with one hour when duration is unknown.
+- **Today/Tomorrow:** show scheduled routes until one hour after planned departure, ordered by time. Recommendations remain at exactly one hour late and disappear afterward. Late-night plans remain in Today after midnight until that hour ends, showing their original planned time. Recording never starts automatically. Plans follow the phone’s current timezone.
+- **Departure weather:** route cards combine endpoint feels-like temperature and rain probability from planned departure through median historical duration, with one hour when duration is unknown. Wind is no longer shown on route cards.
+- **Route traffic:** enable Live traffic on recommended routes in Settings → Baidu Maps and traffic; see [setup](docs/traffic-setup.en.md). Settings, track maps and recommendation cards open the same configuration. The saved Android SDK AK is retained, without a separate server key; basemaps and recommendation traffic have independent switches. From two hours before until one hour after departure, traffic follows weather refresh while Record is visible and idle. Traffic is a planned-route reference allowing detours and moderate offsets, with similarity, distance difference and endpoint offsets shown. Opposite direction, distant endpoints or missing geometry withhold the reference; insufficient or expired data never appears clear. Driving references are not motorcycle times and do not change historical arrival estimates during recording. Future forecasts and optimal departure windows are not provided.
 - **Weather refresh:** automatic checks run while Record is visible; pull down to refresh current weather and both days’ route forecasts together. Weather data is normally retained for 20 minutes; refresh failures retain recent usable data and show a brief message. Only current weather displays an update time. Sources appear once at the bottom of Record. Requests can take several seconds and do not affect offline recording. Background weather reminders are not available yet.
 - **Routes and history:** creating a route needs four valid fixes and 150 m of track; endpoint radii are 20–500 m, and historical comparison/arrival estimates need three usable histories for the same direction.
 - **Arrival prompts:** near-complete progress and at least 30 seconds of sustained low speed may trigger review, but Save/Delete still requires your choice; similar routes, deviation or poor fixes can prevent recognition and estimates.
 - **Time breakdown:** elapsed time equals moving, stationary and unknown time; estimates do not include live traffic.
 - **Maps and stops:** Display at the top right of expanded maps changes styles and contents, with choices saved locally. The stop toggle applies to expanded maps; previews hide stop dots and bubbles. Bubbles hide when no free space fits; zoom in to reveal them. Live traffic shows current road conditions, not historical trip speeds.
 - **Screen and battery:** the visible app stays awake during recording and restores normal timeout when you leave or finish; the power button can lock the screen while background recording continues, and location/screen use increases battery consumption.
-- **Edits and deletion:** hold a trip or route card for management, or browse linked trips inside a route, open details or hold to unlink; deleting a route keeps trips, while deleting a trip removes its raw track.
+- **Edits and deletion:** hold a trip or route card for management. Linked trips inside a route follow the To work / To home selection; open details or hold to unlink. Deleting a route keeps trips, while deleting a trip removes its raw track.
+- **Data location:** Settings shows the actual trip database path. Touch and hold to copy it, or choose Open in file manager to browse the database and its companion files with read-only access. A file manager supporting system document access is needed; a system file picker is tried as a fallback. This entry does not edit, delete or restore data.
 - **Interruptions:** time to the first fix depends on surroundings; if recording is interrupted, check location and app background restrictions, then reopen to inspect saved data without automatic resumption.
 
 ## Data and limits
 
-Trips and full tracks stay on your phone without uploading to a track cloud; speed and stop analysis also stays on your phone. Weather queries send current or route-endpoint coordinates rounded to two decimal places to the selected provider. QWeather and Baidu keys are encrypted on your phone and excluded from backups. When Baidu maps are enabled, a key is configured and you view a map, the service processes location, viewed map areas, IP and device information under its [privacy policy](https://lbsyun.baidu.com/index.php?title=openprivacy). Online maps therefore require network access. Viewing maps does not change historical tracks. **Uninstalling or clearing app data loses records; export, import and cloud recovery are not available yet.**
+Enabling recommendation traffic queries Baidu Maps with route endpoints and waypoints; track verification stays on your device and the full raw trip is not uploaded. These locations are more precise than weather queries. Traffic is off by default and reuses the encrypted map AK, subject to your Baidu account access and quota.
+
+Trips and full tracks stay on your phone without uploading to a track cloud; speed and stop analysis also stays on your phone. Weather queries send current or route-endpoint coordinates rounded to two decimal places to the selected provider. QWeather and Baidu keys are encrypted on your phone and excluded from backups. When Baidu maps are enabled, a key is configured and you view a map, the service processes location, viewed map areas, IP and device information under its [privacy policy](https://lbsyun.baidu.com/index.php?title=openprivacy). Online maps therefore require network access. Viewing maps does not change historical tracks. **Uninstalling or clearing app data loses records; in-app export, import and cloud recovery are not available yet.**
 
 [Open-Meteo’s free API](https://open-meteo.com/en/pricing) is for non-commercial use; QWeather access and quotas depend on your account. Weather is a grid forecast; endpoint previews do not cover every location along the route or describe road-surface conditions.
 

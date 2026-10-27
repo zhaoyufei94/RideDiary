@@ -95,6 +95,7 @@ fun routeGroups(routes: List<RouteRecord>)=routes.groupBy { it.groupKey }.map { 
 abstract class RideDatabase : RoomDatabase() {
     abstract fun dao(): RideDao
     companion object {
+        const val NAME="ridediary.db"
         // Both 0.2.0 schema variants shipped as v3. Let Room validate and update
         // identity normally after repairing only the missing column.
         val MIGRATION_3_4=object: Migration(3,4) {

@@ -14,9 +14,10 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
-data class MapConfig(val enabled: Boolean=false,val apiKey: String="",val styleId: String="",val appearance: MapAppearance=MapAppearance()) {
+data class MapConfig(val enabled: Boolean=false,val apiKey: String="",val styleId: String="",val appearance: MapAppearance=MapAppearance(),val trafficEnabled: Boolean=false) {
     val ready get()=enabled && apiKey.isNotBlank()
-    override fun toString()="MapConfig(enabled=$enabled, configured=${apiKey.isNotBlank()})"
+    val trafficReady get()=trafficEnabled && apiKey.isNotBlank()
+    override fun toString()="MapConfig(enabled=$enabled, trafficEnabled=$trafficEnabled, configured=${apiKey.isNotBlank()})"
 }
 
 /** Map credentials never enter the database, SavedState, logs, or source control. */
@@ -38,7 +39,7 @@ class MapSettings(context: Context) {
             style=MapAppearance.styleFromStored(prefs.getString("display_style",null),styleId.isNotBlank()),
             speedColors=prefs.getBoolean("speed_colors",true),stops=prefs.getBoolean("stops",true),
             endpoints=prefs.getBoolean("endpoints",true),places=prefs.getBoolean("places",false),traffic=prefs.getBoolean("traffic",false))
-        config.value=MapConfig(prefs.getBoolean("enabled",false),secret,styleId,appearance)
+        config.value=MapConfig(prefs.getBoolean("enabled",false),secret,styleId,appearance,prefs.getBoolean("route_traffic",false))
     }
     private fun key(): SecretKey {
         val store=KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
@@ -52,14 +53,15 @@ class MapSettings(context: Context) {
     suspend fun save(value: MapConfig)=withContext(Dispatchers.IO) {
         loaded.await()
         saveLock.withLock {
-            require(!value.enabled || value.ready)
+            require((!value.enabled && !value.trafficEnabled) || value.apiKey.isNotBlank())
             val normalized=value.copy(apiKey=value.apiKey.trim(),styleId=value.styleId.trim(),appearance=config.value?.appearance ?: value.appearance)
             val encrypted=if(normalized.apiKey.isBlank()) "" else Cipher.getInstance("AES/GCM/NoPadding").run {
                 init(Cipher.ENCRYPT_MODE,key())
                 val bytes=doFinal(normalized.apiKey.toByteArray(Charsets.UTF_8))
                 Base64.encodeToString(iv,Base64.NO_WRAP)+":"+Base64.encodeToString(bytes,Base64.NO_WRAP)
             }
-            check(prefs.edit().putBoolean("enabled",normalized.enabled).putString("credential",encrypted).putString("style",normalized.styleId).commit())
+            check(prefs.edit().putBoolean("enabled",normalized.enabled).putBoolean("route_traffic",normalized.trafficEnabled)
+                .putString("credential",encrypted).putString("style",normalized.styleId).commit())
             config.value=normalized
         }
     }

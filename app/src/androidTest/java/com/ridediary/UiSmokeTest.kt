@@ -333,6 +333,37 @@ class UiSmokeTest {
         showPendingRecording()
         assertEquals(0,shownSettings())
     }
+    @Test fun routeLinkedTripsFollowDirectionAndRetainItAfterDetailReturn() {
+        val homeId=runBlocking {
+            val base=repository.dao.routes().single()
+            val homeRoute=base.copy(id="linked-home-route",direction="HOME")
+            repository.dao.saveRoute(homeRoute)
+            repository.dao.saveRide(repository.dao.ride(id)!!.ride.copy(id="linked-home-ride",routeId=homeRoute.id,direction="HOME"))
+            "linked-home-ride"
+        }
+        click(R.string.routes)
+        compose.onNodeWithTag("route-$routeGroupId").performScrollTo().performClick()
+        compose.onNodeWithTag("ride-$id").assertExists()
+        compose.onNodeWithTag("ride-$homeId").assertDoesNotExist()
+        compose.onNodeWithTag("route-direction-HOME").performScrollTo().performClick()
+        compose.onNodeWithTag("ride-$id").assertDoesNotExist()
+        compose.onNodeWithTag("ride-$homeId").performScrollTo().performClick()
+        compose.onNodeWithTag("ride-detail-header").assertExists()
+        scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+        compose.onNodeWithTag("route-direction-HOME").assertIsSelected()
+        compose.onNodeWithTag("ride-$homeId").assertExists()
+        scenario.recreate(); scenario.onActivity { activity=it }
+        compose.onNodeWithTag("route-direction-HOME").assertIsSelected()
+        compose.onNodeWithTag("ride-$id").assertDoesNotExist()
+        compose.onNodeWithTag("route-direction-WORK").performScrollTo().performClick()
+        compose.onNodeWithTag("ride-$id").assertExists()
+        compose.onNodeWithTag("ride-$homeId").assertDoesNotExist()
+    }
+    @Test fun settingsDisplaysActualDataPathAndFileBrowserAction() {
+        compose.onNodeWithContentDescription(text(R.string.settings)).performClick()
+        compose.onNodeWithTag("data-location-path").performScrollTo().assertTextEquals(app.getDatabasePath(RideDatabase.NAME).absolutePath)
+        compose.onNodeWithTag("open-data-location").performScrollTo().assertIsDisplayed().assertHasClickAction()
+    }
     @Test fun longPressShowsMenuWithoutOpeningDetailsAndBackDismissesIt() {
         click(R.string.summary)
         compose.onNodeWithText(text(R.string.delete_ride)).assertDoesNotExist()

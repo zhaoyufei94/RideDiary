@@ -5,7 +5,6 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -54,9 +53,8 @@ import kotlinx.coroutines.withContext
     }
 }
 
-@Composable fun RouteOverview(group: RouteGroup,rides: List<RideData>,activeRouteId: String?,onBack: ()->Unit,
+@Composable fun RouteOverview(group: RouteGroup,rides: List<RideData>,activeRouteId: String?,direction: String,onDirection: (String)->Unit,onBack: ()->Unit,
     onEdit: (RouteRecord)->Unit,onDelete: (RouteRecord)->Unit,onPlan: (RouteRecord)->Unit={}) {
-    var direction by rememberSaveable(group.id) { mutableStateOf(if(group.direction("WORK").isNotEmpty()) "WORK" else "HOME") }
     var sheet by remember(group.id) { mutableStateOf(false) }
     val shown=group.direction(direction)
     val route=shown.firstOrNull() ?: group.variants.first()
@@ -75,7 +73,7 @@ import kotlinx.coroutines.withContext
         if(shown.isNotEmpty()) HeaderIconButton(Glyph.EDIT,stringResource(R.string.edit_route),enabled=!inUse) { onEdit(route) }
         HeaderIconButton(Glyph.MORE,stringResource(R.string.more_actions)) { sheet=true }
     }
-    DirectionSwitch(direction,onSelect={ direction=it },modifier=Modifier.fillMaxWidth(),tagPrefix="route-direction-")
+    DirectionSwitch(direction,onSelect=onDirection,modifier=Modifier.fillMaxWidth(),tagPrefix="route-direction-")
     if(shown.isEmpty()) {
         Panel { Note(stringResource(R.string.route_direction_missing)) }
     } else {
